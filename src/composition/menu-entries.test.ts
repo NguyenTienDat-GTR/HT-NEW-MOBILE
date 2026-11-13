@@ -56,4 +56,13 @@ describe('visibleMenuSections', () => {
   it('SUPER_ADMIN không thấy chứng nhận dù có quyền', () => {
     expect(labels(user(['training.certificate.read.all'], ['SUPER_ADMIN']))).toEqual([]);
   });
+
+  it('hệ thống: mỗi mục theo quyền riêng; quản trị hệ thống vẫn thấy', () => {
+    expect(labels(user(['system.audit_log.read.diocese']))).toEqual(['Nhật ký hệ thống']);
+    expect(labels(user(['system.account_role.assign.deanery']))).toEqual(['Gán vai trò']);
+    expect(labels(user(['system.permission.manage.all']))).toEqual(['Quyền hạn']);
+    expect(
+      labels(user(['system.account.manage.all', 'system.role.read.all'], ['SUPER_ADMIN'])),
+    ).toEqual(['Tài khoản', 'Vai trò']);
+  });
 });

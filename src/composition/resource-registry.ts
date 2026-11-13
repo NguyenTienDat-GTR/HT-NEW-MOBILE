@@ -15,6 +15,11 @@ import {
   registrationsResource,
   scoresResource,
 } from '@/features/training/presentation/participations-resources';
+import { accountRolesResource } from '@/features/system/presentation/account-roles-resource';
+import { accountsResource } from '@/features/system/presentation/accounts-resource';
+import { auditLogsResource } from '@/features/system/presentation/audit-logs-resource';
+import { permissionsResource } from '@/features/system/presentation/permissions-resource';
+import { rolesResource } from '@/features/system/presentation/roles-resource';
 import { assignmentsResource } from '@/features/executive-board/presentation/assignments-resource';
 import { positionsResource } from '@/features/executive-board/presentation/positions-resource';
 import { leaderLevelsResource } from '@/features/leaders/presentation/leader-levels-resource';
@@ -56,6 +61,11 @@ registerResources(
   crossDeaneryResource,
   certificatesResource,
   certificateApprovalsResource,
+  accountsResource,
+  rolesResource,
+  permissionsResource,
+  accountRolesResource,
+  auditLogsResource,
 );
 
 export function findResourceDefinition(id: string | undefined): ResourceDefinition | undefined {

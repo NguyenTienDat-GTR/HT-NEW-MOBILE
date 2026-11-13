@@ -15,6 +15,7 @@ import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import {
   BuildingsIcon,
   CertificateIcon,
+  GearSixIcon,
   GraduationCapIcon,
   ChartLineUpIcon,
   UsersThreeIcon,
@@ -62,6 +63,7 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
     'executive-board': ShieldCheckIcon,
     training: GraduationCapIcon,
     certificates: CertificateIcon,
+    system: GearSixIcon,
   };
   const icon = (Icon: typeof KeyIcon) => (
     <Icon size={iconSize.md} color={colors.primary} weight="bold" />

@@ -8,6 +8,8 @@ import { readEnv, type AppEnv } from '@/core/config/env';
 import { AuthenticatedHttpClient } from '@/core/network/authenticated-http-client';
 import { FetchHttpClient } from '@/core/network/fetch-http-client';
 import type { HttpClient } from '@/core/network/http-client';
+import { HttpResourceGateway } from '@/core/resource/http-resource-gateway';
+import type { ResourceGateway } from '@/core/resource/resource-gateway';
 import { ExpoPushGateway } from '@/core/push/expo-push-gateway';
 import { NoopPushGateway, type PushGateway } from '@/core/push/push-gateway';
 import { NoopRealtimeClient, type RealtimeClient } from '@/core/realtime/realtime-client';
@@ -86,6 +88,8 @@ export interface AppContainer {
   notifications: NotificationDependencies;
   account: AccountDependencies;
   analytics: AnalyticsDependencies;
+  /** Cổng CRUD dùng chung cho các màn danh sách/chi tiết/form chạy theo cấu hình. */
+  resource: ResourceGateway;
 }
 
 /**
@@ -175,5 +179,6 @@ export function createAppContainer(env: AppEnv = readEnv()): AppContainer {
       getWorkQueue: new GetWorkQueue(analyticsRepository),
       getRecords: new GetAnalyticsRecords(analyticsRepository),
     },
+    resource: new HttpResourceGateway(http),
   };
 }

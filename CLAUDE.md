@@ -27,6 +27,10 @@ src/app          route Expo Router, chỉ là lớp mỏng gọi màn hình củ
 - Tính năng không import `data`/`presentation` của tính năng khác. Thêm tính năng = thêm thư mục + Provider trong `composition`.
 - Mỗi use case một việc (SRP); thêm màn danh sách mới bằng cấu hình, không sửa màn chung (OCP).
 
+## Màn danh sách / chi tiết / form theo cấu hình
+
+Các màn CRUD (tổ chức, huynh trưởng, ban điều hành…) chạy bằng `ResourceDefinition` (`src/shared/resource/types.ts`): thêm màn = viết một định nghĩa trong `features/<tên>/presentation`, đăng ký ở `src/composition/resource-registry.ts` và thêm một dòng ở `src/composition/menu-entries.ts`; các màn chung (`ResourceListScreen`, `ResourceDetailScreen`, `ResourceFormScreen`) không phải sửa. Màn cần giao diện riêng dùng `renderList` / `renderDetail`. Quy tắc quyền hiển thị nút nằm ở `domain/*-permissions.ts`, theo đúng web.
+
 ## Giao diện
 
 Theo skill `ui-ux-pro-max`; design system ở `design-system/c-lead/MASTER.md` (đã ghi đè màu/chữ bằng token FE). Chỉ dùng `useTheme()`, không viết mã màu trong component. Vùng chạm ≥ 48dp, ô nhập cao 48, nút chính cao 52, không bảng cuộn ngang (danh sách là thẻ, trường phụ ở màn chi tiết), biểu đồ tính kích thước từ bề rộng thật. Hiện chỉ có bản sáng vì FE chưa có dark mode.

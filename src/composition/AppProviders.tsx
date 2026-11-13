@@ -7,6 +7,7 @@ import { AnalyticsProvider } from '@/features/analytics/presentation/analytics-c
 import { AuthProvider } from '@/features/auth/presentation/auth-context';
 import { useAuthStore } from '@/features/auth/presentation/auth-store';
 import { NotificationProvider } from '@/features/notifications/presentation/notifications-context';
+import { ResourceProvider } from '@/shared/resource/resource-context';
 import { RealtimeProvider } from '@/shared/realtime/realtime-context';
 import { ThemeProvider } from '@/shared/theme/theme-provider';
 
@@ -43,7 +44,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <AuthProvider deps={container.auth}>
               <NotificationProvider deps={container.notifications}>
                 <AccountProvider deps={container.account}>
-                  <AnalyticsProvider deps={container.analytics}>{children}</AnalyticsProvider>
+                  <AnalyticsProvider deps={container.analytics}>
+                    <ResourceProvider gateway={container.resource}>{children}</ResourceProvider>
+                  </AnalyticsProvider>
                 </AccountProvider>
               </NotificationProvider>
             </AuthProvider>

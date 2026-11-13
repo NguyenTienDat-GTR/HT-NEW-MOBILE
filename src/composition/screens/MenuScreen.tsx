@@ -13,7 +13,9 @@ import { Badge } from '@/shared/ui/Badge';
 import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import {
+  BuildingsIcon,
   ChartLineUpIcon,
+  UsersThreeIcon,
   KeyIcon,
   LockKeyIcon,
   ShieldCheckIcon,
@@ -22,10 +24,11 @@ import {
 } from '@/shared/ui/icons';
 import { ListRow } from '@/shared/ui/ListRow';
 import { Screen } from '@/shared/ui/Screen';
+import { visibleMenuSections, type MenuGroupId } from '../menu-entries';
 import { Text } from '@/shared/ui/Text';
 
 export interface MenuScreenProps {
-  onNavigate: (path: '/profile' | '/my-permissions' | '/account-password' | '/analytics') => void;
+  onNavigate: (path: string) => void;
 }
 
 /**
@@ -44,6 +47,12 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
   // Như web: xem phân tích chi tiết khi có quyền analytics.dashboard.read.* và không phải quản trị hệ thống.
   const canSeeAnalytics =
     !isSuperAdmin(user) && hasPermissionPrefix(user, 'analytics.dashboard.read.');
+  const sections = visibleMenuSections(user);
+  const groupIcon: Record<MenuGroupId, typeof KeyIcon> = {
+    organization: BuildingsIcon,
+    leaders: UsersThreeIcon,
+    'executive-board': ShieldCheckIcon,
+  };
   const icon = (Icon: typeof KeyIcon) => (
     <Icon size={iconSize.md} color={colors.primary} weight="bold" />
   );
@@ -74,6 +83,25 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
           </View>
         </View>
       </Card>
+
+      {sections.map((section) => (
+        <View key={section.group} style={{ gap: spacing.xs }}>
+          <Text variant="heading" accessibilityRole="header">
+            {section.label}
+          </Text>
+          <Card style={{ padding: 0, overflow: 'hidden' }}>
+            {section.entries.map((entry) => (
+              <ListRow
+                key={entry.resource}
+                label={entry.label}
+                hint={entry.hint}
+                icon={icon(groupIcon[section.group])}
+                onPress={() => onNavigate(`/res/${entry.resource}`)}
+              />
+            ))}
+          </Card>
+        </View>
+      ))}
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         {canSeeAnalytics ? (

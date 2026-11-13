@@ -8,7 +8,7 @@ import { StepIndicator } from '@/shared/ui/StepIndicator';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
-import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
+import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter';
 import { newPasswordSchema, otpSchema, usernameSchema } from '../forms';
 import { FORGOT_STEPS, useForgotPasswordFlow } from '../use-forgot-password-flow';
 

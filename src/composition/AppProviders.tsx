@@ -2,8 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AccountProvider } from '@/features/account/presentation/account-context';
 import { AuthProvider } from '@/features/auth/presentation/auth-context';
 import { useAuthStore } from '@/features/auth/presentation/auth-store';
+import { NotificationProvider } from '@/features/notifications/presentation/notifications-context';
+import { RealtimeProvider } from '@/shared/realtime/realtime-context';
 import { ThemeProvider } from '@/shared/theme/theme-provider';
 
 import { createAppContainer, type AppContainer } from './container';
@@ -35,7 +38,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <SafeAreaProvider>
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
-          <AuthProvider deps={container.auth}>{children}</AuthProvider>
+          <RealtimeProvider client={container.realtime}>
+            <AuthProvider deps={container.auth}>
+              <NotificationProvider deps={container.notifications}>
+                <AccountProvider deps={container.account}>{children}</AccountProvider>
+              </NotificationProvider>
+            </AuthProvider>
+          </RealtimeProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </SafeAreaProvider>

@@ -38,10 +38,23 @@ export class RefreshCurrentUser {
   }
 }
 
-export class Logout {
-  constructor(private readonly repository: AuthRepository) {}
+/** Việc cần làm trước khi hủy phiên (token còn hiệu lực), vd. hủy đăng ký nhận push. Lỗi của hook bị bỏ qua. */
+export type BeforeLogoutHook = () => Promise<void>;
 
-  execute(): Promise<void> {
-    return this.repository.logout();
+export class Logout {
+  constructor(
+    private readonly repository: AuthRepository,
+    private readonly beforeLogout: readonly BeforeLogoutHook[] = [],
+  ) {}
+
+  async execute(): Promise<void> {
+    for (const hook of this.beforeLogout) {
+      try {
+        await hook();
+      } catch {
+        // Không để việc dọn dẹp phụ chặn đăng xuất.
+      }
+    }
+    await this.repository.logout();
   }
 }

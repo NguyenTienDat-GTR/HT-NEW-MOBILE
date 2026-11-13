@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 
-import { useTheme } from '@/shared/theme/theme-provider';
-import { CheckIcon } from '@/shared/ui/icons';
-import { Text } from '@/shared/ui/Text';
+import { useTheme } from '../theme/theme-provider';
+import { CheckIcon } from './icons';
+import { Text } from './Text';
 
-import { passwordStrength, strongPasswordHints } from '../../domain/password-rules';
+import { passwordStrength, strongPasswordHints } from '@/core/domain/password-rules';
 
 /** Gợi ý mật khẩu mạnh (không bắt buộc; BE chỉ yêu cầu 8–72 ký tự). Trạng thái luôn có chữ, không chỉ màu. */
 export function PasswordStrengthMeter({ value }: { value: string }) {

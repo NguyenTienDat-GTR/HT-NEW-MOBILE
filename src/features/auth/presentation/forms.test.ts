@@ -1,4 +1,4 @@
-import { passwordStrength } from '../domain/password-rules';
+import { passwordStrength } from '@/core/domain/password-rules';
 
 import { changePasswordSchema, loginSchema, otpSchema } from './forms';
 

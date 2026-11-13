@@ -23,7 +23,8 @@ function parseFilters(raw: string | undefined): Record<string, string> | undefin
 }
 
 export default function ResourceListRoute() {
-  const { resource, filters } = useLocalSearchParams<{ resource: string; filters?: string }>();
+  const params = useLocalSearchParams<Record<string, string | undefined>>();
+  const { resource, filters } = params;
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const def = findResourceDefinition(resource);
@@ -33,7 +34,7 @@ export default function ResourceListRoute() {
     <>
       <Stack.Screen options={{ title: def.title }} />
       {def.renderList ? (
-        def.renderList({ def, subject: user })
+        def.renderList({ def, subject: user, params })
       ) : (
         <ResourceListScreen
           def={def}

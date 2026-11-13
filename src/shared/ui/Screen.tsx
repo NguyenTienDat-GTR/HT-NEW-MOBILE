@@ -1,6 +1,7 @@
 import {
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   View,
@@ -18,19 +19,32 @@ export interface ScreenProps {
   /** false = không cuộn (danh sách tự có FlatList). */
   scroll?: boolean;
   contentStyle?: StyleProp<ViewStyle>;
+  /** Kéo xuống để tải lại (chỉ khi scroll = true). */
+  onRefresh?: () => void;
+  refreshing?: boolean;
 }
 
 /**
  * Khung màn hình: vùng an toàn (tai thỏ, thanh điều hướng), tránh bàn phím, lề 16, chừa chỗ cho thanh nút dưới
  * để nội dung không bị che.
  */
-export function Screen({ children, footer, scroll = true, contentStyle }: ScreenProps) {
+export function Screen({
+  children,
+  footer,
+  scroll = true,
+  contentStyle,
+  onRefresh,
+  refreshing = false,
+}: ScreenProps) {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
 
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"
+      refreshControl={
+        onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
+      }
       contentContainerStyle={[
         styles.content,
         { padding: spacing.md, paddingTop: spacing.md + insets.top, gap: spacing.md },

@@ -20,7 +20,7 @@ function tabIcon(Icon: IconComponent, color: unknown, focused: boolean) {
 }
 
 /**
- * Thanh tab dưới (tối đa 5 mục). Hiện có: Trang chủ, Thông báo (kèm số chưa đọc), Menu.
+ * Thanh tab dưới (tối đa 5 mục). Hiện có: Tổng quan, Thông báo (kèm số chưa đọc), Menu.
  * Các đợt sau thêm Khóa huấn luyện và Quét QR theo quyền.
  */
 export default function TabsLayout() {
@@ -42,7 +42,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Trang chủ',
+          title: 'Tổng quan',
           tabBarIcon: ({ color, focused }) => tabIcon(HouseIcon, color, focused),
         }}
       />

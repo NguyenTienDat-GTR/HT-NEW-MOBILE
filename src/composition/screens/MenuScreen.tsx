@@ -2,6 +2,7 @@ import Constants from 'expo-constants';
 import { useState } from 'react';
 import { Linking, View } from 'react-native';
 
+import { hasPermissionPrefix, isSuperAdmin } from '@/core/domain/permissions';
 import { useAuthDependencies } from '@/features/auth/presentation/auth-context';
 import { useAuthStore } from '@/features/auth/presentation/auth-store';
 import { useLogout } from '@/features/auth/presentation/use-session';
@@ -12,6 +13,7 @@ import { Badge } from '@/shared/ui/Badge';
 import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import {
+  ChartLineUpIcon,
   KeyIcon,
   LockKeyIcon,
   ShieldCheckIcon,
@@ -23,7 +25,7 @@ import { Screen } from '@/shared/ui/Screen';
 import { Text } from '@/shared/ui/Text';
 
 export interface MenuScreenProps {
-  onNavigate: (path: '/profile' | '/my-permissions' | '/account-password') => void;
+  onNavigate: (path: '/profile' | '/my-permissions' | '/account-password' | '/analytics') => void;
 }
 
 /**
@@ -39,6 +41,9 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
   const [loggingOut, setLoggingOut] = useState(false);
 
   const name = displayName(undefined, user?.username ?? '');
+  // Như web: xem phân tích chi tiết khi có quyền analytics.dashboard.read.* và không phải quản trị hệ thống.
+  const canSeeAnalytics =
+    !isSuperAdmin(user) && hasPermissionPrefix(user, 'analytics.dashboard.read.');
   const icon = (Icon: typeof KeyIcon) => (
     <Icon size={iconSize.md} color={colors.primary} weight="bold" />
   );
@@ -71,6 +76,14 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
       </Card>
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
+        {canSeeAnalytics ? (
+          <ListRow
+            label="Phân tích dữ liệu"
+            hint="Khóa huấn luyện, chứng nhận, huynh trưởng, tổ chức"
+            icon={icon(ChartLineUpIcon)}
+            onPress={() => onNavigate('/analytics')}
+          />
+        ) : null}
         <ListRow
           label="Hồ sơ cá nhân"
           icon={icon(UserCircleIcon)}

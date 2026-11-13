@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { errorMessage } from '@/core/domain/app-error';
+import { useCountdown } from '@/shared/hooks/use-countdown';
 
 import { useAuthDependencies } from './auth-context';
 
@@ -96,27 +97,4 @@ export function useForgotPasswordFlow() {
       setState(initial);
     },
   };
-}
-
-/** Đếm ngược số giây còn lại tới mốc `targetMs` (0 khi đã qua). */
-function useCountdown(targetMs: number): number {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (targetMs <= 0) return;
-    const tick = () => {
-      const current = Date.now();
-      setNow(current);
-      if (current >= targetMs) clearInterval(timer);
-    };
-    // Cập nhật ngay một lần (mốc mới) rồi mỗi giây; tự dừng khi hết giờ.
-    const immediate = setTimeout(tick, 0);
-    const timer = setInterval(tick, 1000);
-    return () => {
-      clearTimeout(immediate);
-      clearInterval(timer);
-    };
-  }, [targetMs]);
-
-  return Math.max(0, Math.ceil((targetMs - now) / 1000));
 }

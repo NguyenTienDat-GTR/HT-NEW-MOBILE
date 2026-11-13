@@ -11,7 +11,7 @@ import { TextField } from '@/shared/ui/TextField';
 
 import { useAuthDependencies } from '../auth-context';
 import { useAuthStore } from '../auth-store';
-import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter';
+import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter';
 import { changePasswordSchema, type ChangePasswordFormValues } from '../forms';
 import { useLogout } from '../use-session';
 

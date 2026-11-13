@@ -13,6 +13,7 @@ import type {
   GetCaptchaConfig,
   Login,
   Logout,
+  RefreshCurrentUser,
   RestoreSession,
 } from '../domain/usecases/session-usecases';
 
@@ -22,6 +23,7 @@ export interface AuthDependencies {
   login: Login;
   logout: Logout;
   restoreSession: RestoreSession;
+  refreshCurrentUser: RefreshCurrentUser;
   changeTemporaryPassword: ChangeTemporaryPassword;
   requestPasswordResetOtp: RequestPasswordResetOtp;
   verifyPasswordResetOtp: VerifyPasswordResetOtp;

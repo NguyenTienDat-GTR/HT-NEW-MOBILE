@@ -1,7 +1,7 @@
 import { AppError } from '@/core/domain/app-error';
 
 import type { OtpChallenge } from '../entities';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../password-rules';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@/core/domain/password-rules';
 import type { AuthRepository } from '../repositories/auth-repository';
 
 function assertValidNewPassword(newPassword: string, confirmPassword?: string): void {

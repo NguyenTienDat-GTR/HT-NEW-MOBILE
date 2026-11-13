@@ -1,6 +1,7 @@
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useReduceMotion } from '../hooks/use-reduce-motion';
 import { useTheme } from '../theme/theme-provider';
 
 import { XIcon } from './icons';
@@ -22,11 +23,12 @@ export interface BottomSheetProps {
 export function BottomSheet({ visible, title, onClose, children, footer }: BottomSheetProps) {
   const { colors, radius, spacing, iconSize } = useTheme();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReduceMotion();
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType={reduceMotion ? 'none' : 'slide'}
       onRequestClose={onClose}
       statusBarTranslucent
     >

@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AccountProvider } from '@/features/account/presentation/account-context';
+import { AnalyticsProvider } from '@/features/analytics/presentation/analytics-context';
 import { AuthProvider } from '@/features/auth/presentation/auth-context';
 import { useAuthStore } from '@/features/auth/presentation/auth-store';
 import { NotificationProvider } from '@/features/notifications/presentation/notifications-context';
@@ -41,7 +42,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <RealtimeProvider client={container.realtime}>
             <AuthProvider deps={container.auth}>
               <NotificationProvider deps={container.notifications}>
-                <AccountProvider deps={container.account}>{children}</AccountProvider>
+                <AccountProvider deps={container.account}>
+                  <AnalyticsProvider deps={container.analytics}>{children}</AnalyticsProvider>
+                </AccountProvider>
               </NotificationProvider>
             </AuthProvider>
           </RealtimeProvider>

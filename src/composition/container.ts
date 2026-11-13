@@ -27,6 +27,17 @@ import {
   VerifyPasswordChangeOtp,
 } from '@/features/account/domain/usecases';
 import type { AccountDependencies } from '@/features/account/presentation/account-context';
+import { AnalyticsRemoteDataSource } from '@/features/analytics/data/analytics-remote-data-source';
+import { AnalyticsRepositoryImpl } from '@/features/analytics/data/analytics-repository-impl';
+import {
+  GetAnalyticsRecords,
+  GetAnalyticsReport,
+  GetAnalyticsScopes,
+  GetFilterOptions,
+  GetOpenCourses,
+  GetWorkQueue,
+} from '@/features/analytics/domain/usecases';
+import type { AnalyticsDependencies } from '@/features/analytics/presentation/analytics-context';
 import { AuthRemoteDataSource } from '@/features/auth/data/auth-remote-data-source';
 import { AuthRepositoryImpl } from '@/features/auth/data/auth-repository-impl';
 import { MobileTokenRefresher } from '@/features/auth/data/mobile-token-refresher';
@@ -74,6 +85,7 @@ export interface AppContainer {
   auth: AuthDependencies;
   notifications: NotificationDependencies;
   account: AccountDependencies;
+  analytics: AnalyticsDependencies;
 }
 
 /**
@@ -116,6 +128,9 @@ export function createAppContainer(env: AppEnv = readEnv()): AppContainer {
   // Tài khoản
   const accountRepository = new AccountRepositoryImpl(new AccountRemoteDataSource(http));
 
+  // Phân tích
+  const analyticsRepository = new AnalyticsRepositoryImpl(new AnalyticsRemoteDataSource(http));
+
   return {
     env,
     http,
@@ -151,6 +166,14 @@ export function createAppContainer(env: AppEnv = readEnv()): AppContainer {
       verifyPasswordChangeOtp: new VerifyPasswordChangeOtp(accountRepository),
       changePasswordWithToken: new ChangePasswordWithToken(accountRepository),
       listMyPermissions: new ListMyPermissions(accountRepository),
+    },
+    analytics: {
+      getReport: new GetAnalyticsReport(analyticsRepository),
+      getScopes: new GetAnalyticsScopes(analyticsRepository),
+      getFilterOptions: new GetFilterOptions(analyticsRepository),
+      getOpenCourses: new GetOpenCourses(analyticsRepository),
+      getWorkQueue: new GetWorkQueue(analyticsRepository),
+      getRecords: new GetAnalyticsRecords(analyticsRepository),
     },
   };
 }

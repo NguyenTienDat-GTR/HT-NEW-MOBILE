@@ -1,6 +1,11 @@
 import { courseTypesResource } from '@/features/training/presentation/course-types-resource';
 import { coursesResource } from '@/features/training/presentation/courses-resource';
 import {
+  attendanceResource,
+  crossDeaneryResource,
+  teamsResource,
+} from '@/features/training/presentation/course-tools-resources';
+import {
   approvalsResource,
   participantsResource,
   registrationsResource,
@@ -42,6 +47,9 @@ registerResources(
   approvalsResource,
   participantsResource,
   scoresResource,
+  teamsResource,
+  attendanceResource,
+  crossDeaneryResource,
 );
 
 export function findResourceDefinition(id: string | undefined): ResourceDefinition | undefined {

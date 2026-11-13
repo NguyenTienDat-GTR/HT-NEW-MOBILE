@@ -20,7 +20,7 @@ export interface CourseOwner {
 }
 
 export type CourseAction =
-  'update' | 'toggle' | 'finish' | 'lockScore' | 'approve' | 'score' | 'read';
+  'update' | 'toggle' | 'finish' | 'lockScore' | 'approve' | 'score' | 'read' | 'scan';
 
 const ACTION_PERMISSION: Record<CourseAction, string> = {
   update: 'training.course.update',
@@ -30,6 +30,7 @@ const ACTION_PERMISSION: Record<CourseAction, string> = {
   approve: 'training.participation.approve',
   score: 'training.participation.score',
   read: 'training.participation.read',
+  scan: 'training.attendance.scan',
 };
 
 /** Khóa do giáo hạt quản lý (theo loại khóa; khóa quá khứ không có loại thì theo đơn vị sở hữu). */

@@ -28,6 +28,7 @@ export {
   HouseIcon,
   InfoIcon,
   KeyIcon,
+  QrCodeIcon,
   ListIcon,
   LockKeyIcon,
   MapPinIcon,

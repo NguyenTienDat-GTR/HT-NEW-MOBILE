@@ -222,6 +222,20 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
             onPress={() => router.push(goto('/res/participants', code))}
           />
         ) : null}
+        {canSeeParticipants ? (
+          <>
+            <Button
+              label="Chia đội"
+              variant="outline"
+              onPress={() => router.push(`/res/teams?course=${encoded}` as Href)}
+            />
+            <Button
+              label="Điểm danh và email mời"
+              variant="outline"
+              onPress={() => router.push(`/res/attendance?course=${encoded}` as Href)}
+            />
+          </>
+        ) : null}
         {canActOnCourse(user, course, 'score') ? (
           <Button
             label="Chấm điểm"

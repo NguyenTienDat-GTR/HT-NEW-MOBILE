@@ -32,7 +32,14 @@
       "expo-image",
       "expo-splash-screen",
       "expo-notifications",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép C-LEAD dùng camera để quét mã QR điểm danh.",
+          "recordAudioAndroid": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

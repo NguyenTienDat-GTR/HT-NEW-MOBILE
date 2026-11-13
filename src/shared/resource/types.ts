@@ -201,6 +201,8 @@ export interface ResourceDefinition {
   renderList?: (context: {
     def: ResourceDefinition;
     subject: PermissionSubject | null;
+    /** Tham số đường dẫn (vd. `course` để mở màn riêng của một khóa). */
+    params: Record<string, string | undefined>;
   }) => ReactNode;
   /** Thay cả màn chi tiết chung bằng màn riêng (vd. huynh trưởng có nhiều tab). */
   renderDetail?: (context: {

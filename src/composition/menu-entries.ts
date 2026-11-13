@@ -107,6 +107,17 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
     ],
   },
   {
+    resource: 'cross-deanery',
+    group: 'training',
+    label: 'Gửi liên giáo hạt',
+    moduleName: 'training.cross-deanery',
+    permissionPrefixes: [
+      'training.participation.submit.parish',
+      'training.participation.submit.deanery',
+      'training.participation.cross_approve.',
+    ],
+  },
+  {
     resource: 'participants',
     group: 'training',
     label: 'Danh sách tham dự',

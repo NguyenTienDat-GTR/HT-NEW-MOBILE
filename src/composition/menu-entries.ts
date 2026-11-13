@@ -1,7 +1,7 @@
 import { canReadRoute, type PermissionSubject } from '@/core/domain/permissions';
 
 export type MenuGroupId =
-  'organization' | 'leaders' | 'executive-board' | 'training' | 'certificates';
+  'organization' | 'leaders' | 'executive-board' | 'training' | 'certificates' | 'system';
 
 export interface MenuEntry {
   /** Trùng id tài nguyên trong resource-registry; đường dẫn là /res/<id>. */
@@ -21,6 +21,7 @@ export const MENU_GROUP_LABELS: Record<MenuGroupId, string> = {
   'executive-board': 'Ban điều hành',
   training: 'Huấn luyện',
   certificates: 'Chứng nhận',
+  system: 'Hệ thống',
 };
 
 /** Thứ tự và điều kiện hiển thị theo sidebar của web (FE/src/config/routes/groups). */
@@ -154,6 +155,41 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
     label: 'Duyệt chứng nhận',
     moduleName: 'certificate.approval',
     permissionPrefixes: ['training.certificate.approve.'],
+  },
+  {
+    resource: 'accounts',
+    group: 'system',
+    label: 'Tài khoản',
+    moduleName: 'system.account',
+    permissionPrefixes: ['system.account.manage.'],
+  },
+  {
+    resource: 'roles',
+    group: 'system',
+    label: 'Vai trò',
+    moduleName: 'system.role',
+    permissionPrefixes: ['system.role.read.'],
+  },
+  {
+    resource: 'permissions',
+    group: 'system',
+    label: 'Quyền hạn',
+    moduleName: 'system.permission',
+    permissionPrefixes: ['system.permission.read.', 'system.permission.manage.'],
+  },
+  {
+    resource: 'account-roles',
+    group: 'system',
+    label: 'Gán vai trò',
+    moduleName: 'system.account-role',
+    permissionPrefixes: ['system.account_role.assign.'],
+  },
+  {
+    resource: 'audit-logs',
+    group: 'system',
+    label: 'Nhật ký hệ thống',
+    moduleName: 'system.audit-log',
+    permissionPrefixes: ['system.audit_log.read.'],
   },
 ];
 

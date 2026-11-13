@@ -23,6 +23,7 @@ export {
   EyeIcon,
   EyeSlashIcon,
   FunnelSimpleIcon,
+  GearSixIcon,
   GraduationCapIcon,
   HourglassIcon,
   HouseIcon,

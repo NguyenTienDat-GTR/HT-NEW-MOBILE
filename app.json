@@ -9,7 +9,10 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "vn.io.clead.app"
+      "bundleIdentifier": "vn.io.clead.app",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "vn.io.clead.app",
@@ -31,7 +34,12 @@
       "expo-font",
       "expo-image",
       "expo-splash-screen",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "color": "#1e40af"
+        }
+      ],
       "@react-native-community/datetimepicker",
       [
         "expo-camera",
@@ -44,6 +52,7 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "description": "Ứng dụng di động quản lý huynh trưởng C-LEAD."
   }
 }

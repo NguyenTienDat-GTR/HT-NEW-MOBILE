@@ -53,4 +53,9 @@ Xem thử giao diện trên trình duyệt: `npx expo start --web` (chỉ để 
 
 - App gọi đúng các endpoint web đang dùng (`/api/...`, Bearer) qua `https://clead.io.vn/backend/api`.
 - Riêng đăng nhập/làm mới/đăng xuất dùng `/api/mobile/auth/{login,refresh,logout}` (token trong thân JSON, không cookie). Hợp đồng và PR BE: xem kế hoạch; chưa có trên production cho tới khi PR BE được merge.
-- Push: đăng ký thiết bị `/api/mobile/push/devices` (đợt 2).
+- Push: đăng ký thiết bị `/api/mobile/push/devices`, nhận qua Expo Push Service; cũng chưa có ở BE (PR `feat/mobile-push`).
+- Danh sách endpoint theo từng nhóm màn hình: xem `features/*/presentation/*-resource.ts(x)` và các màn riêng; quy tắc quyền/hiện nút ở `features/*/domain/*-permissions.ts`.
+
+## Phát hành
+
+Cấu hình EAS ở `eas.json` (profile development/preview/production, biến `EXPO_PUBLIC_*` theo profile). Các bước cần tài khoản của chủ dự án (EAS init, Firebase, Apple, Play Console) ghi ở `README.md`. Trang hướng dẫn người dùng ở `huong-dan-deploy` chỉ cập nhật khi app được phát hành.

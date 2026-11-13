@@ -42,7 +42,8 @@ export function Heatmap({ columns, columnLabel, rows, hue, onSelect }: HeatmapPr
   const first = Math.min(start, Math.max(0, columns.length - layout.visibleColumns));
   const visible = columns.slice(first, first + layout.visibleColumns);
   const max = Math.max(1, ...rows.flatMap((row) => row.cells));
-  const showNumbers = layout.cellWidth >= 26;
+  // Số trong ô dùng cỡ 12 (không nhỏ hơn): chỉ hiện khi ô đủ rộng cho số có dấu phân cách, còn lại xem qua nút chạm.
+  const showNumbers = layout.cellWidth >= 34;
 
   return (
     <View onLayout={onLayout} style={styles.box}>
@@ -78,7 +79,7 @@ export function Heatmap({ columns, columnLabel, rows, hue, onSelect }: HeatmapPr
             variant="secondary"
             tone="muted"
             align="center"
-            style={{ width: layout.cellWidth, fontSize: 10, lineHeight: 14 }}
+            style={{ width: layout.cellWidth, fontSize: 12, lineHeight: 16 }}
             numberOfLines={1}
           >
             {layout.cellWidth < 40 ? columnLabel(column).split('/')[0] : columnLabel(column)}
@@ -113,8 +114,8 @@ export function Heatmap({ columns, columnLabel, rows, hue, onSelect }: HeatmapPr
                     <Text
                       variant="secondary"
                       style={{
-                        fontSize: 10,
-                        lineHeight: 14,
+                        fontSize: 12,
+                        lineHeight: 16,
                         color: ratio > 0.5 ? colors.onSolid : colors.foreground,
                       }}
                     >

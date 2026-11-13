@@ -33,9 +33,15 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Firebase / push credentials và test
+google-services.json
+GoogleService-Info.plist
+coverage/
+
 # typescript
 *.tsbuildinfo
 
 # generated native folders
 /ios
 /android
+.claude/launch.json

@@ -1,27 +1,11 @@
 import { formatDateTime } from '@/core/domain/date-format';
-import type { ResourceGateway, ResourceRow } from '@/core/resource/resource-gateway';
+import type { ResourceRow } from '@/core/resource/resource-gateway';
 import { flag, joinParts, text } from '@/shared/resource/row';
-import type { ListFilterDef, ResourceDefinition } from '@/shared/resource/types';
+import type { ResourceDefinition } from '@/shared/resource/types';
 
 import { taxonomyLabel } from '../domain/system-labels';
 
-interface TaxonomyOption {
-  code: string;
-  name: string;
-}
-type Taxonomy = Partial<Record<'modules' | 'resources' | 'actions' | 'scopes', TaxonomyOption[]>>;
-
-/** Danh mục phân hệ / đối tượng / thao tác / phạm vi để lọc quyền (một lần gọi cho cả bốn bộ lọc). */
-async function loadTaxonomy(gateway: ResourceGateway, key: keyof Taxonomy) {
-  const data = await gateway.call<Taxonomy>('GET', '/system/permissions/taxonomy');
-  return (data[key] ?? []).map((item) => ({ value: item.code, label: item.name || item.code }));
-}
-
-const taxonomyFilter = (key: string, label: string, collection: keyof Taxonomy): ListFilterDef => ({
-  key,
-  label,
-  options: { load: ({ gateway }) => loadTaxonomy(gateway, collection) },
-});
+import { taxonomyFilters } from './taxonomy-filters';
 
 const badges = (row: ResourceRow) => [
   flag(row, 'status')
@@ -45,12 +29,7 @@ export const permissionsResource: ResourceDefinition = {
     'scope.scopeCode',
   ],
   searchPlaceholder: 'Mã hoặc tên quyền',
-  filters: [
-    taxonomyFilter('module.moduleCode', 'Phân hệ', 'modules'),
-    taxonomyFilter('resource.resourceCode', 'Đối tượng', 'resources'),
-    taxonomyFilter('action.actionCode', 'Thao tác', 'actions'),
-    taxonomyFilter('scope.scopeCode', 'Phạm vi', 'scopes'),
-  ],
+  filters: taxonomyFilters(''),
   card: (row) => ({
     title: text(row, 'permissionName') || text(row, 'permissionCode'),
     subtitle: text(row, 'permissionCode'),

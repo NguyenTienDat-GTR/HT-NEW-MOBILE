@@ -185,6 +185,24 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
     permissionPrefixes: ['system.account_role.assign.'],
   },
   {
+    resource: 'role-permissions',
+    group: 'system',
+    label: 'Phân quyền vai trò',
+    moduleName: 'system.role-permission',
+    permissionPrefixes: [
+      'system.role_permission.read.',
+      'system.role_permission.assign.',
+      'system.role_permission.revoke.',
+    ],
+  },
+  {
+    resource: 'account-permissions',
+    group: 'system',
+    label: 'Phân quyền tài khoản',
+    moduleName: 'system.account-permission',
+    permissionPrefixes: ['system.account_permission.manage.'],
+  },
+  {
     resource: 'audit-logs',
     group: 'system',
     label: 'Nhật ký hệ thống',

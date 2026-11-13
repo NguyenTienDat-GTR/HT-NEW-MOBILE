@@ -65,4 +65,12 @@ describe('visibleMenuSections', () => {
       labels(user(['system.account.manage.all', 'system.role.read.all'], ['SUPER_ADMIN'])),
     ).toEqual(['Tài khoản', 'Vai trò']);
   });
+
+  it('phân quyền: vai trò cần một trong ba quyền xem/phân/thu hồi, tài khoản cần quyền quản lý', () => {
+    expect(labels(user(['system.role_permission.revoke.deanery']))).toEqual(['Phân quyền vai trò']);
+    expect(labels(user(['system.role_permission.read.parish']))).toEqual(['Phân quyền vai trò']);
+    expect(labels(user(['system.account_permission.manage.diocese']))).toEqual([
+      'Phân quyền tài khoản',
+    ]);
+  });
 });

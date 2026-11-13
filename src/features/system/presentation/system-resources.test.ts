@@ -1,8 +1,10 @@
 import { stringifyRoleChoice } from '../domain/account-create';
+import { stringifySelection } from '../domain/permission-grants';
 
 import { accountRolesResource } from './account-roles-resource';
 import { accountsResource } from './accounts-resource';
 import { auditLogsResource } from './audit-logs-resource';
+import { accountPermissionsResource, rolePermissionsResource } from './permission-grants-resources';
 import { permissionsResource } from './permissions-resource';
 import { rolesResource } from './roles-resource';
 
@@ -128,5 +130,64 @@ describe('quyền hạn và nhật ký chỉ để xem', () => {
     expect(card.title).toBe('Thu hồi · Chứng nhận');
     expect(card.subtitle).toBe('GPPC-HTI-2027-1');
     expect(card.badges?.map((badge) => badge.label)).toEqual(['Thu hồi', 'Không đủ quyền']);
+  });
+});
+
+describe('phân quyền', () => {
+  const rolePerm = rolePermissionsResource.form!;
+  const accountPerm = accountPermissionsResource.form!;
+  const picked = stringifySelection(['a', 'b']);
+
+  it('vai trò: tạo gửi nhiều quyền một lần, sửa chỉ gửi hạn', () => {
+    expect(
+      rolePerm.toBody(
+        { roleCode: 'HT_XU', permissions: picked, expiresAt: '' },
+        'create',
+        null,
+        null,
+      ),
+    ).toEqual({ roleCode: 'HT_XU', permissionCodes: ['a', 'b'], expiresAt: undefined });
+    expect(rolePerm.toBody({ expiresAt: '2027-01-01' }, 'edit', { id: '1' }, null)).toEqual({
+      expiresAt: '2027-01-01T23:59:59+07:00',
+    });
+  });
+
+  it('tài khoản: tạo cần lý do; sửa gửi lý do và hạn', () => {
+    expect(
+      accountPerm.toBody(
+        { username: 'ht.an', permissions: picked, reason: ' Hỗ trợ ', expiresAt: '' },
+        'create',
+        null,
+        null,
+      ),
+    ).toEqual({
+      username: 'ht.an',
+      permissionCodes: ['a', 'b'],
+      reason: 'Hỗ trợ',
+      expiresAt: undefined,
+    });
+    const reason = accountPerm.fields.find((field) => field.name === 'reason')!;
+    expect(reason.required).toBe(true);
+    expect(accountPerm.toBody({ reason: 'x', expiresAt: '' }, 'edit', { id: '1' }, null)).toEqual({
+      reason: 'x',
+      expiresAt: undefined,
+    });
+  });
+
+  it('tạo bắt buộc chọn ít nhất một quyền; sửa không hiện ô chọn quyền', () => {
+    const field = rolePerm.fields.find((item) => item.name === 'permissions')!;
+    expect(field.validate!('', {}, 'create')).toBe('Chọn ít nhất một quyền');
+    expect(field.validate!(picked, {}, 'create')).toBeNull();
+    expect(field.visible!({}, 'edit')).toBe(false);
+  });
+
+  it('quyền thao tác theo tiền tố quyền; không bật/tắt', () => {
+    const assigner = { roles: [], permissions: ['system.role_permission.assign.deanery'] };
+    expect(rolePermissionsResource.canCreate(assigner)).toBe(true);
+    expect(rolePermissionsResource.canCreate({ roles: [], permissions: [] })).toBe(false);
+    expect(rolePermissionsResource.canToggle(assigner, {})).toBe(false);
+    expect(
+      accountPermissionsResource.canUpdate({ roles: [], permissions: [] }, { validity: 'ACTIVE' }),
+    ).toBe(false);
   });
 });

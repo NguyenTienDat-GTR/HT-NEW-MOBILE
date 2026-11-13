@@ -13,7 +13,7 @@ export interface ResourceListQuery {
   sortBy?: string;
   sortDirection?: 'ASC' | 'DESC';
   /** Bộ lọc theo đường dẫn trường, ví dụ { "parish.deanery.id": "..." }; giá trị rỗng bị bỏ. */
-  filters?: Record<string, string>;
+  filters?: Record<string, string | readonly string[]>;
 }
 
 export type HttpVerb = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';

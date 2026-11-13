@@ -7,10 +7,18 @@ import { Banner } from '@/shared/ui/Banner';
 
 /** Form tạo (không có `id`) hoặc sửa (`?id=`). Lưu xong quay lại màn trước. */
 export default function ResourceFormRoute() {
-  const { resource, id } = useLocalSearchParams<{ resource: string; id?: string }>();
+  const params = useLocalSearchParams<Record<string, string | undefined>>();
+  const { resource, id } = params;
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const def = findResourceDefinition(resource);
+  if (def?.renderForm)
+    return (
+      <>
+        <Stack.Screen options={{ title: def.form?.titleCreate ?? def.singular }} />
+        {def.renderForm({ def, id, params, subject: user, onSaved: () => router.back() })}
+      </>
+    );
   if (!def?.form) return <Banner tone="danger" message="Không tìm thấy màn hình này." />;
 
   return (

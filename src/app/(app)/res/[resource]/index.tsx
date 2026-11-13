@@ -6,8 +6,24 @@ import { rowId } from '@/shared/resource/use-resource';
 import { ResourceListScreen } from '@/shared/resource/ResourceListScreen';
 import { Banner } from '@/shared/ui/Banner';
 
+/** Bộ lọc áp sẵn từ đường dẫn: `?filters={"khóa":"giá trị"}`; chuỗi hỏng thì bỏ qua. */
+function parseFilters(raw: string | undefined): Record<string, string> | undefined {
+  if (!raw) return undefined;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return undefined;
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, string] => typeof entry[1] === 'string',
+      ),
+    );
+  } catch {
+    return undefined;
+  }
+}
+
 export default function ResourceListRoute() {
-  const { resource } = useLocalSearchParams<{ resource: string }>();
+  const { resource, filters } = useLocalSearchParams<{ resource: string; filters?: string }>();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const def = findResourceDefinition(resource);
@@ -25,6 +41,7 @@ export default function ResourceListRoute() {
           onOpen={(row) =>
             router.push(`/res/${def.id}/${encodeURIComponent(rowId(def, row))}` as Href)
           }
+          initialFilters={parseFilters(filters)}
           onCreate={() => router.push(`/res/${def.id}/form` as Href)}
         />
       )}

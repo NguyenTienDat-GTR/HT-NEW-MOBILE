@@ -1,3 +1,11 @@
+import { courseTypesResource } from '@/features/training/presentation/course-types-resource';
+import { coursesResource } from '@/features/training/presentation/courses-resource';
+import {
+  approvalsResource,
+  participantsResource,
+  registrationsResource,
+  scoresResource,
+} from '@/features/training/presentation/participations-resources';
 import { assignmentsResource } from '@/features/executive-board/presentation/assignments-resource';
 import { positionsResource } from '@/features/executive-board/presentation/positions-resource';
 import { leaderLevelsResource } from '@/features/leaders/presentation/leader-levels-resource';
@@ -28,6 +36,12 @@ registerResources(
   leaderLevelsResource,
   positionsResource,
   assignmentsResource,
+  courseTypesResource,
+  coursesResource,
+  registrationsResource,
+  approvalsResource,
+  participantsResource,
+  scoresResource,
 );
 
 export function findResourceDefinition(id: string | undefined): ResourceDefinition | undefined {

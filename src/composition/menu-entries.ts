@@ -1,6 +1,6 @@
 import { canReadRoute, type PermissionSubject } from '@/core/domain/permissions';
 
-export type MenuGroupId = 'organization' | 'leaders' | 'executive-board';
+export type MenuGroupId = 'organization' | 'leaders' | 'executive-board' | 'training';
 
 export interface MenuEntry {
   /** Trùng id tài nguyên trong resource-registry; đường dẫn là /res/<id>. */
@@ -18,6 +18,7 @@ export const MENU_GROUP_LABELS: Record<MenuGroupId, string> = {
   organization: 'Tổ chức',
   leaders: 'Huynh trưởng',
   'executive-board': 'Ban điều hành',
+  training: 'Huấn luyện',
 };
 
 /** Thứ tự và điều kiện hiển thị theo sidebar của web (FE/src/config/routes/groups). */
@@ -72,6 +73,59 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
     permissionPrefixes: [
       'organization.executive_board.read.',
       'organization.executive_board_assignment.read.',
+    ],
+  },
+  {
+    resource: 'course-types',
+    group: 'training',
+    label: 'Loại khóa',
+    moduleName: 'training.course-type',
+    permissionPrefixes: ['training.course_type.read.'],
+  },
+  {
+    resource: 'courses',
+    group: 'training',
+    label: 'Khóa huấn luyện',
+    moduleName: 'training.course',
+    permissionPrefixes: ['training.course.read.', 'training.participation.submit.parish'],
+  },
+  {
+    resource: 'registrations',
+    group: 'training',
+    label: 'Đăng ký tham dự',
+    moduleName: 'training.registration',
+    permissionPrefixes: ['training.participation.read.parish', 'training.participation.submit.'],
+  },
+  {
+    resource: 'approvals',
+    group: 'training',
+    label: 'Duyệt đăng ký',
+    moduleName: 'training.approval',
+    permissionPrefixes: [
+      'training.participation.approve.deanery',
+      'training.participation.approve.diocese',
+    ],
+  },
+  {
+    resource: 'participants',
+    group: 'training',
+    label: 'Danh sách tham dự',
+    moduleName: 'training.participation',
+    permissionPrefixes: [
+      'training.participation.read.deanery',
+      'training.participation.read.diocese',
+      'training.participation.approve.deanery',
+      'training.participation.approve.diocese',
+    ],
+  },
+  {
+    resource: 'scores',
+    group: 'training',
+    label: 'Chấm điểm',
+    moduleName: 'training.score',
+    permissionPrefixes: [
+      'training.participation.score.deanery',
+      'training.participation.score.diocese',
     ],
   },
 ];

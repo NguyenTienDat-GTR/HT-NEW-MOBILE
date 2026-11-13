@@ -1,6 +1,7 @@
 import { canReadRoute, type PermissionSubject } from '@/core/domain/permissions';
 
-export type MenuGroupId = 'organization' | 'leaders' | 'executive-board' | 'training';
+export type MenuGroupId =
+  'organization' | 'leaders' | 'executive-board' | 'training' | 'certificates';
 
 export interface MenuEntry {
   /** Trùng id tài nguyên trong resource-registry; đường dẫn là /res/<id>. */
@@ -19,6 +20,7 @@ export const MENU_GROUP_LABELS: Record<MenuGroupId, string> = {
   leaders: 'Huynh trưởng',
   'executive-board': 'Ban điều hành',
   training: 'Huấn luyện',
+  certificates: 'Chứng nhận',
 };
 
 /** Thứ tự và điều kiện hiển thị theo sidebar của web (FE/src/config/routes/groups). */
@@ -138,6 +140,20 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
       'training.participation.score.deanery',
       'training.participation.score.diocese',
     ],
+  },
+  {
+    resource: 'certificates',
+    group: 'certificates',
+    label: 'Danh sách chứng nhận',
+    moduleName: 'certificate.list',
+    permissionPrefixes: ['training.certificate.read.'],
+  },
+  {
+    resource: 'certificate-approvals',
+    group: 'certificates',
+    label: 'Duyệt chứng nhận',
+    moduleName: 'certificate.approval',
+    permissionPrefixes: ['training.certificate.approve.'],
   },
 ];
 

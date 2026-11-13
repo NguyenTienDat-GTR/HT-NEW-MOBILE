@@ -1,5 +1,5 @@
 import type { Page } from '../domain/page';
-import type { HttpClient } from '../network/http-client';
+import type { DownloadedBytes, HttpClient } from '../network/http-client';
 
 import type { HttpVerb, ResourceGateway, ResourceListQuery, ResourceRow } from './resource-gateway';
 
@@ -80,5 +80,13 @@ export class HttpResourceGateway implements ResourceGateway {
     options: { body?: unknown; query?: Record<string, string | number | boolean | undefined> } = {},
   ): Promise<T> {
     return this.http.request<T>({ method, path, body: options.body, query: options.query });
+  }
+
+  download(
+    method: HttpVerb,
+    path: string,
+    options: { body?: unknown } = {},
+  ): Promise<DownloadedBytes> {
+    return this.http.download({ method, path, body: options.body });
   }
 }

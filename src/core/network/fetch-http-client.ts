@@ -1,5 +1,11 @@
 import { createApiError, networkError, timeoutError } from './api-error-factory';
-import type { ApiEnvelope, HttpClient, HttpRequest, QueryValue } from './http-client';
+import type {
+  ApiEnvelope,
+  DownloadedBytes,
+  HttpClient,
+  HttpRequest,
+  QueryValue,
+} from './http-client';
 
 export interface FetchHttpClientOptions {
   baseUrl: string;
@@ -20,6 +26,40 @@ export class FetchHttpClient implements HttpClient {
   }
 
   async request<T>(request: HttpRequest): Promise<T> {
+    return this.send(request, 'application/json', async (response) => {
+      const envelope = (await response.json().catch(() => null)) as Partial<ApiEnvelope<T>> | null;
+      if (!response.ok || envelope?.success === false) {
+        throw createApiError(response.status, envelope);
+      }
+      return envelope?.data as T;
+    });
+  }
+
+  async download(request: HttpRequest): Promise<DownloadedBytes> {
+    return this.send(
+      request,
+      'application/pdf, application/octet-stream, */*',
+      async (response) => {
+        if (!response.ok) {
+          const envelope = (await response.json().catch(() => null)) as Partial<
+            ApiEnvelope<unknown>
+          > | null;
+          throw createApiError(response.status, envelope);
+        }
+        return {
+          bytes: new Uint8Array(await response.arrayBuffer()),
+          contentType: response.headers.get('content-type') ?? 'application/octet-stream',
+        };
+      },
+    );
+  }
+
+  /** Gửi một request (thời gian chờ, hủy từ phía gọi, đổi lỗi mạng) rồi giao phản hồi cho `read`. */
+  private async send<T>(
+    request: HttpRequest,
+    accept: string,
+    read: (response: Response) => Promise<T>,
+  ): Promise<T> {
     const controller = new AbortController();
     let timedOut = false;
     const timer = setTimeout(() => {
@@ -30,7 +70,7 @@ export class FetchHttpClient implements HttpClient {
     request.signal?.addEventListener('abort', onCallerAbort);
 
     try {
-      const headers: Record<string, string> = { accept: 'application/json', ...request.headers };
+      const headers: Record<string, string> = { accept, ...request.headers };
       let body: string | undefined;
       if (request.body !== undefined) {
         headers['content-type'] = 'application/json';
@@ -50,12 +90,7 @@ export class FetchHttpClient implements HttpClient {
         if (request.signal?.aborted) throw error;
         throw networkError();
       }
-
-      const envelope = (await response.json().catch(() => null)) as Partial<ApiEnvelope<T>> | null;
-      if (!response.ok || envelope?.success === false) {
-        throw createApiError(response.status, envelope);
-      }
-      return envelope?.data as T;
+      return await read(response);
     } finally {
       clearTimeout(timer);
       request.signal?.removeEventListener('abort', onCallerAbort);

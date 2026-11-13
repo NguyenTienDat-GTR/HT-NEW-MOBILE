@@ -1,3 +1,7 @@
+import {
+  certificateApprovalsResource,
+  certificatesResource,
+} from '@/features/certificates/presentation/certificates-resource';
 import { courseTypesResource } from '@/features/training/presentation/course-types-resource';
 import { coursesResource } from '@/features/training/presentation/courses-resource';
 import {
@@ -50,6 +54,8 @@ registerResources(
   teamsResource,
   attendanceResource,
   crossDeaneryResource,
+  certificatesResource,
+  certificateApprovalsResource,
 );
 
 export function findResourceDefinition(id: string | undefined): ResourceDefinition | undefined {

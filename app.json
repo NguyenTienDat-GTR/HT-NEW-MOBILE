@@ -39,7 +39,8 @@
           "cameraPermission": "Cho phép C-LEAD dùng camera để quét mã QR điểm danh.",
           "recordAudioAndroid": false
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

@@ -18,6 +18,10 @@ import {
 import { accountRolesResource } from '@/features/system/presentation/account-roles-resource';
 import { accountsResource } from '@/features/system/presentation/accounts-resource';
 import { auditLogsResource } from '@/features/system/presentation/audit-logs-resource';
+import {
+  accountPermissionsResource,
+  rolePermissionsResource,
+} from '@/features/system/presentation/permission-grants-resources';
 import { permissionsResource } from '@/features/system/presentation/permissions-resource';
 import { rolesResource } from '@/features/system/presentation/roles-resource';
 import { assignmentsResource } from '@/features/executive-board/presentation/assignments-resource';
@@ -65,6 +69,8 @@ registerResources(
   rolesResource,
   permissionsResource,
   accountRolesResource,
+  rolePermissionsResource,
+  accountPermissionsResource,
   auditLogsResource,
 );
 

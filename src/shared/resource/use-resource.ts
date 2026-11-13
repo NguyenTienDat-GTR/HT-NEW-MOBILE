@@ -39,7 +39,7 @@ export function useResourceList(def: ResourceDefinition, state: ListState) {
         status: state.status,
         sortBy: def.defaultSort?.by,
         sortDirection: def.defaultSort?.direction,
-        filters: state.filters,
+        filters: { ...state.filters, ...def.baseFilters },
       }),
     getNextPageParam: (last) => (last.last ? undefined : last.number + 1),
   });

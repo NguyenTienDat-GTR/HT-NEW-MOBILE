@@ -30,7 +30,16 @@ export type OptionsSource =
   | { load: (context: OptionsContext) => Promise<SelectOption[]>; dependsOn?: readonly string[] };
 
 export type FieldKind =
-  'text' | 'email' | 'phone' | 'multiline' | 'date' | 'daymonth' | 'select' | 'switch' | 'lookup';
+  | 'text'
+  | 'email'
+  | 'phone'
+  | 'multiline'
+  | 'date'
+  | 'daymonth'
+  | 'select'
+  | 'switch'
+  | 'lookup'
+  | 'custom';
 
 export interface FormFieldDef {
   name: string;
@@ -58,7 +67,19 @@ export interface FormFieldDef {
   maxDate?: 'today' | string;
   minDate?: string;
   placeholder?: string;
-  keyboardType?: 'default' | 'number-pad';
+  keyboardType?: 'default' | 'number-pad' | 'decimal-pad';
+  /** Khóa theo giá trị các trường khác (vd. khóa đã có hồ sơ thì không đổi loại khóa). */
+  readOnlyWhen?: (values: FormValues, mode: FormMode) => boolean;
+  /** kind 'custom': ô nhập riêng của tính năng; giá trị lưu dạng chuỗi (thường là JSON). */
+  render?: (props: CustomFieldProps) => ReactNode;
+}
+
+export interface CustomFieldProps {
+  value: string;
+  values: FormValues;
+  onChange: (value: string) => void;
+  error?: string;
+  locked: boolean;
 }
 
 export interface FormDefinition {
@@ -155,6 +176,8 @@ export interface ResourceDefinition {
   /** Có bộ lọc Đang hoạt động / Tạm ngưng không. */
   statusFilter?: boolean;
   filters?: readonly ListFilterDef[];
+  /** Bộ lọc luôn áp (không hiện cho người dùng), vd. chỉ hồ sơ chờ duyệt. Giá trị mảng = IN. */
+  baseFilters?: Record<string, string | readonly string[]>;
   card: (row: ResourceRow) => CardView;
   detailTitle: (row: ResourceRow) => string;
   detailBadges?: (row: ResourceRow) => readonly { label: string; tone?: BadgeTone }[];
@@ -165,6 +188,15 @@ export interface ResourceDefinition {
   canUpdate: (subject: PermissionSubject | null, row: ResourceRow) => boolean;
   canToggle: (subject: PermissionSubject | null, row: ResourceRow) => boolean;
   /** Khối bổ sung dưới chi tiết (vd. ban điều hành của đơn vị). */
+  /** Thay cả màn tạo/sửa chung bằng màn riêng (vd. gửi đăng ký nhiều huynh trưởng). */
+  renderForm?: (context: {
+    def: ResourceDefinition;
+    id?: string;
+    /** Tham số đường dẫn khác `id` (vd. `course` để chọn sẵn khóa). */
+    params: Record<string, string | undefined>;
+    subject: PermissionSubject | null;
+    onSaved: () => void;
+  }) => ReactNode;
   /** Thay cả màn danh sách chung bằng màn riêng (vd. cấp độ: danh mục ngắn, có đổi thứ tự). */
   renderList?: (context: {
     def: ResourceDefinition;

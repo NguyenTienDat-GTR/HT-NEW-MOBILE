@@ -29,7 +29,7 @@ src/app          route Expo Router, chỉ là lớp mỏng gọi màn hình củ
 
 ## Màn danh sách / chi tiết / form theo cấu hình
 
-Các màn CRUD (tổ chức, huynh trưởng, ban điều hành…) chạy bằng `ResourceDefinition` (`src/shared/resource/types.ts`): thêm màn = viết một định nghĩa trong `features/<tên>/presentation`, đăng ký ở `src/composition/resource-registry.ts` và thêm một dòng ở `src/composition/menu-entries.ts`; các màn chung (`ResourceListScreen`, `ResourceDetailScreen`, `ResourceFormScreen`) không phải sửa. Màn cần giao diện riêng dùng `renderList` / `renderDetail`. Quy tắc quyền hiển thị nút nằm ở `domain/*-permissions.ts`, theo đúng web.
+Các màn CRUD (tổ chức, huynh trưởng, ban điều hành…) chạy bằng `ResourceDefinition` (`src/shared/resource/types.ts`): thêm màn = viết một định nghĩa trong `features/<tên>/presentation`, đăng ký ở `src/composition/resource-registry.ts` và thêm một dòng ở `src/composition/menu-entries.ts`; các màn chung (`ResourceListScreen`, `ResourceDetailScreen`, `ResourceFormScreen`) không phải sửa. Màn cần giao diện riêng dùng `renderList` / `renderDetail` / `renderForm`; ô nhập riêng của tính năng dùng `kind: 'custom'` với `render`. Quy tắc quyền hiển thị nút nằm ở `domain/*-permissions.ts`, theo đúng web.
 
 ## Giao diện
 

@@ -25,3 +25,12 @@ export async function loadOptions(
     }))
     .filter((option) => option.value !== '');
 }
+
+/** Danh mục cấp độ huynh trưởng của giáo phận (mảng, không phân trang), dùng cho ô chọn cấp. */
+export async function loadLevelOptions(gateway: ResourceGateway): Promise<SelectOption[]> {
+  const levels = await gateway.call<{ levelCode: string; levelName: string }[]>(
+    'GET',
+    '/leader-levels/options',
+  );
+  return levels.map((level) => ({ value: level.levelCode, label: level.levelName }));
+}

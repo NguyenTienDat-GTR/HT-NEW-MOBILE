@@ -33,7 +33,9 @@ export function buildListQuery(
     result.sortDirection = query.sortDirection ?? 'ASC';
   }
   const filters = Object.fromEntries(
-    Object.entries(query.filters ?? {}).filter(([, value]) => value !== ''),
+    Object.entries(query.filters ?? {}).filter(
+      ([, value]) => value !== '' && !(Array.isArray(value) && value.length === 0),
+    ),
   );
   if (Object.keys(filters).length > 0) result.filters = JSON.stringify(filters);
   return result;

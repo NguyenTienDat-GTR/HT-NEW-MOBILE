@@ -58,7 +58,9 @@ function SelectView({
       options={options}
       placeholder={loading ? 'Đang tải…' : (field.placeholder ?? 'Chọn')}
       allowClear={!field.required}
-      disabled={field.lockedOnEdit && mode === 'edit'}
+      disabled={
+        (field.lockedOnEdit && mode === 'edit') || Boolean(field.readOnlyWhen?.(values, mode))
+      }
       onChange={(next) => onChange(field.name, next)}
     />
   );
@@ -96,9 +98,23 @@ function DayMonthView({ field, value, onChange, mode }: FormFieldViewProps) {
 
 function FormFieldViewBase(props: FormFieldViewProps) {
   const { field, value, error, mode, onChange } = props;
-  const locked = field.lockedOnEdit && mode === 'edit';
+  const locked =
+    (field.lockedOnEdit && mode === 'edit') || Boolean(field.readOnlyWhen?.(props.values, mode));
 
   switch (field.kind) {
+    case 'custom':
+      return (
+        <View style={styles.block}>
+          {field.render?.({
+            value: String(value),
+            values: props.values,
+            onChange: (next) => onChange(field.name, next),
+            error,
+            locked,
+          })}
+          {error ? <ErrorText message={error} /> : null}
+        </View>
+      );
     case 'select':
       return (
         <View style={styles.block}>

@@ -37,18 +37,26 @@ export interface ResourceListScreenProps {
   subject: PermissionSubject | null;
   onOpen: (row: ResourceRow) => void;
   onCreate: () => void;
+  /** Bộ lọc áp sẵn khi mở (vd. từ chi tiết khóa sang danh sách đăng ký của khóa đó). */
+  initialFilters?: Record<string, string>;
 }
 
 /**
  * Danh sách thẻ chạy theo cấu hình: tìm kiếm, lọc trạng thái, bộ lọc trong sheet, cuộn vô hạn.
  * Mỗi thẻ chỉ có tiêu đề + 2 dòng + nhãn; mọi trường khác nằm ở màn chi tiết (không bảng cuộn ngang).
  */
-export function ResourceListScreen({ def, subject, onOpen, onCreate }: ResourceListScreenProps) {
+export function ResourceListScreen({
+  def,
+  subject,
+  onOpen,
+  onCreate,
+  initialFilters,
+}: ResourceListScreenProps) {
   const { colors, spacing } = useTheme();
   const insets = useSafeAreaInsets();
   const [search, setSearch] = useState('');
   const [statusChoice, setStatusChoice] = useState<StatusChoice>('all');
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  const [filters, setFilters] = useState<Record<string, string>>(initialFilters ?? {});
   const [sheetOpen, setSheetOpen] = useState(false);
   const debounced = useDebouncedValue(search.trim());
 

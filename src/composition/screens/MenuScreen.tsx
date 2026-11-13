@@ -14,6 +14,7 @@ import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import {
   BuildingsIcon,
+  GraduationCapIcon,
   ChartLineUpIcon,
   UsersThreeIcon,
   KeyIcon,
@@ -52,6 +53,7 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
     organization: BuildingsIcon,
     leaders: UsersThreeIcon,
     'executive-board': ShieldCheckIcon,
+    training: GraduationCapIcon,
   };
   const icon = (Icon: typeof KeyIcon) => (
     <Icon size={iconSize.md} color={colors.primary} weight="bold" />

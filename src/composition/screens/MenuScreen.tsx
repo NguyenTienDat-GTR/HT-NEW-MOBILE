@@ -14,6 +14,7 @@ import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import {
   BuildingsIcon,
+  CertificateIcon,
   GraduationCapIcon,
   ChartLineUpIcon,
   UsersThreeIcon,
@@ -48,7 +49,10 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
   const name = displayName(undefined, user?.username ?? '');
   // Như web: xem phân tích chi tiết khi có quyền analytics.dashboard.read.* và không phải quản trị hệ thống.
   // Quét QR điểm danh: quyền riêng training.attendance.scan.*, không dùng cho quản trị hệ thống.
-  const canScan = !isSuperAdmin(user) && hasPermissionPrefix(user, 'training.attendance.scan.');
+  const canScan =
+    !isSuperAdmin(user) &&
+    (hasPermissionPrefix(user, 'training.attendance.scan.') ||
+      hasPermissionPrefix(user, 'training.certificate.read.'));
   const canSeeAnalytics =
     !isSuperAdmin(user) && hasPermissionPrefix(user, 'analytics.dashboard.read.');
   const sections = visibleMenuSections(user);
@@ -57,6 +61,7 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
     leaders: UsersThreeIcon,
     'executive-board': ShieldCheckIcon,
     training: GraduationCapIcon,
+    certificates: CertificateIcon,
   };
   const icon = (Icon: typeof KeyIcon) => (
     <Icon size={iconSize.md} color={colors.primary} weight="bold" />
@@ -111,8 +116,8 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
       {canScan ? (
         <Card style={{ padding: 0, overflow: 'hidden' }}>
           <ListRow
-            label="Quét QR điểm danh"
-            hint="Quét mã trên thẻ hoặc email tham dự"
+            label="Quét mã QR"
+            hint="Điểm danh khóa huấn luyện hoặc xem chứng nhận"
             icon={icon(QrCodeIcon)}
             onPress={() => onNavigate('/scan')}
           />

@@ -24,7 +24,15 @@ export interface ApiEnvelope<T> {
   timestamp?: string;
 }
 
+/** Nội dung nhị phân tải về (vd. PDF chứng nhận). */
+export interface DownloadedBytes {
+  bytes: Uint8Array;
+  contentType: string;
+}
+
 /** Cổng gọi HTTP. Trả về `data` đã bóc khỏi bao ngoài; lỗi được ném dưới dạng AppError. */
 export interface HttpClient {
   request<T>(request: HttpRequest): Promise<T>;
+  /** Tải nội dung nhị phân (không có bao ngoài JSON); lỗi của BE vẫn là AppError. */
+  download(request: HttpRequest): Promise<DownloadedBytes>;
 }

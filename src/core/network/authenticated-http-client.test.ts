@@ -17,11 +17,12 @@ function fakeSession(
   };
 }
 
+const noDownload = jest.fn();
 const unauthorized = () => new AppError('unauthorized', 'hết hạn', { status: 401 });
 
 describe('AuthenticatedHttpClient', () => {
   it('gắn Bearer vào request cần đăng nhập', async () => {
-    const inner: HttpClient = { request: jest.fn().mockResolvedValue('ok') };
+    const inner: HttpClient = { request: jest.fn().mockResolvedValue('ok'), download: noDownload };
     const client = new AuthenticatedHttpClient(inner, fakeSession());
     await client.request({ method: 'GET', path: '/me' });
     const sent = (inner.request as jest.Mock).mock.calls[0][0] as HttpRequest;
@@ -29,7 +30,7 @@ describe('AuthenticatedHttpClient', () => {
   });
 
   it('request auth:false đi thẳng, không lấy token', async () => {
-    const inner: HttpClient = { request: jest.fn().mockResolvedValue('ok') };
+    const inner: HttpClient = { request: jest.fn().mockResolvedValue('ok'), download: noDownload };
     const session = fakeSession();
     await new AuthenticatedHttpClient(inner, session).request({
       method: 'POST',
@@ -42,7 +43,10 @@ describe('AuthenticatedHttpClient', () => {
   it('gặp 401: làm mới phiên rồi gửi lại đúng một lần với token mới', async () => {
     const request = jest.fn().mockRejectedValueOnce(unauthorized()).mockResolvedValueOnce('done');
     const session = fakeSession();
-    const result = await new AuthenticatedHttpClient({ request }, session).request({
+    const result = await new AuthenticatedHttpClient(
+      { request, download: noDownload },
+      session,
+    ).request({
       method: 'GET',
       path: '/x',
     });
@@ -54,7 +58,7 @@ describe('AuthenticatedHttpClient', () => {
   it('vẫn 401 sau khi gửi lại thì ném lỗi, không lặp vô hạn', async () => {
     const request = jest.fn().mockRejectedValue(unauthorized());
     await expect(
-      new AuthenticatedHttpClient({ request }, fakeSession()).request({
+      new AuthenticatedHttpClient({ request, download: noDownload }, fakeSession()).request({
         method: 'GET',
         path: '/x',
       }),
@@ -66,10 +70,32 @@ describe('AuthenticatedHttpClient', () => {
     const request = jest.fn().mockRejectedValue(new AppError('forbidden', 'cấm', { status: 403 }));
     const session = fakeSession();
     await expect(
-      new AuthenticatedHttpClient({ request }, session).request({ method: 'GET', path: '/x' }),
+      new AuthenticatedHttpClient({ request, download: noDownload }, session).request({
+        method: 'GET',
+        path: '/x',
+      }),
     ).rejects.toMatchObject({
       kind: 'forbidden',
     });
     expect(session.refreshAfterRejection).not.toHaveBeenCalled();
+  });
+
+  it('tải nhị phân cũng gắn Bearer và làm mới phiên khi gặp 401', async () => {
+    const bytes = new Uint8Array([37, 80, 68, 70]);
+    const download = jest
+      .fn()
+      .mockRejectedValueOnce(unauthorized())
+      .mockResolvedValueOnce({ bytes, contentType: 'application/pdf' });
+    const session = fakeSession();
+    const result = await new AuthenticatedHttpClient(
+      { request: jest.fn(), download },
+      session,
+    ).download({
+      method: 'POST',
+      path: '/certificates/export-pdf',
+    });
+    expect(result.bytes).toBe(bytes);
+    expect(download.mock.calls[0][0].headers.authorization).toBe('Bearer t1');
+    expect(download.mock.calls[1][0].headers.authorization).toBe('Bearer t2');
   });
 });

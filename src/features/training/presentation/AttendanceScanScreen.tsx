@@ -28,6 +28,8 @@ import {
 export interface AttendanceScanScreenProps {
   /** Có mã khóa = chỉ điểm danh cho khóa đó; không có = khóa nằm trong chính mã QR. */
   courseCode?: string;
+  /** Mở chứng nhận khi quét mã QR chứng nhận (có khi người dùng được xem chứng nhận). */
+  onCertificate?: (code: string) => void;
 }
 
 const path = (courseCode: string | undefined, action: 'scan' | 'lookup') =>
@@ -39,7 +41,7 @@ const path = (courseCode: string | undefined, action: 'scan' | 'lookup') =>
  * Quét mã QR điểm danh: camera đọc mã → tra cứu người → xác nhận → điểm danh → quét tiếp.
  * Có ô nhập mã thủ công (máy không có camera, hoặc để thử trên web).
  */
-export function AttendanceScanScreen({ courseCode }: AttendanceScanScreenProps) {
+export function AttendanceScanScreen({ courseCode, onCertificate }: AttendanceScanScreenProps) {
   const gateway = useResourceGateway();
   const { colors, radius } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
@@ -61,6 +63,11 @@ export function AttendanceScanScreen({ courseCode }: AttendanceScanScreenProps) 
       } catch (exception) {
         dispatch({ type: 'failed', message: errorMessage(exception) });
       }
+      return;
+    }
+    if (payload.kind === 'certificate' && onCertificate && !courseCode) {
+      setNote(null);
+      onCertificate(payload.code);
       return;
     }
     setNote(

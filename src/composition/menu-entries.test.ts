@@ -42,4 +42,18 @@ describe('visibleMenuSections', () => {
   it('chưa đăng nhập thì không có mục nào', () => {
     expect(labels(null)).toEqual([]);
   });
+
+  it('chứng nhận: xem danh sách khi có quyền đọc, mục duyệt chỉ hiện khi có quyền duyệt', () => {
+    expect(labels(user(['training.certificate.read.deanery']))).toEqual(['Danh sách chứng nhận']);
+    expect(labels(user(['training.certificate.approve.diocese']))).toEqual(['Duyệt chứng nhận']);
+    expect(
+      visibleMenuSections(
+        user(['training.certificate.read.deanery', 'training.certificate.approve.deanery']),
+      ).map((s) => s.group),
+    ).toEqual(['certificates']);
+  });
+
+  it('SUPER_ADMIN không thấy chứng nhận dù có quyền', () => {
+    expect(labels(user(['training.certificate.read.all'], ['SUPER_ADMIN']))).toEqual([]);
+  });
 });

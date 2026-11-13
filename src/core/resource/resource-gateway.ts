@@ -1,4 +1,5 @@
 import type { Page } from '../domain/page';
+import type { DownloadedBytes } from '../network/http-client';
 
 /** Một dòng dữ liệu của BE (danh sách/chi tiết). Màn hình đọc các trường theo định nghĩa của từng tài nguyên. */
 export type ResourceRow = Record<string, unknown>;
@@ -33,4 +34,6 @@ export interface ResourceGateway {
     path: string,
     options?: { body?: unknown; query?: Record<string, string | number | boolean | undefined> },
   ): Promise<T>;
+  /** Tải nội dung nhị phân (vd. PDF) bằng một lời gọi có Bearer. */
+  download(method: HttpVerb, path: string, options?: { body?: unknown }): Promise<DownloadedBytes>;
 }

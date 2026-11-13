@@ -37,6 +37,8 @@ export interface TextFieldProps {
   textContentType?: TextInputProps['textContentType'];
   maxLength?: number;
   editable?: boolean;
+  /** Nhiều dòng (ghi chú, mô tả): ô cao hơn, Enter xuống dòng. */
+  multiline?: boolean;
   onSubmitEditing?: () => void;
   inputRef?: Ref<TextInputHandle>;
 }
@@ -58,6 +60,7 @@ export function TextField({
   textContentType,
   maxLength,
   editable = true,
+  multiline = false,
   onSubmitEditing,
   inputRef,
 }: TextFieldProps) {
@@ -108,6 +111,8 @@ export function TextField({
           textContentType={textContentType}
           maxLength={maxLength}
           editable={editable}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : 'center'}
           onSubmitEditing={onSubmitEditing}
           accessibilityLabel={label}
           accessibilityHint={hint}
@@ -117,7 +122,7 @@ export function TextField({
             {
               color: colors.foreground,
               fontFamily: fontFamily.regular,
-              minHeight: theme.touch.input - 2,
+              minHeight: multiline ? 96 : theme.touch.input - 2,
             },
           ]}
         />

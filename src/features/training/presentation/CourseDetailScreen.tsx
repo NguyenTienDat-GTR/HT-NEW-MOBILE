@@ -20,6 +20,7 @@ import { Card } from '@/shared/ui/Card';
 import { CollapsibleSection } from '@/shared/ui/CollapsibleSection';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import { ListIcon } from '@/shared/ui/icons';
+import { InfoGrid } from '@/shared/ui/InfoGrid';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { ListRow } from '@/shared/ui/ListRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
@@ -205,24 +206,31 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           <Text variant="secondary" tone="textSecondary">
             {[text(course, 'courseTypeName'), text(course, 'hostYear')].filter(Boolean).join(' · ')}
           </Text>
-          {canUpdate ? <Button label="Sửa khóa" variant="outline" onPress={onEdit} /> : null}
-          {canRegister && canSubmitRegistration(user) ? (
-            <Button
-              label="Gửi đăng ký"
-              onPress={() => router.push(`/res/registrations/form?course=${encoded}` as Href)}
-            />
+          <Text variant="secondary" tone="textSecondary">
+            {`${fmtNumber(count(course, 'approvedParticipantCount'))} tham dự viên đã duyệt`}
+          </Text>
+          {canUpdate || (canRegister && canSubmitRegistration(user)) ? (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {canUpdate ? (
+                <View style={{ flex: 1 }}>
+                  <Button label="Sửa khóa" variant="outline" size="sm" onPress={onEdit} />
+                </View>
+              ) : null}
+              {canRegister && canSubmitRegistration(user) ? (
+                <View style={{ flex: 1 }}>
+                  <Button
+                    label="Gửi đăng ký"
+                    size="sm"
+                    onPress={() => router.push(`/res/registrations/form?course=${encoded}` as Href)}
+                  />
+                </View>
+              ) : null}
+            </View>
           ) : null}
         </View>
       </Card>
 
       {error && pending === null ? <Banner tone="danger" message={error} /> : null}
-
-      <Card>
-        <InfoRow
-          label="Tham dự viên đã duyệt"
-          value={fmtNumber(count(course, 'approvedParticipantCount'))}
-        />
-      </Card>
 
       {/* Các bước quy trình của khóa: hamburger ẩn/hiện danh sách, như menu thả xuống của web trên điện thoại. */}
       {steps.length > 0 ? (
@@ -238,7 +246,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
       ) : null}
 
       <Card>
-        <View style={{ gap: 12 }}>
+        <InfoGrid>
           <Text variant="heading" accessibilityRole="header">
             Thông tin khóa
           </Text>
@@ -259,11 +267,11 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           <InfoRow label="Cấp độ khi hoàn thành" value={text(course, 'resultingLevelName')} />
           <InfoRow label="Khóa tiên quyết" value={text(course, 'prerequisiteTypeName')} />
           <InfoRow label="Dành cho giáo hạt" value={targets || 'Tất cả giáo hạt'} />
-        </View>
+        </InfoGrid>
       </Card>
 
       <Card>
-        <View style={{ gap: 12 }}>
+        <InfoGrid>
           <Text variant="heading" accessibilityRole="header">
             Đăng ký
           </Text>
@@ -295,11 +303,11 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
               onPress={() => setPending(registrationOpen ? 'close' : 'open')}
             />
           ) : null}
-        </View>
+        </InfoGrid>
       </Card>
 
       <Card>
-        <View style={{ gap: 12 }}>
+        <InfoGrid>
           <Text variant="heading" accessibilityRole="header">
             Chấm điểm
           </Text>
@@ -324,7 +332,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
               onPress={() => setPending(flag(course, 'scoreLocked') ? 'unlock' : 'lock')}
             />
           ) : null}
-        </View>
+        </InfoGrid>
       </Card>
 
       {text(course, 'additionalNotes') ? (

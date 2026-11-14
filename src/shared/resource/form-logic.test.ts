@@ -1,4 +1,12 @@
-import { applyChange, isValidDayMonth, optional, validateField, validateForm } from './form-logic';
+import {
+  applyChange,
+  groupFormRows,
+  isCompactField,
+  isValidDayMonth,
+  optional,
+  validateField,
+  validateForm,
+} from './form-logic';
 import type { FormDefinition, FormFieldDef } from './types';
 
 const f = (over: Partial<FormFieldDef> & Pick<FormFieldDef, 'name' | 'kind'>): FormFieldDef => ({
@@ -100,5 +108,41 @@ describe('form helpers', () => {
     expect(isValidDayMonth('12-25')).toBe(true);
     expect(isValidDayMonth('13-01')).toBe(false);
     expect(isValidDayMonth('04-31')).toBe(false);
+  });
+});
+
+describe('bố cục form: xếp cặp ô ngắn', () => {
+  const mk = (name: string, extra: Partial<FormFieldDef> = {}): FormFieldDef => ({
+    name,
+    label: name,
+    kind: 'text',
+    ...extra,
+  });
+  const names = (rows: FormFieldDef[][]) => rows.map((row) => row.map((field) => field.name));
+
+  it('hai ô ngày liền nhau chung một hàng, ô văn bản chiếm cả dòng', () => {
+    const rows = groupFormRows([
+      mk('ten'),
+      mk('batDau', { kind: 'date' }),
+      mk('ketThuc', { kind: 'date' }),
+      mk('diaDiem'),
+    ]);
+    expect(names(rows)).toEqual([['ten'], ['batDau', 'ketThuc'], ['diaDiem']]);
+  });
+
+  it('ô số cũng là ô ngắn; ô ngắn lẻ không bị bỏ trống nửa hàng', () => {
+    const rows = groupFormRows([
+      mk('nam', { keyboardType: 'number-pad' }),
+      mk('so', { keyboardType: 'decimal-pad' }),
+      mk('ngay', { kind: 'date' }),
+      mk('ghiChu', { kind: 'multiline' }),
+    ]);
+    expect(names(rows)).toEqual([['nam', 'so'], ['ngay'], ['ghiChu']]);
+  });
+
+  it('khai báo width ghi đè mặc định', () => {
+    expect(isCompactField(mk('a', { kind: 'date', width: 'full' }))).toBe(false);
+    expect(isCompactField(mk('b', { width: 'half' }))).toBe(true);
+    expect(isCompactField(mk('c', { kind: 'switch' }))).toBe(false);
   });
 });

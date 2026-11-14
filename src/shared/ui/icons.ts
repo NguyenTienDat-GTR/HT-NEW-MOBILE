@@ -4,6 +4,7 @@
  */
 export {
   ArrowCounterClockwiseIcon,
+  ArrowLeftIcon,
   ArrowRightIcon,
   BellIcon,
   BellSlashIcon,

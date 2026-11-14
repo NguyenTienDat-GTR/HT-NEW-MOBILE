@@ -10,6 +10,7 @@ import {
   usePushRegistration,
   useUnreadCount,
 } from '@/features/notifications/presentation/use-notifications';
+import { HeaderBackButton } from '@/shared/ui/HeaderBackButton';
 import { ScreenInsets } from '@/shared/ui/screen-insets';
 import { useRealtime } from '@/shared/realtime/realtime-context';
 import { useTheme } from '@/shared/theme/theme-provider';
@@ -47,6 +48,8 @@ export default function AppLayout() {
             headerTitleStyle: { fontFamily: fontFamily.semibold, color: colors.foreground },
             headerShadowVisible: false,
             headerBackTitle: '',
+            // Nút quay lại tự vẽ để mũi tên luôn rõ trên nền thanh tiêu đề.
+            headerLeft: ({ canGoBack }) => (canGoBack ? <HeaderBackButton /> : null),
             contentStyle: { backgroundColor: colors.background },
           }}
         >

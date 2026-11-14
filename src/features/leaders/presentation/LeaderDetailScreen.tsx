@@ -21,6 +21,7 @@ import { Card } from '@/shared/ui/Card';
 import { DateField } from '@/shared/ui/DateField';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { FilterChips } from '@/shared/ui/FilterChips';
+import { InfoGrid } from '@/shared/ui/InfoGrid';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
@@ -218,7 +219,7 @@ function InfoTab({
   return (
     <>
       <Card>
-        <View style={{ gap: 12 }}>
+        <InfoGrid>
           <InfoRow label="Tên thánh" value={text(leader, 'holyName')} />
           <InfoRow label="Họ và tên" value={text(leader, 'fullName')} />
           <InfoRow label="Giới tính" value={genderLabel(text(leader, 'gender'))} />
@@ -243,7 +244,7 @@ function InfoTab({
               .filter(Boolean)
               .join(' · ')}
           />
-        </View>
+        </InfoGrid>
       </Card>
       <Card>
         <Text variant="heading" accessibilityRole="header">

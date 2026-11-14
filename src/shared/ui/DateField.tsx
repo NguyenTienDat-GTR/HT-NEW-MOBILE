@@ -76,6 +76,8 @@ export function DateField({
       DateTimePickerAndroid.open({
         value: current ?? new Date(),
         mode: 'date',
+        // Lịch chọn ngày, không có ô gõ tay.
+        display: 'calendar',
         minimumDate: fromIso(minimumDate),
         maximumDate: fromIso(maximumDate),
         onValueChange: (_event, date) => onChange(toIso(date)),

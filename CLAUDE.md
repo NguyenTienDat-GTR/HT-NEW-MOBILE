@@ -33,6 +33,8 @@ Các màn CRUD (tổ chức, huynh trưởng, ban điều hành…) chạy bằn
 
 Vùng an toàn: `Screen`, danh sách và nút dính đáy lấy khoảng chừa từ `useScreenInsets()` (`shared/ui/screen-insets.tsx`), không gọi `useSafeAreaInsets` trực tiếp. Stack đã chừa phía trên (thanh tiêu đề), thanh tab đã chừa phía dưới; phần còn lại màn tự chừa để nút home / thanh điều hướng của Android không che nút hay chặn cuộn. Danh sách dài cuộn vô hạn: `FlatList.onEndReached`, hoặc `Screen`/`BottomSheet` với `onEndReached` + `loadingMore` (hook `useEndReached`); không dùng nút "Tải thêm".
 
+Bố cục gọn: form xếp cặp hai cột các ô ngắn liền kề (ô ngày, ô số; hoặc `width: 'half'`), ô ngắn lẻ chỉ nửa chiều rộng (`groupFormRows` ở `form-logic.ts`); màn chi tiết bọc các `InfoRow` trong `InfoGrid` để giá trị ngắn xếp hai cột. Ngày luôn chọn bằng `DateField` (lịch hệ điều hành, không gõ tay). Mũi tên quay lại là `HeaderBackButton` tự vẽ để không trùng màu nền thanh tiêu đề.
+
 Thanh tab dưới (`src/app/(app)/(tabs)/_layout.tsx`): Tổng quan, Khóa huấn luyện, **Quét QR** (nút nổi ở giữa, `ScanTabButton`), Thông báo, Menu. Tab Khóa huấn luyện và Quét QR ẩn theo quyền (`canSeeMenuEntry`, `canUseQrScanner`). Trình quét chung `AttendanceScanScreen` giống nút quét ở header web (mã điểm danh, mã chứng nhận, nhập/dán mã, chọn ảnh); camera chỉ bật khi màn đang được xem. Điểm danh riêng một khóa mở ở `/course-scan?course=<mã>`.
 
 Thao tác riêng trên một bản ghi (duyệt, thu hồi, chia sẻ PDF…) đặt ở `renderDetailExtra` để dùng lại màn chi tiết chung. Tải nội dung nhị phân (PDF) dùng `gateway.download` (có Bearer và tự làm mới phiên), rồi `shared/files/share-file.ts` ghi vào bộ nhớ đệm và mở hộp chia sẻ của hệ điều hành.

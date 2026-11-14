@@ -2,6 +2,7 @@ import { useAuthStore } from '@/features/auth/presentation/auth-store';
 import { useLogout } from '@/features/auth/presentation/use-session';
 import { DashboardScreen } from '@/features/analytics/presentation/screens/DashboardScreen';
 import { hasPermissionPrefix } from '@/core/domain/permissions';
+import { dashboardHref } from '../dashboard-links';
 import { BrandHeader } from '@/shared/ui/BrandHeader';
 import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
@@ -33,6 +34,7 @@ export function HomeScreen({ onOpenPath, onOpenAnalysis }: HomeScreenProps) {
     return (
       <DashboardScreen
         permissions={user?.permissions ?? []}
+        resolveHref={(href) => dashboardHref(href, user)}
         onOpenPath={onOpenPath}
         onOpenAnalysis={onOpenAnalysis}
       />

@@ -6,6 +6,7 @@ import { useTheme } from '@/shared/theme/theme-provider';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Button } from '@/shared/ui/Button';
 import { CheckboxRow } from '@/shared/ui/CheckboxRow';
+import { DateField } from '@/shared/ui/DateField';
 import { FilterChips } from '@/shared/ui/FilterChips';
 import { FunnelSimpleIcon, XIcon } from '@/shared/ui/icons';
 import { SelectField } from '@/shared/ui/SelectField';
@@ -21,6 +22,7 @@ import {
   DATE_PRESETS,
   DEFAULT_FILTERS,
   activeFilterCount,
+  effectiveRange,
   presetLabel,
   type AnalyticsFilterState,
   type DatePresetId,
@@ -193,6 +195,7 @@ export function FilterBar({
         options={options}
         scope={scope}
         scopes={scopes}
+        applied={applied}
         onClose={() => setOpen(false)}
         onApply={(next) => {
           setOpen(false);
@@ -210,6 +213,7 @@ interface FilterSheetProps {
   options?: FilterOptions;
   scope?: string;
   scopes?: readonly ScopeOption[];
+  applied?: AppliedFilters;
   onClose: () => void;
   onApply: (filters: AnalyticsFilterState) => void;
 }
@@ -221,6 +225,7 @@ function FilterSheet({
   options,
   scope,
   scopes,
+  applied,
   onClose,
   onApply,
 }: FilterSheetProps) {
@@ -254,7 +259,14 @@ function FilterSheet({
     (o) => !o.scopes || (scope ? o.scopes.includes(scope) : false),
   ).filter((o) => !visibleFields.groupByValues || visibleFields.groupByValues.includes(o.value));
 
-  const presets = [...DATE_PRESETS].map((p) => ({ value: p.id, label: p.label }));
+  const presets = [...DATE_PRESETS, { id: 'custom' as const, label: 'Tùy chọn' }].map((p) => ({
+    value: p.id,
+    label: p.label,
+  }));
+  // Khoảng ngày đang chọn: chọn một ô ngày là chuyển sang "Tùy chọn", ô còn lại giữ giá trị đang thấy.
+  const range = effectiveRange(draft, applied);
+  const pickRange = (patch: Partial<{ fromDate: string; toDate: string }>) =>
+    set({ preset: 'custom', fromDate: range.fromDate, toDate: range.toDate, ...patch });
 
   return (
     <BottomSheet
@@ -298,8 +310,26 @@ function FilterSheet({
       <FilterChips<DatePresetId>
         options={presets as { value: DatePresetId; label: string }[]}
         value={draft.preset}
-        onChange={(value) => set({ preset: value })}
+        onChange={(value) => (value === 'custom' ? pickRange({}) : set({ preset: value }))}
       />
+      <View style={styles.dates}>
+        <View style={styles.date}>
+          <DateField
+            label="Từ ngày"
+            value={range.fromDate}
+            maximumDate={range.toDate || undefined}
+            onChange={(value) => pickRange({ fromDate: value })}
+          />
+        </View>
+        <View style={styles.date}>
+          <DateField
+            label="Đến ngày"
+            value={range.toDate}
+            minimumDate={range.fromDate || undefined}
+            onChange={(value) => pickRange({ toDate: value })}
+          />
+        </View>
+      </View>
 
       <Text variant="label">Gom theo kỳ</Text>
       <FilterChips
@@ -386,6 +416,8 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   summary: { flex: 1, gap: 2 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  dates: { flexDirection: 'row', gap: 12 },
+  date: { flex: 1 },
   chip: {
     minHeight: 44,
     flexDirection: 'row',

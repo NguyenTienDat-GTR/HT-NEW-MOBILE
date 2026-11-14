@@ -1,3 +1,5 @@
+import { formatDate } from '@/core/domain/date-format';
+
 import type { ScopeType, TimeBucket } from './entities';
 
 /** Trạng thái bộ lọc ở app: chuỗi rỗng nghĩa là không lọc. */
@@ -124,10 +126,26 @@ export function withResolvedRange(
   return { ...filters, ...resolvePreset(filters.preset, today) };
 }
 
+/**
+ * Khoảng ngày đang hiển thị trong ô "Từ ngày / Đến ngày": preset thì tính ra, `custom` thì theo ngày đã chọn; mặc định
+ * 12 tháng qua (BE tự tính) lấy khoảng thực tế BE đã dùng (`applied`) nếu có.
+ */
+export function effectiveRange(
+  filters: AnalyticsFilterState,
+  applied?: { fromDate?: string | null; toDate?: string | null },
+  today: Date = new Date(),
+): { fromDate: string; toDate: string } {
+  if (filters.preset === 'custom') return { fromDate: filters.fromDate, toDate: filters.toDate };
+  const resolved = resolvePreset(filters.preset, today);
+  return filters.preset === 'last12Months'
+    ? { fromDate: applied?.fromDate ?? '', toDate: applied?.toDate ?? '' }
+    : resolved;
+}
+
 export function presetLabel(filters: AnalyticsFilterState): string {
   if (filters.preset === 'custom') {
     return filters.fromDate || filters.toDate
-      ? `${filters.fromDate || '…'} → ${filters.toDate || '…'}`
+      ? `${formatDate(filters.fromDate) || '…'} → ${formatDate(filters.toDate) || '…'}`
       : 'Tùy chọn';
   }
   return DATE_PRESETS.find((preset) => preset.id === filters.preset)?.label ?? '12 tháng qua';

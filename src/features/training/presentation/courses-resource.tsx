@@ -70,7 +70,7 @@ function courseBadges(row: Record<string, unknown>) {
   const registration = registrationState(row);
   const organizing = organizingState(row);
   return [
-    ...(flag(row, 'status') ? [] : [{ label: 'Tạm ngưng', tone: 'warning' as const }]),
+    ...(flag(row, 'status') ? [] : [{ label: 'Đã vô hiệu hóa', tone: 'warning' as const }]),
     { label: ORGANIZING_LABELS[organizing], tone: ORGANIZING_TONES[organizing] },
     { label: REGISTRATION_LABELS[registration], tone: REGISTRATION_TONES[registration] },
   ];
@@ -370,11 +370,11 @@ export const coursesResource: ResourceDefinition = {
   },
   toggle: {
     isActive: (row) => flag(row, 'status'),
-    label: (row) => (flag(row, 'status') ? 'Ngưng khóa huấn luyện' : 'Kích hoạt lại khóa'),
+    label: (row) => (flag(row, 'status') ? 'Vô hiệu hóa khóa' : 'Bật lại khóa'),
     confirmMessage: (row) =>
       flag(row, 'status')
-        ? 'Khóa bị ngưng sẽ không nhận đăng ký, duyệt hay chấm điểm; chứng nhận đã duyệt có thể bị thu hồi. Gõ "Xác nhận" để tiếp tục.'
-        : 'Kích hoạt lại khóa. Gõ "Xác nhận" để tiếp tục.',
+        ? 'Khóa bị vô hiệu hóa chỉ xem được, không nhận đăng ký, duyệt hay chấm điểm; chứng nhận đã duyệt có thể bị thu hồi. Gõ "Xác nhận" để tiếp tục.'
+        : 'Bật lại khóa. Gõ "Xác nhận" để tiếp tục.',
     requiresConfirmText: () => true,
     impact: async (gateway, row) => {
       const data = await gateway.call<Record<string, unknown>>(

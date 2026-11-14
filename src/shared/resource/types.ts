@@ -188,7 +188,15 @@ export interface ResourceDefinition {
   card: (row: ResourceRow) => CardView;
   detailTitle: (row: ResourceRow) => string;
   detailBadges?: (row: ResourceRow) => readonly { label: string; tone?: BadgeTone }[];
-  detail: (row: ResourceRow) => readonly DetailSection[];
+  detail: (row: ResourceRow, context?: unknown) => readonly DetailSection[];
+  /**
+   * Dữ liệu tra cứu phụ cho màn chi tiết (vd. tên cấp độ theo mã): tải một lần, cache theo `key`, truyền vào tham số
+   * thứ hai của `detail`. Chưa tải xong thì `context` là undefined (detail phải chịu được).
+   */
+  detailContext?: {
+    key: readonly string[];
+    load: (gateway: ResourceGateway) => Promise<unknown>;
+  };
   form?: FormDefinition;
   toggle?: ToggleDefinition;
   canCreate: (subject: PermissionSubject | null) => boolean;

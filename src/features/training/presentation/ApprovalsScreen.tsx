@@ -22,6 +22,7 @@ import { FilterChips } from '@/shared/ui/FilterChips';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { SelectField } from '@/shared/ui/SelectField';
 import { useScreenInsets } from '@/shared/ui/screen-insets';
+import { pickAllowed } from '@/shared/resource/initial-filters';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
@@ -55,17 +56,22 @@ const isException = (row: ResourceRow) => row.eligible === false;
 export function ApprovalsScreen({
   def,
   subject,
+  initialFilters,
 }: {
   def: ResourceDefinition;
   subject: PermissionSubject | null;
+  /** Bộ lọc áp sẵn từ đường dẫn (vd. từ tổng quan: chờ xử lý / bị từ chối). */
+  initialFilters?: Record<string, string>;
 }) {
   const { colors, spacing, radius } = useTheme();
   const insets = useScreenInsets();
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusChoice>('all');
-  const [course, setCourse] = useState('');
+  const [status, setStatus] = useState<StatusChoice>(
+    pickAllowed(initialFilters?.approvalStatus, ['PENDING', 'REJECTED'] as const, 'all'),
+  );
+  const [course, setCourse] = useState(initialFilters?.['course.courseCode'] ?? '');
   const [selected, setSelected] = useState<Map<string, ResourceRow>>(new Map());
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [result, setResult] = useState<BulkResult | null>(null);

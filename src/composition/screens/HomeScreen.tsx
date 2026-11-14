@@ -34,7 +34,7 @@ export function HomeScreen({ onOpenPath, onOpenAnalysis }: HomeScreenProps) {
     return (
       <DashboardScreen
         permissions={user?.permissions ?? []}
-        resolveHref={(href) => dashboardHref(href, user)}
+        resolveHref={(key, href) => dashboardHref(key, href, user)}
         onOpenPath={onOpenPath}
         onOpenAnalysis={onOpenAnalysis}
       />

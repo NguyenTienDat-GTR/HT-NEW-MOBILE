@@ -9,6 +9,15 @@ export class AccountRemoteDataSource {
     return this.http.request({ method: 'GET', path: '/auth/me/profile' });
   }
 
+  updateProfile(body: Record<string, unknown>): Promise<unknown> {
+    // BE bắt buộc cờ đồng ý xử lý dữ liệu khi sửa hồ sơ; người dùng đã tích đồng ý ở màn sửa hồ sơ.
+    return this.http.request({
+      method: 'PUT',
+      path: '/auth/me/profile',
+      body: { ...body, privacyConsent: true },
+    });
+  }
+
   changeEmail(email: string, currentPassword: string): Promise<{ email: string }> {
     // BE bắt buộc cờ đồng ý xử lý dữ liệu khi đổi email; người dùng đã đồng ý chính sách ở cổng sau đăng nhập.
     return this.http.request({
@@ -34,11 +43,28 @@ export class AccountRemoteDataSource {
     });
   }
 
-  permissions(page: number, size: number, search?: string): Promise<PermissionPageDto> {
+  permissions(
+    page: number,
+    size: number,
+    search?: string,
+    filters?: Record<string, string>,
+  ): Promise<PermissionPageDto> {
     return this.http.request({
       method: 'GET',
       path: '/auth/me/permissions',
-      query: { page, size, search },
+      // BE gọi Set.of(...).contains(sortBy) nên thiếu sortBy là lỗi 500; web luôn gửi sắp xếp, app cũng phải gửi.
+      query: {
+        page,
+        size,
+        search,
+        sortBy: 'permissionName',
+        sortDirection: 'ASC',
+        filters: filters && Object.keys(filters).length > 0 ? JSON.stringify(filters) : undefined,
+      },
     });
+  }
+
+  permissionFilterOptions(): Promise<{ modules?: string[] | null; actions?: string[] | null }> {
+    return this.http.request({ method: 'GET', path: '/auth/me/permissions/filter-options' });
   }
 }

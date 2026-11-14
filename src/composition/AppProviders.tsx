@@ -10,6 +10,7 @@ import { NotificationProvider } from '@/features/notifications/presentation/noti
 import { ResourceProvider } from '@/shared/resource/resource-context';
 import { RealtimeProvider } from '@/shared/realtime/realtime-context';
 import { ThemeProvider } from '@/shared/theme/theme-provider';
+import { ToastProvider } from '@/shared/ui/Toast';
 
 import { createAppContainer, type AppContainer } from './container';
 
@@ -45,7 +46,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
               <NotificationProvider deps={container.notifications}>
                 <AccountProvider deps={container.account}>
                   <AnalyticsProvider deps={container.analytics}>
-                    <ResourceProvider gateway={container.resource}>{children}</ResourceProvider>
+                    <ResourceProvider gateway={container.resource}>
+                      <ToastProvider>{children}</ToastProvider>
+                    </ResourceProvider>
                   </AnalyticsProvider>
                 </AccountProvider>
               </NotificationProvider>

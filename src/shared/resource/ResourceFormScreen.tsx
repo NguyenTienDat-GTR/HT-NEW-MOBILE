@@ -9,6 +9,7 @@ import { Button } from '../ui/Button';
 import { LoadingState } from '../ui/LoadingState';
 import { Screen } from '../ui/Screen';
 import type { TextInputHandle } from '../ui/TextField';
+import { useToast } from '../ui/Toast';
 
 import { FormFieldView } from './FormFieldView';
 import { FormSection } from './FormSection';
@@ -16,6 +17,7 @@ import {
   applyChange,
   firstFormError,
   groupFormRows,
+  isBooleanField,
   isCompactField,
   sectionErrorCounts,
   validateForm,
@@ -80,6 +82,7 @@ function FormBody({
   const mode: FormMode = row ? 'edit' : 'create';
   const gateway = useResourceGateway();
   const invalidate = useInvalidateResource(def);
+  const toast = useToast();
   const [values, setValues] = useState<FormValues>(() => form.initialValues(row, subject));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -162,6 +165,12 @@ function FormBody({
         result = await gateway.create(def.endpoint, body);
       }
       await invalidate();
+      // Báo đã lưu (như toast của web): màn form đóng ngay sau đó nên thông báo hiện ở khung dùng chung.
+      toast.success(
+        mode === 'create'
+          ? (form.successCreate ?? 'Tạo mới thành công')
+          : (form.successEdit ?? 'Lưu cập nhật thành công'),
+      );
       const saved = result && typeof result === 'object' ? (result as ResourceRow) : null;
       onSaved(
         saved ? rowId(def, saved) || (row ? rowId(def, row) : null) : row ? rowId(def, row) : null,
@@ -192,7 +201,11 @@ function FormBody({
       }}
       footer={
         <Button
-          label={mode === 'create' ? 'Tạo mới' : 'Lưu thay đổi'}
+          label={
+            mode === 'create'
+              ? (form.submitLabels?.create ?? 'Tạo mới')
+              : (form.submitLabels?.edit ?? 'Lưu cập nhật')
+          }
           onPress={() => void submit()}
           loading={saving}
         />
@@ -207,7 +220,7 @@ function FormBody({
                 key={field.name}
                 field={field}
                 scope={def.id}
-                value={values[field.name] ?? (field.kind === 'switch' ? false : '')}
+                value={values[field.name] ?? (isBooleanField(field) ? false : '')}
                 values={values}
                 mode={mode}
                 row={row}
@@ -244,6 +257,8 @@ function FormBody({
             );
           },
         );
+        // Nhóm mà mọi ô đều đang ẩn thì không vẽ tiêu đề trống.
+        if (rows.length === 0) return null;
         return section.title ? (
           <FormSection
             key={section.title}

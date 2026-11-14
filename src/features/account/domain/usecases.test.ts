@@ -50,6 +50,7 @@ describe('labels', () => {
           roles: [],
           email: null,
           hasLeader: true,
+          canEditBirthDate: false,
           rankHistory: [],
           certificates: [],
           leader: {
@@ -57,6 +58,7 @@ describe('labels', () => {
             holyName: 'Phêrô',
             fullName: 'Nguyễn Văn A',
             birthDate: null,
+            imageUrl: null,
             email: null,
             phoneNumber: null,
             gender: null,

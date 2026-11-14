@@ -43,7 +43,7 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
   {
     resource: 'parishes',
     group: 'organization',
-    label: 'Giáo xứ / họ / điểm',
+    label: 'Giáo xứ, giáo họ, giáo điểm',
     moduleName: 'organization.parish',
     permissionPrefixes: ['organization.parish.read.'],
   },
@@ -145,7 +145,7 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
   {
     resource: 'certificates',
     group: 'certificates',
-    label: 'Danh sách chứng nhận',
+    label: 'Chứng nhận',
     moduleName: 'certificate.list',
     permissionPrefixes: ['training.certificate.read.'],
   },
@@ -154,7 +154,8 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
     group: 'certificates',
     label: 'Duyệt chứng nhận',
     moduleName: 'certificate.approval',
-    permissionPrefixes: ['training.certificate.approve.'],
+    // Như web: người có quyền xem chứng nhận cũng thấy màn này (chỉ xem, không duyệt được).
+    permissionPrefixes: ['training.certificate.approve.', 'training.certificate.read.'],
   },
   {
     resource: 'accounts',
@@ -211,11 +212,13 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
   },
 ];
 
+/** Người dùng kèm cờ đơn vị bị khóa (AuthUser thỏa kiểu này). */
+export type MenuSubject = PermissionSubject & { unitLocked?: boolean };
+
 /** Người dùng được thấy một mục menu (vd. 'courses'); dùng cho các tab dưới cùng. */
-export function canSeeMenuEntry(
-  resource: string,
-  user: PermissionSubject | null | undefined,
-): boolean {
+export function canSeeMenuEntry(resource: string, user: MenuSubject | null | undefined): boolean {
+  // Như web (canSeeRoute): đơn vị bị khóa thì chỉ còn xem thông báo, mọi màn nghiệp vụ đều ẩn.
+  if (user?.unitLocked) return false;
   const entry = MENU_ENTRIES.find((item) => item.resource === resource);
   return (
     !!entry &&
@@ -233,8 +236,10 @@ export interface MenuSection {
 }
 
 /** Các nhóm menu người dùng được thấy; nhóm không còn mục nào thì ẩn cả nhóm. */
-export function visibleMenuSections(user: PermissionSubject | null | undefined): MenuSection[] {
+export function visibleMenuSections(user: MenuSubject | null | undefined): MenuSection[] {
   const sections: MenuSection[] = [];
+  // Như web: đơn vị bị khóa thì không còn mục nghiệp vụ nào.
+  if (user?.unitLocked) return sections;
   for (const entry of MENU_ENTRIES) {
     if (
       !canReadRoute(

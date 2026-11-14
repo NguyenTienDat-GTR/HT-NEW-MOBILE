@@ -24,7 +24,9 @@ import {
   ChangeMyEmail,
   ChangePasswordWithToken,
   GetMyProfile,
+  UpdateMyProfile,
   ListMyPermissions,
+  GetMyPermissionFilterOptions,
   RequestPasswordChangeOtp,
   VerifyPasswordChangeOtp,
 } from '@/features/account/domain/usecases';
@@ -165,11 +167,13 @@ export function createAppContainer(env: AppEnv = readEnv()): AppContainer {
     },
     account: {
       getMyProfile: new GetMyProfile(accountRepository),
+      updateMyProfile: new UpdateMyProfile(accountRepository),
       changeMyEmail: new ChangeMyEmail(accountRepository),
       requestPasswordChangeOtp: new RequestPasswordChangeOtp(accountRepository),
       verifyPasswordChangeOtp: new VerifyPasswordChangeOtp(accountRepository),
       changePasswordWithToken: new ChangePasswordWithToken(accountRepository),
       listMyPermissions: new ListMyPermissions(accountRepository),
+      getMyPermissionFilterOptions: new GetMyPermissionFilterOptions(accountRepository),
     },
     analytics: {
       getReport: new GetAnalyticsReport(analyticsRepository),

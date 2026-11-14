@@ -19,6 +19,7 @@ import {
   participantCard,
   PARTICIPATION_SEARCH_FIELDS,
   participationDetail,
+  LEVEL_NAMES_CONTEXT,
   registrationCard,
   leaderName,
   unitFilters,
@@ -47,6 +48,7 @@ const base = {
   searchPlaceholder: 'Tên huynh trưởng, giáo xứ, giáo hạt',
   detailTitle: leaderName,
   detail: participationDetail,
+  detailContext: LEVEL_NAMES_CONTEXT,
 } satisfies Partial<ResourceDefinition>;
 
 /** Hồ sơ đăng ký tham dự: danh sách, chi tiết, thu hồi (người gửi, khi chưa duyệt) và gửi đăng ký mới. */
@@ -55,6 +57,7 @@ export const registrationsResource: ResourceDefinition = {
   id: 'registrations',
   title: 'Đăng ký tham dự',
   singular: 'Đăng ký',
+  createLabel: 'Gửi đăng ký',
   endpoint: '/training/participations',
   filters: [
     courseFilter,
@@ -69,6 +72,7 @@ export const registrationsResource: ResourceDefinition = {
   toggle: {
     isActive: () => true,
     label: () => 'Thu hồi đăng ký',
+    successMessage: () => 'Đã thu hồi đăng ký',
     confirmMessage: () => 'Thu hồi hồ sơ đăng ký này. Bạn gửi lại được nếu khóa còn mở đăng ký.',
     run: (gateway, row) => gateway.call('DELETE', `/training/registrations/${encode(row)}`),
   },
@@ -135,6 +139,7 @@ export const participantsResource: ResourceDefinition = {
   toggle: {
     isActive: () => true,
     label: () => 'Chuyển về từ chối duyệt',
+    successMessage: () => 'Đã chuyển hồ sơ về trạng thái từ chối duyệt',
     confirmMessage: () =>
       'Hồ sơ rời danh sách tham dự và chuyển về trạng thái từ chối duyệt (không bị xóa; duyệt lại được ở màn Duyệt đăng ký). Không áp dụng cho hồ sơ đã có chứng nhận.',
     run: (gateway, row) => gateway.call('DELETE', `/training/participants/${encode(row)}`),

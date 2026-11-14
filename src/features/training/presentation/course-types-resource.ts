@@ -1,6 +1,7 @@
 import { formatDate } from '@/core/domain/date-format';
 import { optional, trimmed } from '@/shared/resource/form-logic';
-import { loadLevelOptions } from '@/shared/resource/options';
+import { levelLabel } from '@/core/domain/level-labels';
+import { LEVEL_NAMES_CONTEXT, levelNamesOf, loadLevelOptions } from '@/shared/resource/options';
 import { flag, joinParts, text } from '@/shared/resource/row';
 import type { ResourceDefinition } from '@/shared/resource/types';
 
@@ -31,7 +32,7 @@ const ownerLabel = (row: Record<string, unknown>) => {
 const statusBadge = (active: boolean) =>
   active
     ? { label: 'Đang hoạt động', tone: 'success' as const }
-    : { label: 'Tạm ngưng', tone: 'warning' as const };
+    : { label: 'Tạm ngưng', tone: 'neutral' as const };
 
 interface PrerequisiteOption {
   typeCode: string;
@@ -67,7 +68,8 @@ export const courseTypesResource: ResourceDefinition = {
     statusBadge(flag(row, 'status')),
     ...(flag(row, 'hasCertificate') ? [{ label: 'Có chứng nhận', tone: 'info' as const }] : []),
   ],
-  detail: (row) => [
+  detailContext: LEVEL_NAMES_CONTEXT,
+  detail: (row, context) => [
     {
       title: 'Thông tin loại khóa',
       fields: [
@@ -78,45 +80,61 @@ export const courseTypesResource: ResourceDefinition = {
     {
       title: 'Điều kiện tham dự',
       fields: [
-        { label: 'Cấp độ yêu cầu', value: text(row, 'requiredCurrentLevel') },
+        {
+          label: 'Cấp hiện tại yêu cầu',
+          value:
+            levelLabel(text(row, 'requiredCurrentLevel'), levelNamesOf(context)) || 'Không yêu cầu',
+        },
         {
           label: 'Tuổi tối thiểu',
           value:
             text(row, 'requiredMinAge') && text(row, 'requiredMinAge') !== '0'
-              ? text(row, 'requiredMinAge')
-              : '',
-        },
-        { label: 'Khóa tiên quyết', value: text(row, 'prerequisiteTypeName') },
-        {
-          label: 'Thời hạn sau khóa tiên quyết',
-          value: text(row, 'maxYearsAfterPrerequisite')
-            ? `${text(row, 'maxYearsAfterPrerequisite')} năm`
-            : '',
+              ? `${text(row, 'requiredMinAge')} tuổi`
+              : 'Không yêu cầu',
         },
       ],
     },
     {
-      title: 'Chứng nhận và thăng cấp',
+      title: 'Khóa tiên quyết và nâng cấp',
       fields: [
-        { label: 'Cấp chứng nhận', value: flag(row, 'hasCertificate') ? 'Có' : 'Không' },
-        { label: 'Mã viết tắt chứng chỉ', value: text(row, 'certificateShortCode') },
-        { label: 'Cấp độ khi hoàn thành', value: text(row, 'resultingLevel') },
+        { label: 'Khóa tiên quyết', value: text(row, 'prerequisiteTypeName') || 'Không có' },
+        ...(text(row, 'prerequisiteTypeName')
+          ? [
+              {
+                label: 'Thời hạn tối đa sau khóa tiên quyết',
+                value: text(row, 'maxYearsAfterPrerequisite')
+                  ? `${text(row, 'maxYearsAfterPrerequisite')} năm`
+                  : 'Không giới hạn',
+              },
+            ]
+          : []),
+        {
+          label: 'Cấp độ khi hoàn thành',
+          value:
+            text(row, 'resultingLevel') && text(row, 'resultingLevel') !== 'NONE'
+              ? levelLabel(text(row, 'resultingLevel'), levelNamesOf(context))
+              : 'Không có',
+        },
+        { label: 'Khóa có cấp chứng nhận', value: flag(row, 'hasCertificate') ? 'Có' : 'Không' },
+        ...(text(row, 'certificateShortCode')
+          ? [{ label: 'Mã viết tắt chứng chỉ', value: text(row, 'certificateShortCode') }]
+          : []),
       ],
     },
     {
-      title: 'Dấu vết ghi nhận',
+      title: 'Lịch sử ghi nhận',
       collapsed: true,
       fields: [
-        { label: 'Tạo bởi', value: text(row, 'createdByName') },
-        { label: 'Tạo lúc', value: formatDate(text(row, 'createdAt')) },
-        { label: 'Sửa bởi', value: text(row, 'updatedByName') },
-        { label: 'Sửa lúc', value: formatDate(text(row, 'updatedAt')) },
+        { label: 'Người tạo', value: text(row, 'createdByName') },
+        { label: 'Ngày tạo', value: formatDate(text(row, 'createdAt')) },
+        { label: 'Người cập nhật', value: text(row, 'updatedByName') },
+        { label: 'Ngày cập nhật', value: formatDate(text(row, 'updatedAt')) },
       ],
     },
   ],
   form: {
     titleCreate: 'Thêm loại khóa',
-    titleEdit: 'Sửa loại khóa',
+    titleEdit: 'Chỉnh sửa loại khóa',
     sections: [
       { title: 'Thông tin loại khóa', fields: ['typeName', 'managementUnitType'] },
       {

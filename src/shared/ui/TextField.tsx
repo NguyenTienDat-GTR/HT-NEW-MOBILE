@@ -12,9 +12,9 @@ import {
 import { fontFamily } from '../theme/tokens';
 import { useTheme } from '../theme/theme-provider';
 
-import { EyeIcon, EyeSlashIcon, WarningCircleIcon } from './icons';
+import { EyeIcon, EyeSlashIcon } from './icons';
+import { FieldError } from './FieldError';
 import { FieldLabel } from './FieldLabel';
-import { Text } from './Text';
 
 /** Kiểu tham chiếu tới ô nhập (để chuyển focus giữa các ô). */
 export type TextInputHandle = ComponentRef<typeof TextInput>;
@@ -27,6 +27,8 @@ export interface TextFieldProps {
   /** Lỗi hiển thị ngay dưới ô (kèm icon, không chỉ bằng màu). */
   error?: string;
   hint?: string;
+  /** Ô bắt buộc: nhãn có dấu "*". */
+  required?: boolean;
   placeholder?: string;
   /** Ô mật khẩu: có nút hiện/ẩn. */
   secure?: boolean;
@@ -51,6 +53,7 @@ export function TextField({
   onBlur,
   error,
   hint,
+  required = false,
   placeholder,
   secure = false,
   leftIcon,
@@ -75,7 +78,7 @@ export function TextField({
   return (
     <View style={styles.wrapper}>
       {/* Nhãn luôn hiện phía trên, không thay bằng placeholder. */}
-      <FieldLabel label={label} hint={hint} />
+      <FieldLabel label={label} hint={hint} required={required} />
       <View
         style={[
           styles.field,
@@ -84,8 +87,10 @@ export function TextField({
             borderRadius: theme.radius.input,
             borderColor,
             backgroundColor: editable ? colors.surface1 : colors.surface2,
-            // Vòng focus 3px như web (--primary-ring).
+            // Viền đậm lên khi focus (như vòng focus của web). Bù 1dp bằng padding để viền dày thêm không đẩy chữ
+            // và các ô bên cạnh xê dịch.
             borderWidth: focused ? 2 : 1,
+            padding: focused ? 0 : 1,
           },
         ]}
       >
@@ -113,7 +118,7 @@ export function TextField({
           multiline={multiline}
           textAlignVertical={multiline ? 'top' : 'center'}
           onSubmitEditing={onSubmitEditing}
-          accessibilityLabel={label}
+          accessibilityLabel={required ? `${label}, bắt buộc` : label}
           accessibilityHint={hint}
           // 16px: iOS không tự phóng to khi focus.
           style={[
@@ -121,7 +126,8 @@ export function TextField({
             {
               color: colors.foreground,
               fontFamily: fontFamily.regular,
-              minHeight: multiline ? 96 : theme.touch.input - 2,
+              // Trừ viền + phần bù (2dp mỗi phía) để cả ô cao đúng 48dp ở cả hai trạng thái.
+              minHeight: multiline ? 96 : theme.touch.input - 4,
             },
           ]}
         />
@@ -146,14 +152,7 @@ export function TextField({
           </Pressable>
         ) : null}
       </View>
-      {error ? (
-        <View style={styles.message} accessibilityLiveRegion="polite">
-          <WarningCircleIcon size={theme.iconSize.sm} color={colors.danger} weight="bold" />
-          <Text variant="secondary" tone="danger" style={styles.messageText}>
-            {error}
-          </Text>
-        </View>
-      ) : null}
+      {error ? <FieldError message={error} /> : null}
     </View>
   );
 }
@@ -164,6 +163,4 @@ const styles = StyleSheet.create({
   leftIcon: { paddingLeft: 14 },
   input: { flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 10 },
   toggle: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  message: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
-  messageText: { flex: 1 },
 });

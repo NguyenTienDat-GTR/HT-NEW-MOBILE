@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useToast } from '@/shared/ui/Toast';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -21,6 +22,7 @@ export function useLoginViewModel() {
   });
   const siteKey = captcha.data?.enabled ? captcha.data.siteKey : null;
 
+  const toast = useToast();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { username: '', password: '', rememberMe: true },
@@ -41,8 +43,10 @@ export function useLoginViewModel() {
         turnstileToken: turnstileToken ?? undefined,
       });
       useAuthStore.getState().setAuthenticated(user);
+      toast.success('Đăng nhập thành công');
     } catch (error) {
       setFormError(errorMessage(error));
+      toast.error(errorMessage(error));
       // Token Turnstile chỉ dùng được một lần: bắt xác minh lại sau mỗi lần thất bại.
       setTurnstileToken(null);
       setTurnstileReset((value) => value + 1);

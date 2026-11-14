@@ -10,7 +10,7 @@ import { taxonomyFilters } from './taxonomy-filters';
 const badges = (row: ResourceRow) => [
   flag(row, 'status')
     ? { label: 'Đang hoạt động', tone: 'success' as const }
-    : { label: 'Đã tắt', tone: 'warning' as const },
+    : { label: 'Tạm ngưng', tone: 'neutral' as const },
 ];
 
 /** Quyền hạn: danh mục chỉ để xem (sửa và bật/tắt dành riêng cho quản trị hệ thống, làm trên web). */
@@ -46,7 +46,7 @@ export const permissionsResource: ResourceDefinition = {
   detailBadges: badges,
   detail: (row) => [
     {
-      title: 'Quyền',
+      title: 'Thông tin quyền',
       fields: [
         { label: 'Mã quyền', value: text(row, 'permissionCode') },
         { label: 'Tên quyền', value: text(row, 'permissionName') },
@@ -54,7 +54,7 @@ export const permissionsResource: ResourceDefinition = {
       ],
     },
     {
-      title: 'Phân loại',
+      title: 'Phạm vi áp dụng',
       fields: [
         { label: 'Phân hệ', value: taxonomyLabel('module', row.moduleCode) },
         { label: 'Đối tượng', value: taxonomyLabel('resource', row.resourceCode) },

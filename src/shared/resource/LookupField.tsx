@@ -8,6 +8,7 @@ import { useDebouncedValue } from '../hooks/use-debounced-value';
 import { useTheme } from '../theme/theme-provider';
 import { Banner } from '../ui/Banner';
 import { BottomSheet } from '../ui/BottomSheet';
+import { FieldError } from '../ui/FieldError';
 import { FieldLabel } from '../ui/FieldLabel';
 import { CaretDownIcon, CheckIcon } from '../ui/icons';
 import { LoadingState } from '../ui/LoadingState';
@@ -22,6 +23,8 @@ export interface LookupFieldProps {
   scope: string;
   value: string;
   disabled?: boolean;
+  /** Lỗi hiện ngay dưới ô (viền đỏ, icon và chữ). */
+  error?: string;
   onChange: (value: string) => void;
 }
 
@@ -29,7 +32,14 @@ export interface LookupFieldProps {
  * Chọn một bản ghi trong danh sách rất dài (huynh trưởng): mở sheet, gõ để tìm trên máy chủ (đợi người dùng
  * ngừng gõ rồi mới gọi), chạm một dòng để chọn. Nhãn của lựa chọn được giữ lại để hiển thị sau khi đóng sheet.
  */
-export function LookupField({ field, scope, value, disabled = false, onChange }: LookupFieldProps) {
+export function LookupField({
+  field,
+  scope,
+  value,
+  disabled = false,
+  error,
+  onChange,
+}: LookupFieldProps) {
   const { colors, radius, iconSize, touch } = useTheme();
   const gateway = useResourceGateway();
   const [open, setOpen] = useState(false);
@@ -54,10 +64,11 @@ export function LookupField({ field, scope, value, disabled = false, onChange }:
 
   return (
     <View style={styles.wrapper}>
-      <FieldLabel label={field.label} hint={field.hint} />
+      <FieldLabel label={field.label} hint={field.hint} required={field.required} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${field.label}: ${label || 'Chưa chọn'}`}
+        accessibilityLabel={`${field.label}${field.required ? ', bắt buộc' : ''}: ${label || 'Chưa chọn'}`}
+        accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={() => setOpen(true)}
         style={({ pressed }) => [
@@ -65,8 +76,8 @@ export function LookupField({ field, scope, value, disabled = false, onChange }:
           {
             minHeight: touch.input,
             borderRadius: radius.input,
-            borderColor: colors.input,
-            backgroundColor: pressed ? colors.surface2 : colors.surface1,
+            borderColor: error ? colors.danger : colors.input,
+            backgroundColor: disabled || pressed ? colors.surface2 : colors.surface1,
             opacity: disabled ? 0.6 : 1,
           },
         ]}
@@ -81,6 +92,7 @@ export function LookupField({ field, scope, value, disabled = false, onChange }:
         </Text>
         <CaretDownIcon size={iconSize.sm} color={colors.muted} weight="bold" />
       </Pressable>
+      {error ? <FieldError message={error} /> : null}
 
       <BottomSheet visible={open} title={field.label} onClose={() => setOpen(false)}>
         <TextField
@@ -102,9 +114,22 @@ export function LookupField({ field, scope, value, disabled = false, onChange }:
               accessibilityState={{ selected }}
               accessibilityLabel={option.label}
               onPress={() => choose(option)}
-              style={[styles.option, { minHeight: 52, borderColor: colors.border }]}
+              style={({ pressed }) => [
+                styles.option,
+                {
+                  backgroundColor: selected
+                    ? colors.primarySoft
+                    : pressed
+                      ? colors.surface2
+                      : 'transparent',
+                },
+              ]}
             >
-              <Text variant="body" style={styles.value}>
+              <Text
+                variant={selected ? 'bodyStrong' : 'body'}
+                tone={selected ? 'primary' : 'foreground'}
+                style={styles.value}
+              >
                 {option.label}
               </Text>
               {selected ? (
@@ -125,19 +150,22 @@ export function LookupField({ field, scope, value, disabled = false, onChange }:
 
 const styles = StyleSheet.create({
   wrapper: { gap: 6 },
+  // Cùng kích thước và lề với SelectField để hai loại ô chọn thẳng hàng trong form.
   field: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     gap: 8,
   },
   value: { flex: 1 },
   option: {
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 8,
   },
 });

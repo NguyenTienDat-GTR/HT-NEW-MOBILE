@@ -25,7 +25,7 @@ const badges = (row: ResourceRow) => [
     : { label: 'Vai trò phụ', tone: 'neutral' as const },
   flag(row, 'status')
     ? { label: 'Đang hoạt động', tone: 'success' as const }
-    : { label: 'Tạm ngưng', tone: 'warning' as const },
+    : { label: 'Tạm ngưng', tone: 'neutral' as const },
 ];
 
 /** Gán vai trò: danh sách các lần gán, gán nhiều vai trò cho một tài khoản, đổi vai trò chính / hạn dùng, bật/tắt. */
@@ -33,6 +33,7 @@ export const accountRolesResource: ResourceDefinition = {
   id: 'account-roles',
   title: 'Gán vai trò',
   singular: 'Lần gán vai trò',
+  createLabel: 'Gán nhiều vai trò',
   endpoint: '/system/account-roles',
   idField: 'id',
   searchFields: ['username', 'roleCode', 'assignedBy'],
@@ -70,17 +71,17 @@ export const accountRolesResource: ResourceDefinition = {
   detailBadges: badges,
   detail: (row) => [
     {
-      title: 'Lần gán vai trò',
+      title: 'Vai trò của tài khoản',
       fields: [
         { label: 'Tài khoản', value: text(row, 'username') },
         { label: 'Huynh trưởng', value: text(row, 'leaderFullName') },
         { label: 'Vai trò', value: text(row, 'roleName') },
-        { label: 'Loại', value: flag(row, 'isPrimary') ? 'Vai trò chính' : 'Vai trò phụ' },
+        { label: 'Loại vai trò', value: flag(row, 'isPrimary') ? 'Vai trò chính' : 'Vai trò phụ' },
         { label: 'Trạng thái', value: flag(row, 'status') ? 'Đang hoạt động' : 'Tạm ngưng' },
       ],
     },
     {
-      title: 'Thời hạn',
+      title: 'Gán vai trò',
       fields: [
         { label: 'Người gán', value: text(row, 'assignedByName') || text(row, 'assignedBy') },
         { label: 'Ngày gán', value: formatDateTime(text(row, 'assignedAt')) },
@@ -99,8 +100,8 @@ export const accountRolesResource: ResourceDefinition = {
     },
   ],
   form: {
-    titleCreate: 'Gán vai trò cho tài khoản',
-    titleEdit: 'Sửa lần gán vai trò',
+    titleCreate: 'Gán nhiều vai trò cho tài khoản',
+    titleEdit: 'Chỉnh sửa gán vai trò',
     sections: [
       { title: 'Tài khoản', fields: ['username', 'accountView', 'roleView'] },
       { title: 'Vai trò', fields: ['roles', 'isPrimary'] },

@@ -30,6 +30,7 @@ import { Screen } from '@/shared/ui/Screen';
 import { EyeIcon } from '@/shared/ui/icons';
 import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 
 import { genderLabel, levelLabel, parishOptionLabel, rankSentence } from '../domain/leader-labels';
 import {
@@ -43,8 +44,8 @@ import {
 type Tab = 'info' | 'training' | 'certificates' | 'accounts';
 
 const TABS = [
-  { value: 'info', label: 'Cá nhân' },
-  { value: 'training', label: 'Khóa HL' },
+  { value: 'info', label: 'Thông tin cá nhân' },
+  { value: 'training', label: 'Khóa huấn luyện' },
   { value: 'certificates', label: 'Chứng nhận' },
   { value: 'accounts', label: 'Tài khoản' },
 ] as const;
@@ -119,7 +120,7 @@ export function LeaderDetailScreen({ def, id, subject, onEdit }: LeaderDetailScr
             <Badge label={levelLabel(text(leader, 'leaderLevel'), levelNames)} tone="info" />
             <Badge
               label={active ? 'Đang hoạt động' : 'Tạm ngưng'}
-              tone={active ? 'success' : 'warning'}
+              tone={active ? 'success' : 'neutral'}
             />
           </View>
           <Text variant="secondary" tone="textSecondary">
@@ -137,11 +138,7 @@ export function LeaderDetailScreen({ def, id, subject, onEdit }: LeaderDetailScr
             <Button label="Sửa ngày sinh" variant="outline" onPress={() => setBirthOpen(true)} />
           ) : null}
           {canTransferLeader(subject) ? (
-            <Button
-              label="Chuyển giáo xứ"
-              variant="outline"
-              onPress={() => setTransferOpen(true)}
-            />
+            <Button label="Chuyển xứ" variant="outline" onPress={() => setTransferOpen(true)} />
           ) : null}
         </View>
       </Card>
@@ -222,54 +219,61 @@ function InfoTab({
   return (
     <>
       <Card>
-        <InfoGrid>
-          <InfoRow label="Tên thánh" value={text(leader, 'holyName')} />
-          <InfoRow label="Họ và tên" value={text(leader, 'fullName')} />
-          <InfoRow label="Giới tính" value={genderLabel(text(leader, 'gender'))} />
-          <InfoRow label="Ngày sinh" value={formatDate(text(leader, 'birthDate'))} />
-          <InfoRow label="Số điện thoại" value={text(leader, 'phoneNumber')} />
-          <InfoRow label="Email" value={text(leader, 'email')} />
-          <InfoRow label="Giáo xứ / họ / điểm" value={text(leader, 'parishName')} />
-          <InfoRow label="Giáo hạt" value={text(leader, 'deaneryName')} />
-          <InfoRow
-            label="Cấp huynh trưởng"
-            value={levelLabel(text(leader, 'leaderLevel'), levelNames)}
-          />
-          <InfoRow
-            label="Tạo"
-            value={[text(leader, 'createdByName'), formatDate(text(leader, 'createdAt'))]
-              .filter(Boolean)
-              .join(' · ')}
-          />
-          <InfoRow
-            label="Cập nhật"
-            value={[text(leader, 'updatedByName'), formatDate(text(leader, 'updatedAt'))]
-              .filter(Boolean)
-              .join(' · ')}
-          />
-        </InfoGrid>
+        <View style={{ gap: 12 }}>
+          <Text variant="heading" accessibilityRole="header">
+            Thông tin cơ bản
+          </Text>
+          <InfoGrid>
+            <InfoRow label="Tên thánh" value={text(leader, 'holyName')} />
+            <InfoRow label="Họ và tên" value={text(leader, 'fullName')} />
+            <InfoRow label="Giới tính" value={genderLabel(text(leader, 'gender'))} />
+            <InfoRow label="Ngày sinh" value={formatDate(text(leader, 'birthDate'))} />
+            <InfoRow label="Số điện thoại" value={text(leader, 'phoneNumber')} />
+            <InfoRow label="Email" value={text(leader, 'email')} />
+            <InfoRow label="Giáo xứ / giáo họ / giáo điểm" value={text(leader, 'parishName')} />
+            <InfoRow label="Giáo hạt" value={text(leader, 'deaneryName')} />
+            <InfoRow
+              label="Cấp huynh trưởng"
+              value={levelLabel(text(leader, 'leaderLevel'), levelNames)}
+            />
+            <InfoRow
+              label="Tạo"
+              value={[text(leader, 'createdByName'), formatDate(text(leader, 'createdAt'))]
+                .filter(Boolean)
+                .join(' · ')}
+            />
+            <InfoRow
+              label="Cập nhật"
+              value={[text(leader, 'updatedByName'), formatDate(text(leader, 'updatedAt'))]
+                .filter(Boolean)
+                .join(' · ')}
+            />
+          </InfoGrid>
+        </View>
       </Card>
       <Card>
-        <Text variant="heading" accessibilityRole="header">
-          Lịch sử cấp bậc
-        </Text>
-        <QueryState query={history} empty="Chưa có lịch sử cấp bậc">
-          <View style={{ gap: 12 }}>
-            {sorted.map((item) => (
-              <InfoRow
-                key={String(item.id)}
-                label={formatDate(text(item, 'promotionDate'))}
-                value={[
-                  rankSentence(text(item, 'newLevel'), text(item, 'promotionDate'), levelNames),
-                  text(item, 'courseName'),
-                  text(item, 'note'),
-                ]
-                  .filter(Boolean)
-                  .join(' · ')}
-              />
-            ))}
-          </View>
-        </QueryState>
+        <View style={{ gap: 12 }}>
+          <Text variant="heading" accessibilityRole="header">
+            Lịch sử cấp bậc
+          </Text>
+          <QueryState query={history} empty="Chưa có lịch sử cấp bậc">
+            <View style={{ gap: 12 }}>
+              {sorted.map((item) => (
+                <InfoRow
+                  key={String(item.id)}
+                  label={formatDate(text(item, 'promotionDate'))}
+                  value={[
+                    rankSentence(text(item, 'newLevel'), text(item, 'promotionDate'), levelNames),
+                    text(item, 'courseName'),
+                    text(item, 'note'),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                />
+              ))}
+            </View>
+          </QueryState>
+        </View>
       </Card>
     </>
   );
@@ -327,12 +331,16 @@ function TrainingTab({ id }: { id: string }) {
             }
             accessibilityLabel={`Xem chi tiết kết quả: ${text(row, 'courseName') || text(row, 'courseCode')}`}
           >
-            <Text variant="bodyStrong">{text(row, 'courseName') || text(row, 'courseCode')}</Text>
-            <InfoRow label="Ngày đăng ký" value={formatDate(text(row, 'registrationDate'))} />
-            <InfoRow label="Điểm" value={score} />
-            <InfoRow label="Kết quả" value={result} />
-            <InfoRow label="Nhận xét" value={text(row, 'scoreNote')} />
-            <ViewDetailHint />
+            <View style={{ gap: 8 }}>
+              <Text variant="bodyStrong">{text(row, 'courseName') || text(row, 'courseCode')}</Text>
+              <InfoGrid>
+                <InfoRow label="Ngày đăng ký" value={formatDate(text(row, 'registrationDate'))} />
+                <InfoRow label="Điểm" value={score} />
+                <InfoRow label="Kết quả" value={result} />
+                <InfoRow label="Nhận xét" value={text(row, 'scoreNote')} />
+              </InfoGrid>
+              <ViewDetailHint />
+            </View>
           </Card>
         );
       })}
@@ -371,15 +379,21 @@ function CertificatesTab({ id, subject }: { id: string; subject: PermissionSubje
           }
           accessibilityLabel={`Xem chi tiết chứng nhận: ${text(row, 'certificateName') || text(row, 'certificateCode')}`}
         >
-          <Text variant="bodyStrong">{text(row, 'certificateName')}</Text>
-          <InfoRow
-            label="Khóa huấn luyện"
-            value={text(row, 'courseName') || text(row, 'courseCode')}
-          />
-          <InfoRow label="Mã chứng nhận" value={text(row, 'certificateCode')} />
-          <InfoRow label="Ngày cấp" value={formatDate(text(row, 'issueDate'))} />
-          <InfoRow label="Người ký" value={text(row, 'signedBy')} />
-          <ViewDetailHint />
+          <View style={{ gap: 8 }}>
+            <Text variant="bodyStrong">
+              {text(row, 'certificateName') || text(row, 'certificateCode')}
+            </Text>
+            <InfoGrid>
+              <InfoRow
+                label="Khóa huấn luyện"
+                value={text(row, 'courseName') || text(row, 'courseCode')}
+              />
+              <InfoRow label="Mã chứng nhận" value={text(row, 'certificateCode')} />
+              <InfoRow label="Ngày cấp" value={formatDate(text(row, 'issueDate'))} />
+              <InfoRow label="Người ký" value={text(row, 'signedBy')} />
+            </InfoGrid>
+            <ViewDetailHint />
+          </View>
         </Card>
       ))}
     </QueryState>
@@ -399,28 +413,33 @@ function AccountsTab({ id, fullName }: { id: string; fullName: string }) {
     <QueryState query={query} empty="Huynh trưởng chưa có tài khoản">
       {(query.data ?? []).map((account) => (
         <Card key={text(account, 'username')}>
-          <Text variant="bodyStrong">{text(account, 'username')}</Text>
-          <InfoRow label="Vai trò chính" value={text(account, 'primaryRoleName')} />
-          <InfoRow
-            label="Vai trò phụ"
-            value={
-              Array.isArray(account.secondaryRoleNames)
-                ? (account.secondaryRoleNames as string[]).join(', ')
-                : ''
-            }
-          />
-          <InfoRow
-            label="Trạng thái"
-            value={flag(account, 'status') ? 'Đang hoạt động' : 'Tạm ngưng'}
-          />
+          <View style={{ gap: 8 }}>
+            <Text variant="bodyStrong">{text(account, 'username')}</Text>
+            <InfoGrid>
+              <InfoRow label="Vai trò chính" value={text(account, 'primaryRoleName')} />
+              <InfoRow
+                label="Vai trò phụ"
+                value={
+                  Array.isArray(account.secondaryRoleNames)
+                    ? (account.secondaryRoleNames as string[]).join(', ')
+                    : ''
+                }
+              />
+              <InfoRow
+                label="Trạng thái"
+                value={flag(account, 'status') ? 'Đang hoạt động' : 'Tạm ngưng'}
+              />
+            </InfoGrid>
+          </View>
         </Card>
       ))}
     </QueryState>
   );
 }
 
-function useMutationSheet(onDone: () => void) {
+function useMutationSheet(onDone: () => void, successMessage: string) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const invalidate = () => queryClient.invalidateQueries({ queryKey: resourceKey('leaders') });
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -430,9 +449,11 @@ function useMutationSheet(onDone: () => void) {
     try {
       await action();
       await invalidate();
+      toast.success(successMessage);
       onDone();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setPending(false);
     }
@@ -457,7 +478,7 @@ function TransferSheet({
   const { pending, error, run } = useMutationSheet(() => {
     setParishId('');
     onClose();
-  });
+  }, 'Chuyển giáo xứ thành công');
 
   const deaneries = useQuery({
     queryKey: ['transfer-deaneries'],
@@ -502,8 +523,9 @@ function TransferSheet({
       }
     >
       <Text variant="body" tone="textSecondary">
-        Chuyển huynh trưởng sang giáo xứ / họ / điểm đang hoạt động khác. Chỉ chuyển trong phạm vi
-        bạn quản lý.
+        Chọn đơn vị mới cho huynh trưởng, hiện thuộc{' '}
+        {text(leader, 'parishName') || 'giáo xứ hiện tại'}. Các tài khoản xem hồ sơ huynh trưởng của
+        hai đơn vị sẽ nhận thông báo.
       </Text>
       {(deaneries.data?.length ?? 0) > 1 ? (
         <SelectField
@@ -518,7 +540,7 @@ function TransferSheet({
         />
       ) : null}
       <SelectField
-        label="Giáo xứ / họ / điểm mới"
+        label="Giáo xứ / giáo họ / giáo điểm mới"
         value={parishId}
         options={options}
         placeholder={parishes.isPending ? 'Đang tải…' : 'Chọn đơn vị'}
@@ -543,7 +565,7 @@ function BirthDateSheet({
 }) {
   const gateway = useResourceGateway();
   const [value, setValue] = useState(text(leader, 'birthDate'));
-  const { pending, error, run } = useMutationSheet(onClose);
+  const { pending, error, run } = useMutationSheet(onClose, 'Cập nhật ngày sinh thành công');
 
   return (
     <BottomSheet
@@ -568,7 +590,13 @@ function BirthDateSheet({
         </>
       }
     >
-      <DateField label="Ngày sinh" value={value} onChange={setValue} maximumDate={todayIso()} />
+      <DateField
+        label="Ngày sinh"
+        required
+        value={value}
+        onChange={setValue}
+        maximumDate={todayIso()}
+      />
       {error ? <Banner tone="danger" message={error} /> : null}
     </BottomSheet>
   );

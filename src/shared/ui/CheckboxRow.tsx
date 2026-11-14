@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/theme-provider';
 
+import { FieldError } from './FieldError';
 import { CheckIcon } from './icons';
 import { Text } from './Text';
 
@@ -47,11 +48,7 @@ export function CheckboxRow({ label, checked, onChange, error }: CheckboxRowProp
           {label}
         </Text>
       </Pressable>
-      {error ? (
-        <Text variant="secondary" tone="danger" accessibilityLiveRegion="polite">
-          {error}
-        </Text>
-      ) : null}
+      {error ? <FieldError message={error} /> : null}
     </View>
   );
 }

@@ -11,6 +11,7 @@ import { FilterChips, type ChipOption } from '@/shared/ui/FilterChips';
 import { BellSlashIcon } from '@/shared/ui/icons';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 
 import type { NotificationItem } from '../../domain/entities';
 import {
@@ -30,11 +31,11 @@ import {
 
 type Filter = 'all' | 'unread' | Exclude<NotificationGroup, 'other'>;
 
-/** Nhãn ngắn cho chip để bộ lọc gọn trong 2 dòng (tên đầy đủ của nhóm xem ở NOTIFICATION_GROUPS). */
+/** Nhãn chip của từng nhóm, đúng tên nhóm ở trung tâm thông báo của web. */
 const SHORT_GROUP_LABELS: Record<(typeof NOTIFICATION_GROUPS)[number]['key'], string> = {
-  training: 'Huấn luyện',
+  training: 'Khóa huấn luyện',
   certificate: 'Chứng chỉ',
-  access: 'Quyền',
+  access: 'Tài khoản & quyền',
   unit: 'Đơn vị',
 };
 
@@ -64,6 +65,7 @@ export function NotificationsScreen({ onOpenPath }: NotificationsScreenProps) {
   const query = useNotificationList();
   const markRead = useMarkRead();
   const markAll = useMarkAllRead();
+  const toast = useToast();
   const [filter, setFilter] = useState<Filter>('all');
   const [selected, setSelected] = useState<NotificationItem | null>(null);
 
@@ -102,7 +104,12 @@ export function NotificationsScreen({ onOpenPath }: NotificationsScreenProps) {
           fullWidth={false}
           disabled={unreadIds.length === 0}
           loading={markAll.isPending}
-          onPress={() => markAll.mutate(unreadIds)}
+          onPress={() =>
+            markAll.mutate(unreadIds, {
+              onSuccess: () => toast.success('Đã đánh dấu các thông báo trong trang là đã đọc'),
+              onError: (error) => toast.error(errorMessage(error)),
+            })
+          }
         />
       </View>
       <FilterChips options={FILTER_OPTIONS} value={filter} onChange={setFilter} />

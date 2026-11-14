@@ -7,7 +7,7 @@ export interface CertificateLabel {
 
 const STATUS: Record<string, CertificateLabel> = {
   PENDING: { label: 'Chờ duyệt', tone: 'warning' },
-  SUBMITTED: { label: 'Đã gửi, chờ duyệt', tone: 'warning' },
+  SUBMITTED: { label: 'Đã gửi', tone: 'warning' },
   APPROVED: { label: 'Đã duyệt', tone: 'success' },
   REJECTED: { label: 'Từ chối', tone: 'danger' },
   REVOKED: { label: 'Đã thu hồi', tone: 'danger' },

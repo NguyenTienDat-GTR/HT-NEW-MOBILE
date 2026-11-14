@@ -90,8 +90,9 @@ export function ResourceListScreen({
                 {view.subtitle}
               </Text>
             ) : null}
-            {(view.lines ?? []).filter(Boolean).map((line) => (
-              <Text key={line} variant="secondary" tone="muted" numberOfLines={2}>
+            {(view.lines ?? []).filter(Boolean).map((line, index) => (
+              // Hai dòng có thể trùng chữ: khóa theo vị trí để không trùng key.
+              <Text key={`${index}-${line}`} variant="secondary" tone="muted" numberOfLines={2}>
                 {line}
               </Text>
             ))}
@@ -205,7 +206,10 @@ export function ResourceListScreen({
             },
           ]}
         >
-          <Button label={`Thêm ${def.singular.toLowerCase()}`} onPress={onCreate} />
+          <Button
+            label={def.createLabel ?? `Thêm ${def.singular.toLowerCase()}`}
+            onPress={onCreate}
+          />
         </View>
       ) : null}
 

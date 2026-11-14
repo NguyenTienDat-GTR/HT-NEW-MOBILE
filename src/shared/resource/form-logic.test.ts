@@ -3,12 +3,16 @@ import {
   firstFormError,
   groupFormRows,
   isCompactField,
+  isRequired,
   isValidDayMonth,
   optional,
+  parseMulti,
+  stringifyMulti,
   sectionErrorCounts,
   validateField,
   validateForm,
 } from './form-logic';
+import { CONSENT_FIELD } from './consent-field';
 import type { FormDefinition, FormFieldDef } from './types';
 
 const f = (over: Partial<FormFieldDef> & Pick<FormFieldDef, 'name' | 'kind'>): FormFieldDef => ({
@@ -171,5 +175,34 @@ describe('lỗi form: tìm ô lỗi đầu tiên', () => {
   it('đếm số lỗi từng nhóm', () => {
     expect(sectionErrorCounts(form, { a1: 'x', a2: 'y', b1: 'z' })).toEqual([2, 1]);
     expect(sectionErrorCounts(form, {})).toEqual([0, 0]);
+  });
+});
+
+describe('ô nhiều lựa chọn và bắt buộc theo chế độ', () => {
+  it('parseMulti đọc chuỗi JSON mảng, sai dạng thì rỗng', () => {
+    expect(parseMulti(stringifyMulti(['a', 'b']))).toEqual(['a', 'b']);
+    expect(parseMulti('')).toEqual([]);
+    expect(parseMulti('không phải json')).toEqual([]);
+    expect(parseMulti('{"a":1}')).toEqual([]);
+    expect(parseMulti(true)).toEqual([]);
+  });
+
+  it('requiredOnCreateOnly: bắt buộc khi tạo, bỏ trống được khi sửa', () => {
+    const field = {
+      name: 'phoneNumber',
+      label: 'Số điện thoại',
+      kind: 'phone' as const,
+      required: true,
+      requiredOnCreateOnly: true,
+    };
+    expect(isRequired(field, 'create')).toBe(true);
+    expect(isRequired(field, 'edit')).toBe(false);
+    expect(validateField(field, { phoneNumber: '' }, 'create')).toBe('Vui lòng nhập số điện thoại');
+    expect(validateField(field, { phoneNumber: '' }, 'edit')).toBeNull();
+  });
+
+  it('ô đồng ý (consent) là ô đúng/sai: chưa tích thì báo lỗi, không đòi "nhập"', () => {
+    expect(validateField(CONSENT_FIELD, {}, 'create')).toBe('Vui lòng xác nhận trước khi lưu');
+    expect(validateField(CONSENT_FIELD, { subjectConsentConfirmed: true }, 'create')).toBeNull();
   });
 });

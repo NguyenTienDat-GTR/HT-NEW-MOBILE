@@ -35,21 +35,21 @@ export const diocesesResource: ResourceDefinition = {
     badges: [
       flag(row, 'status')
         ? { label: 'Đang hoạt động', tone: 'success' }
-        : { label: 'Tạm ngưng', tone: 'warning' },
+        : { label: 'Tạm ngưng', tone: 'neutral' },
     ],
   }),
   detailTitle: (row) => text(row, 'name'),
   detailBadges: (row) => [
     flag(row, 'status')
       ? { label: 'Đang hoạt động', tone: 'success' }
-      : { label: 'Tạm ngưng', tone: 'warning' },
+      : { label: 'Tạm ngưng', tone: 'neutral' },
   ],
   detail: (row) => [
     {
       title: 'Thống kê',
       fields: [
         { label: 'Giáo hạt', value: fmtNumber(count(row, 'deaneryCount')) },
-        { label: 'Giáo xứ / họ / điểm', value: fmtNumber(count(row, 'parishCount')) },
+        { label: 'Giáo xứ', value: fmtNumber(count(row, 'parishCount')) },
         { label: 'Huynh trưởng', value: fmtNumber(count(row, 'leaderCount')) },
       ],
     },
@@ -62,7 +62,7 @@ export const diocesesResource: ResourceDefinition = {
   ],
   form: {
     titleCreate: 'Thêm giáo phận',
-    titleEdit: 'Sửa giáo phận',
+    titleEdit: 'Chỉnh sửa giáo phận',
     sections: [
       { title: 'Thông tin cơ bản', fields: ['name', 'unionName', 'chaplain'] },
       { title: 'Thông tin liên hệ', fields: ['phoneNumber', 'email'] },

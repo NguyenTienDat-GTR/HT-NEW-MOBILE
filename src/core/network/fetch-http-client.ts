@@ -71,8 +71,11 @@ export class FetchHttpClient implements HttpClient {
 
     try {
       const headers: Record<string, string> = { accept, ...request.headers };
-      let body: string | undefined;
-      if (request.body !== undefined) {
+      let body: string | FormData | undefined;
+      if (request.body instanceof FormData) {
+        // Tải tệp (ảnh đại diện): để fetch tự đặt content-type kèm ranh giới của multipart.
+        body = request.body;
+      } else if (request.body !== undefined) {
         headers['content-type'] = 'application/json';
         body = JSON.stringify(request.body);
       }

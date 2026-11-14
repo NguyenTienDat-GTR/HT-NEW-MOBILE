@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/theme-provider';
 
 import { BottomSheet } from './BottomSheet';
+import { FieldError } from './FieldError';
 import { FieldLabel } from './FieldLabel';
 import { CaretDownIcon, CheckIcon } from './icons';
 import { Text } from './Text';
@@ -26,6 +27,10 @@ export interface SelectFieldProps {
   disabled?: boolean;
   /** Hướng dẫn hiện sau dấu "?" cạnh nhãn. */
   hint?: string;
+  /** Lỗi hiện ngay dưới ô (viền đỏ, icon và chữ). */
+  error?: string;
+  /** Ô bắt buộc: nhãn có dấu "*". */
+  required?: boolean;
 }
 
 const SEARCH_THRESHOLD = 8;
@@ -43,6 +48,8 @@ export function SelectField({
   allowClear = true,
   disabled = false,
   hint,
+  error,
+  required = false,
 }: SelectFieldProps) {
   const { colors, radius, iconSize, touch } = useTheme();
   const [open, setOpen] = useState(false);
@@ -64,10 +71,10 @@ export function SelectField({
 
   return (
     <View style={styles.wrapper}>
-      <FieldLabel label={label} hint={hint} />
+      <FieldLabel label={label} hint={hint} required={required} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${selected?.label ?? placeholder}`}
+        accessibilityLabel={`${label}${required ? ', bắt buộc' : ''}: ${selected?.label ?? placeholder}`}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={() => setOpen(true)}
@@ -76,7 +83,7 @@ export function SelectField({
           {
             minHeight: touch.input,
             borderRadius: radius.input,
-            borderColor: colors.input,
+            borderColor: error ? colors.danger : colors.input,
             backgroundColor: disabled
               ? colors.surface2
               : pressed
@@ -96,6 +103,7 @@ export function SelectField({
         </Text>
         <CaretDownIcon size={iconSize.sm} color={colors.muted} weight="bold" />
       </Pressable>
+      {error ? <FieldError message={error} /> : null}
 
       <BottomSheet visible={open} title={label} onClose={() => setOpen(false)}>
         {options.length > SEARCH_THRESHOLD ? (

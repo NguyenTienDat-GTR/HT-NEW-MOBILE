@@ -1,6 +1,7 @@
 import { formatDate, formatDateTime } from '@/core/domain/date-format';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
-import { loadOptions } from '@/shared/resource/options';
+import { levelLabel } from '@/core/domain/level-labels';
+import { levelNamesOf, loadOptions } from '@/shared/resource/options';
 import { flag, joinParts, text } from '@/shared/resource/row';
 import type { CardView, DetailSection, ListFilterDef } from '@/shared/resource/types';
 
@@ -84,7 +85,8 @@ export function participantCard(row: ResourceRow): CardView {
   };
 }
 
-export function participationDetail(row: ResourceRow): DetailSection[] {
+export function participationDetail(row: ResourceRow, context?: unknown): DetailSection[] {
+  const levelNames = levelNamesOf(context);
   const components = Array.isArray(row.componentScores)
     ? (row.componentScores as ResourceRow[])
     : [];
@@ -92,17 +94,17 @@ export function participationDetail(row: ResourceRow): DetailSection[] {
     {
       title: 'Huynh trưởng',
       fields: [
-        { label: 'Họ tên', value: leaderName(row) },
+        { label: 'Họ và tên', value: leaderName(row) },
         { label: 'Giới tính', value: GENDER_LABELS[text(row, 'leaderGender')] ?? '' },
-        { label: 'Giáo xứ / họ / điểm', value: text(row, 'parishName') },
+        { label: 'Giáo xứ / giáo họ / giáo điểm', value: text(row, 'parishName') },
         { label: 'Giáo hạt', value: text(row, 'deaneryName') },
-        { label: 'Cấp hiện tại', value: text(row, 'leaderLevel') },
+        { label: 'Cấp huynh trưởng', value: levelLabel(text(row, 'leaderLevel'), levelNames) },
         { label: 'Email', value: text(row, 'leaderEmail') },
         { label: 'Số điện thoại', value: text(row, 'leaderPhone') },
       ],
     },
     {
-      title: 'Đăng ký',
+      title: 'Đăng ký tham dự',
       fields: [
         { label: 'Khóa huấn luyện', value: text(row, 'courseName') },
         { label: 'Ngày đăng ký', value: formatDate(text(row, 'registrationDate')) },
@@ -112,25 +114,30 @@ export function participationDetail(row: ResourceRow): DetailSection[] {
         },
         { label: 'Trạng thái duyệt', value: approvalLabel(row.approvalStatus)?.label ?? '' },
         {
-          label: 'Điều kiện',
-          value: row.eligible === false ? 'Ngoại lệ' : row.eligible === true ? 'Đủ điều kiện' : '',
+          label: 'Đủ điều kiện',
+          value:
+            row.eligible === false
+              ? 'Chưa đủ điều kiện (hồ sơ ngoại lệ)'
+              : row.eligible === true
+                ? 'Đủ điều kiện'
+                : '',
         },
         { label: 'Lý do ngoại lệ', value: text(row, 'exceptionReason') },
         { label: 'Lý do gửi ngoài đợt', value: text(row, 'offTargetReason') },
-        { label: 'Lý do liên giáo hạt', value: text(row, 'crossDeaneryReason') },
+        { label: 'Lý do gửi liên giáo hạt', value: text(row, 'crossDeaneryReason') },
         { label: 'Ghi chú đăng ký', value: text(row, 'registrationNote') },
-        { label: 'Nhận xét của người duyệt', value: text(row, 'review') },
-        { label: 'Gửi lúc', value: formatDateTime(text(row, 'parishSubmittedAt')) },
+        { label: 'Ghi chú duyệt', value: text(row, 'review') },
+        { label: 'Giáo xứ gửi lúc', value: formatDateTime(text(row, 'parishSubmittedAt')) },
         { label: 'Người gửi', value: text(row, 'createdByName') },
       ],
     },
     {
-      title: 'Kết quả',
+      title: 'Kết quả khóa huấn luyện',
       fields: [
         { label: 'Đội', value: text(row, 'teamName') },
-        { label: 'Điểm tổng kết', value: scoreText(row) },
-        { label: 'Kết quả', value: resultText(row) },
-        { label: 'Kết quả cuối khóa', value: finalResultLabel(row.finalResult)?.label ?? '' },
+        { label: 'Tổng điểm', value: scoreText(row) },
+        { label: 'Đánh giá điểm', value: resultText(row) },
+        { label: 'Kết quả chung', value: finalResultLabel(row.finalResult)?.label ?? '' },
         { label: 'Nhận xét', value: text(row, 'scoreNote') },
         ...components.map((item) => ({
           label: text(item, 'componentName') || text(item, 'componentCode'),
@@ -140,6 +147,8 @@ export function participationDetail(row: ResourceRow): DetailSection[] {
     },
   ];
 }
+
+export { LEVEL_NAMES_CONTEXT } from '@/shared/resource/options';
 
 export const courseFilter: ListFilterDef = {
   key: 'course.courseCode',
@@ -161,7 +170,7 @@ export const unitFilters: ListFilterDef[] = [
   },
   {
     key: 'leader.parish.id',
-    label: 'Giáo xứ / họ / điểm',
+    label: 'Giáo xứ / giáo họ / giáo điểm',
     dependsOn: ['leader.parish.deanery.id'],
     options: {
       dependsOn: ['leader.parish.deanery.id'],

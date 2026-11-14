@@ -25,6 +25,7 @@ import { SelectField } from '@/shared/ui/SelectField';
 import { pickAllowed } from '@/shared/resource/initial-filters';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import { canApproveCertificates, isBulkEligible } from '../domain/certificate-permissions';
 
@@ -60,6 +61,7 @@ export function CertificateApprovalsScreen({
   const router = useRouter();
   const gateway = useResourceGateway();
   const refresh = useRefreshCertificates();
+  const toast = useToast();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusChoice>(
     pickAllowed(
@@ -92,10 +94,9 @@ export function CertificateApprovalsScreen({
     [query.data],
   );
 
-  if (!canApproveCertificates(subject))
-    return <Banner tone="warning" message="Tài khoản của bạn không có quyền duyệt chứng nhận." />;
-
-  const eligibleRows = rows.filter(isBulkEligible);
+  // Như web: người chỉ có quyền xem chứng nhận vẫn vào được màn này để xem danh sách, chỉ không có ô chọn và nút duyệt.
+  const canApprove = canApproveCertificates(subject);
+  const eligibleRows = canApprove ? rows.filter(isBulkEligible) : [];
   const picked = [...selected.values()];
   const reset = () => setSelected(new Map());
   const toggle = (row: ResourceRow) =>
@@ -111,6 +112,16 @@ export function CertificateApprovalsScreen({
 
   const finish = async (data: DecisionResult) => {
     setResult(data);
+    if (data.successCount > 0)
+      toast.success(
+        `${action === 'approve' ? 'Duyệt' : 'Từ chối'} ${data.successCount} chứng nhận thành công`,
+      );
+    if (data.failedCount > 0)
+      toast.error(
+        `${data.failedCount} chứng nhận không xử lý được: ${data.failures
+          .map((item) => `${item.leaderFullName || 'Chứng nhận'} (${item.reason})`)
+          .join('; ')}`,
+      );
     reset();
     setAction(null);
     await refresh();
@@ -210,7 +221,7 @@ export function CertificateApprovalsScreen({
         }
         renderItem={({ item }) => {
           const view = certificateCard(item);
-          const selectable = isBulkEligible(item);
+          const selectable = canApprove && isBulkEligible(item);
           const on = selected.has(rowId(def, item));
           return (
             <Card style={on ? { borderColor: colors.primary, borderWidth: 2 } : undefined}>

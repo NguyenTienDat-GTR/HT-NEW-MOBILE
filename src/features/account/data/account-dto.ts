@@ -15,6 +15,8 @@ export interface MyLeaderDto {
   leaderLevel?: string | null;
   deaneryName?: string | null;
   parishName?: string | null;
+  imageUrl?: string | null;
+  imageThumbUrl?: string | null;
 }
 
 export interface RankHistoryDto {
@@ -36,6 +38,7 @@ export interface MyProfileDto {
   roles?: MyRoleDto[] | null;
   email?: string | null;
   hasLeader?: boolean | null;
+  canEditBirthDate?: boolean | null;
   leader?: MyLeaderDto | null;
   rankHistory?: RankHistoryDto[] | null;
   certificates?: CertificateDto[] | null;

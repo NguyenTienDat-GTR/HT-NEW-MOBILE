@@ -55,7 +55,7 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
   if (state.step === 'done') {
     return (
       <Screen footer={<Button label="Về trang đăng nhập" onPress={onBackToLogin} />}>
-        <Text variant="title">Đã đổi mật khẩu</Text>
+        <Text variant="title">Đặt lại mật khẩu thành công</Text>
         <Banner
           tone="info"
           message="Mật khẩu của bạn đã được cập nhật. Hãy đăng nhập bằng mật khẩu mới."
@@ -90,7 +90,7 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
             </>
           ) : null}
           {state.step === 'password' ? (
-            <Button label="Đặt mật khẩu mới" onPress={submitPassword} loading={flow.pending} />
+            <Button label="Đặt lại mật khẩu" onPress={submitPassword} loading={flow.pending} />
           ) : null}
           <Button
             label={state.step === 'username' ? 'Quay lại đăng nhập' : 'Làm lại từ đầu'}

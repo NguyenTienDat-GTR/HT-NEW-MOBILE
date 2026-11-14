@@ -5,7 +5,7 @@ import { Linking } from 'react-native';
 import { errorMessage } from '@/core/domain/app-error';
 import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
-import { CheckboxRow } from '@/shared/ui/CheckboxRow';
+import { ConsentCheckbox } from '@/shared/ui/ConsentCheckbox';
 import { Screen } from '@/shared/ui/Screen';
 import { Text } from '@/shared/ui/Text';
 
@@ -60,8 +60,8 @@ export function PrivacyConsentScreen() {
         size="sm"
         onPress={() => void Linking.openURL(`${deps.siteOrigin}/chinh-sach-bao-mat`)}
       />
-      <CheckboxRow
-        label="Tôi đã đọc và đồng ý với chính sách bảo vệ dữ liệu cá nhân"
+      <ConsentCheckbox
+        variant="self"
         checked={checked}
         onChange={(value) => {
           setChecked(value);

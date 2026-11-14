@@ -30,7 +30,8 @@ export function HomeScreen({ onOpenPath, onOpenAnalysis }: HomeScreenProps) {
   const user = useAuthStore((state) => state.user);
   const logout = useLogout();
 
-  if (canReadOverview(user)) {
+  // Như web: đơn vị bị khóa thì không xem tổng quan, chỉ còn thông báo.
+  if (canReadOverview(user) && !user?.unitLocked) {
     return (
       <DashboardScreen
         permissions={user?.permissions ?? []}
@@ -48,10 +49,12 @@ export function HomeScreen({ onOpenPath, onOpenAnalysis }: HomeScreenProps) {
       {user?.unitLocked ? (
         <Banner tone="warning" message="Đơn vị của bạn đang bị khóa. Bạn chỉ xem được thông báo." />
       ) : null}
-      <Text variant="secondary" tone="textSecondary">
-        Tài khoản của bạn chưa được cấp quyền xem số liệu tổng quan. Xem thông báo ở tab Thông báo
-        và hồ sơ của bạn trong Menu.
-      </Text>
+      {user?.unitLocked ? null : (
+        <Text variant="secondary" tone="textSecondary">
+          Tài khoản của bạn chưa được cấp quyền xem số liệu tổng quan. Xem thông báo ở tab Thông báo
+          và hồ sơ của bạn trong Menu.
+        </Text>
+      )}
     </Screen>
   );
 }

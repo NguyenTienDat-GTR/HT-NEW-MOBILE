@@ -34,3 +34,23 @@ export async function loadLevelOptions(gateway: ResourceGateway): Promise<Select
   );
   return levels.map((level) => ({ value: level.levelCode, label: level.levelName }));
 }
+
+interface LevelName {
+  levelCode: string;
+  levelName: string;
+}
+
+/**
+ * Danh mục cấp độ của giáo phận (mã -> tên) cho màn chi tiết: khai báo ở `detailContext` của định nghĩa, dùng chung
+ * cache với màn chi tiết huynh trưởng. Nhờ đó màn chi tiết hiện tên cấp, không hiện mã (HT_I…).
+ */
+export const LEVEL_NAMES_CONTEXT = {
+  key: ['leader-level-names'],
+  load: (gateway: ResourceGateway) => gateway.call<LevelName[]>('GET', '/leader-levels/options'),
+} as const;
+
+/** Đổi dữ liệu `detailContext` ở trên thành bảng tra mã -> tên (chưa tải xong thì bảng rỗng). */
+export function levelNamesOf(context: unknown): ReadonlyMap<string, string> {
+  const list = Array.isArray(context) ? (context as LevelName[]) : [];
+  return new Map(list.map((level) => [level.levelCode, level.levelName]));
+}

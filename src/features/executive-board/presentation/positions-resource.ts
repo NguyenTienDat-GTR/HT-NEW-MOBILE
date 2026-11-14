@@ -14,7 +14,7 @@ import {
 const statusBadge = (active: boolean) =>
   active
     ? { label: 'Đang hoạt động', tone: 'success' as const }
-    : { label: 'Tạm ngưng', tone: 'warning' as const };
+    : { label: 'Tạm ngưng', tone: 'neutral' as const };
 
 export const positionsResource: ResourceDefinition = {
   id: 'positions',
@@ -45,19 +45,19 @@ export const positionsResource: ResourceDefinition = {
       ],
     },
     {
-      title: 'Dấu vết ghi nhận',
+      title: 'Lịch sử ghi nhận',
       collapsed: true,
       fields: [
-        { label: 'Tạo bởi', value: text(row, 'createdByName') },
-        { label: 'Tạo lúc', value: formatDate(text(row, 'createdAt')) },
-        { label: 'Sửa bởi', value: text(row, 'updatedByName') },
-        { label: 'Sửa lúc', value: formatDate(text(row, 'updatedAt')) },
+        { label: 'Người tạo', value: text(row, 'createdByName') },
+        { label: 'Ngày tạo', value: formatDate(text(row, 'createdAt')) },
+        { label: 'Người cập nhật', value: text(row, 'updatedByName') },
+        { label: 'Ngày cập nhật', value: formatDate(text(row, 'updatedAt')) },
       ],
     },
   ],
   form: {
     titleCreate: 'Thêm chức vụ',
-    titleEdit: 'Sửa chức vụ',
+    titleEdit: 'Chỉnh sửa chức vụ',
     sections: [{ fields: ['positionName', 'positionType', 'displayOrder'] }],
     fields: [
       { name: 'positionName', label: 'Tên chức vụ', kind: 'text', required: true, maxLength: 100 },
@@ -83,7 +83,8 @@ export const positionsResource: ResourceDefinition = {
         kind: 'text',
         keyboardType: 'number-pad',
         maxLength: 4,
-        hint: 'Bắt đầu từ 1; linh mục tuyên úy luôn đứng đầu. Để trống để xếp cuối cùng.',
+        placeholder: 'Xếp cuối',
+        hint: 'Bắt đầu từ 1; linh mục tuyên úy luôn đứng đầu (thứ tự 0). Để trống để xếp cuối cùng.',
         validate: (value) =>
           typeof value === 'string' && value.trim() !== '' && !/^[1-9]\d*$/.test(value.trim())
             ? 'Thứ tự phải là số nguyên từ 1 trở lên.'

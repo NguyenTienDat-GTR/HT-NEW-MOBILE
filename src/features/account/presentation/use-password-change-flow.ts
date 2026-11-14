@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useToast } from '@/shared/ui/Toast';
 
 import { errorMessage } from '@/core/domain/app-error';
 import { useCountdown } from '@/shared/hooks/use-countdown';
@@ -27,27 +28,33 @@ const initial: FlowState = {
 /** Đổi mật khẩu 3 bước: mật khẩu hiện tại -> OTP qua email -> mật khẩu mới. Mọi kiểm tra chính nằm ở BE. */
 export function usePasswordChangeFlow() {
   const deps = useAccountDependencies();
+  const toast = useToast();
   const [state, setState] = useState<FlowState>(initial);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const secondsToResend = useCountdown(state.resendAt);
 
-  const run = useCallback(async (action: () => Promise<void>) => {
-    setPending(true);
-    setError(null);
-    try {
-      await action();
-    } catch (exception) {
-      setError(errorMessage(exception));
-    } finally {
-      setPending(false);
-    }
-  }, []);
+  const run = useCallback(
+    async (action: () => Promise<void>) => {
+      setPending(true);
+      setError(null);
+      try {
+        await action();
+      } catch (exception) {
+        setError(errorMessage(exception));
+        toast.error(errorMessage(exception));
+      } finally {
+        setPending(false);
+      }
+    },
+    [toast],
+  );
 
   const sendOtp = useCallback(
     (oldPassword: string) =>
       run(async () => {
         const challenge = await deps.requestPasswordChangeOtp.execute(oldPassword);
+        if (state.step === 'otp') toast.success(`Đã gửi lại mã OTP tới ${challenge.email}`);
         setState({
           ...initial,
           step: 'otp',
@@ -56,7 +63,7 @@ export function usePasswordChangeFlow() {
           resendAt: Date.now() + challenge.resendAfterSeconds * 1000,
         });
       }),
-    [deps, run],
+    [deps, run, state.step, toast],
   );
 
   const verifyOtp = useCallback(
@@ -72,9 +79,10 @@ export function usePasswordChangeFlow() {
     (newPassword: string, confirmPassword: string) =>
       run(async () => {
         await deps.changePasswordWithToken.execute(state.changeToken, newPassword, confirmPassword);
+        toast.success('Đổi mật khẩu thành công');
         setState((current) => ({ ...current, step: 'done' }));
       }),
-    [deps, run, state.changeToken],
+    [deps, run, state.changeToken, toast],
   );
 
   return {

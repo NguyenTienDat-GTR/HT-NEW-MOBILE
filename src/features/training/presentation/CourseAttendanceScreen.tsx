@@ -23,9 +23,11 @@ import { Screen } from '@/shared/ui/Screen';
 import { SwitchRow } from '@/shared/ui/SwitchRow';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import { buildInvitationBody, invitationSummary, type InvitationJob } from '../domain/invitation';
 import { canActOnCourse, type TrainingSubject } from '../domain/training-permissions';
+import { leaderName } from './participation-common';
 
 interface Summary {
   attendanceEnabled: boolean;
@@ -62,6 +64,7 @@ export function CourseAttendanceScreen({
   subject: PermissionSubject | null;
 }) {
   const gateway = useResourceGateway();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const router = useRouter();
   const code = courseCode ?? '';
@@ -132,8 +135,11 @@ export function CourseAttendanceScreen({
         },
       );
       await refresh();
+      const who = leaderName(row);
+      toast.success(row.checkedInAt ? `Đã bỏ điểm danh ${who}` : `Đã điểm danh ${who}`);
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setBusyId(null);
     }

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/theme-provider';
 import { Card } from '../ui/Card';
-import { CaretDownIcon, CaretUpIcon } from '../ui/icons';
+import { CaretDownIcon, CaretUpIcon, WarningCircleIcon } from '../ui/icons';
 import { Text } from '../ui/Text';
 
 export interface FormSectionProps {
@@ -38,9 +38,12 @@ export function FormSection({ title, open, onToggle, errorCount = 0, children }:
           {title}
         </Text>
         {errorCount > 0 ? (
-          <Text variant="secondary" tone="danger">
-            {errorCount} lỗi
-          </Text>
+          <View style={styles.errors}>
+            <WarningCircleIcon size={iconSize.sm} color={colors.danger} weight="bold" />
+            <Text variant="secondary" tone="danger">
+              {errorCount} lỗi
+            </Text>
+          </View>
         ) : null}
         <Caret size={iconSize.sm} color={colors.muted} weight="bold" />
       </Pressable>
@@ -68,5 +71,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: { flex: 1 },
+  errors: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   collapsed: { display: 'none' },
 });

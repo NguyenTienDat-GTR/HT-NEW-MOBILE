@@ -20,6 +20,7 @@ import { Screen } from '@/shared/ui/Screen';
 import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   buildRegistrationBody,
@@ -61,6 +62,7 @@ export function RegistrationSubmitScreen({
   onSaved,
 }: RegistrationSubmitScreenProps) {
   const gateway = useResourceGateway();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [sender, setSender] = useState('');
   const [course, setCourse] = useState(presetCourse ?? '');
@@ -124,12 +126,14 @@ export function RegistrationSubmitScreen({
       });
       await queryClient.invalidateQueries({ queryKey: resourceKey('registrations') });
       await queryClient.invalidateQueries({ queryKey: resourceKey('courses') });
+      toast.success(`Đã gửi ${standard.length + exceptions.length} hồ sơ đăng ký`);
       setDone(`Đã gửi ${standard.length + exceptions.length} hồ sơ đăng ký.`);
       setStandard([]);
       setExceptions([]);
       onSaved();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setSaving(false);
     }

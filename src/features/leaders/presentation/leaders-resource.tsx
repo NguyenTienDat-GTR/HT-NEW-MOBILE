@@ -1,4 +1,5 @@
 import { formatDate } from '@/core/domain/date-format';
+import { CONSENT_FIELD } from '@/shared/resource/consent-field';
 import { optional, trimmed } from '@/shared/resource/form-logic';
 import { loadOptions } from '@/shared/resource/options';
 import { flag, joinParts, text } from '@/shared/resource/row';
@@ -78,7 +79,7 @@ export const leadersResource: ResourceDefinition = {
     { key: 'parish.deanery.id', label: 'Giáo hạt', options: deaneryOptions },
     {
       key: 'parish.id',
-      label: 'Giáo xứ / họ / điểm',
+      label: 'Giáo xứ / giáo họ / giáo điểm',
       dependsOn: ['parish.deanery.id'],
       options: {
         dependsOn: ['parish.deanery.id'],
@@ -91,7 +92,7 @@ export const leadersResource: ResourceDefinition = {
           ),
       },
     },
-    { key: 'leaderLevel', label: 'Cấp huynh trưởng', options: leaderLevelOptions },
+    { key: 'leaderLevel', label: 'Cấp HT', options: leaderLevelOptions },
   ],
   card: (row) => ({
     title: fullName(row),
@@ -103,7 +104,7 @@ export const leadersResource: ResourceDefinition = {
     badges: [
       flag(row, 'status')
         ? { label: 'Đang hoạt động', tone: 'success' }
-        : { label: 'Tạm ngưng', tone: 'warning' },
+        : { label: 'Tạm ngưng', tone: 'neutral' },
     ],
   }),
   detailTitle: fullName,
@@ -116,11 +117,11 @@ export const leadersResource: ResourceDefinition = {
   ),
   form: {
     titleCreate: 'Thêm huynh trưởng',
-    titleEdit: 'Sửa hồ sơ huynh trưởng',
+    titleEdit: 'Chỉnh sửa huynh trưởng',
     sections: [
       { title: 'Thông tin cá nhân', fields: ['holyName', 'fullName', 'birthDate', 'gender'] },
-      { title: 'Liên hệ', fields: ['phoneNumber', 'email'] },
-      { title: 'Đơn vị và cấp', fields: ['deaneryId', 'parishId', 'leaderLevel'] },
+      { title: 'Thông tin liên hệ', fields: ['email', 'phoneNumber'] },
+      { title: 'Phạm vi', fields: ['deaneryId', 'parishId', 'leaderLevel'] },
       { fields: ['subjectConsentConfirmed'] },
     ],
     fields: [
@@ -149,7 +150,14 @@ export const leadersResource: ResourceDefinition = {
         required: true,
         options: GENDER_OPTIONS,
       },
-      { name: 'phoneNumber', label: 'Số điện thoại', kind: 'phone', required: true, maxLength: 10 },
+      {
+        name: 'phoneNumber',
+        label: 'Số điện thoại',
+        kind: 'phone',
+        required: true,
+        requiredOnCreateOnly: true,
+        maxLength: 10,
+      },
       { name: 'email', label: 'Email', kind: 'email', maxLength: 100 },
       {
         name: 'deaneryId',
@@ -159,15 +167,16 @@ export const leadersResource: ResourceDefinition = {
         lockedOnEdit: true,
         excludeFromBody: true,
         resets: ['parishId'],
+        hint: 'Chọn giáo hạt trước để danh sách giáo xứ / giáo họ / giáo điểm chỉ hiện các đơn vị thuộc giáo hạt đó.',
         options: deaneryOptions,
       },
       {
         name: 'parishId',
-        label: 'Giáo xứ / họ / điểm',
+        label: 'Giáo xứ / giáo họ / giáo điểm',
         kind: 'select',
         required: true,
         lockedOnEdit: true,
-        hint: 'Chọn giáo hạt trước. Muốn đổi giáo xứ của huynh trưởng, dùng "Chuyển giáo xứ" ở trang chi tiết.',
+        hint: 'Chọn đúng nơi huynh trưởng sinh hoạt. Huynh trưởng ở giáo họ / giáo điểm thì chọn giáo họ / giáo điểm đó (không chọn giáo xứ cha). Sau khi tạo, muốn đổi thì dùng "Chuyển xứ" ở trang chi tiết.',
         options: parishOptions(true),
       },
       {
@@ -178,22 +187,19 @@ export const leadersResource: ResourceDefinition = {
         lockedOnEdit: true,
         options: leaderLevelOptions,
       },
-      {
-        name: 'subjectConsentConfirmed',
-        label:
-          'Tôi xác nhận người có thông tin dưới đây đã được thông báo và đồng ý để hệ thống xử lý dữ liệu cá nhân của họ phục vụ quản lý hồ sơ huynh trưởng, đào tạo và cấp chứng nhận.',
-        kind: 'switch',
-        validate: (value) => (value === true ? null : 'Vui lòng xác nhận trước khi lưu'),
-      },
+      CONSENT_FIELD,
     ],
-    initialValues: (row) => ({
+    initialValues: (row, subject) => ({
       holyName: row ? text(row, 'holyName') : '',
       fullName: row ? text(row, 'fullName') : '',
       birthDate: row ? text(row, 'birthDate') : '',
       gender: row ? text(row, 'gender') : '',
       phoneNumber: row ? text(row, 'phoneNumber') : '',
       email: row ? text(row, 'email') : '',
-      deaneryId: row ? text(row, 'deaneryId') : '',
+      // Như web: tạo mới thì chọn sẵn giáo hạt của tài khoản (admin giáo hạt / giáo xứ).
+      deaneryId: row
+        ? text(row, 'deaneryId')
+        : ((subject as { deaneryId?: string | null } | null)?.deaneryId ?? ''),
       parishId: row ? text(row, 'parishId') : '',
       leaderLevel: row ? text(row, 'leaderLevel') : '',
       subjectConsentConfirmed: false,
@@ -214,12 +220,19 @@ export const leadersResource: ResourceDefinition = {
       }
       // Sửa: chỉ tên thánh, giới tính, SĐT, email (như web). Xóa email là gửi clearFields.
       const clearsEmail = !optional(values, 'email') && Boolean(row && text(row, 'email'));
+      // Như web: xóa trắng số điện thoại khi sửa là xóa khỏi hồ sơ (gửi clearFields).
+      const clearsPhone =
+        !optional(values, 'phoneNumber') && Boolean(row && text(row, 'phoneNumber'));
+      const clearFields = [
+        ...(clearsEmail ? ['email'] : []),
+        ...(clearsPhone ? ['phoneNumber'] : []),
+      ];
       return {
         holyName: trimmed(values, 'holyName'),
         gender: values.gender,
-        phoneNumber: trimmed(values, 'phoneNumber'),
+        phoneNumber: optional(values, 'phoneNumber'),
         email: optional(values, 'email'),
-        clearFields: clearsEmail ? ['email'] : undefined,
+        clearFields: clearFields.length > 0 ? clearFields : undefined,
         subjectConsentConfirmed: true,
       };
     },

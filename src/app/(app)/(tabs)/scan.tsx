@@ -11,7 +11,8 @@ import { AttendanceScanScreen } from '@/features/training/presentation/Attendanc
 export default function ScanTab() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-  const canReadCertificates = hasPermissionPrefix(user, 'training.certificate.read.');
+  const canReadCertificates =
+    !user?.unitLocked && hasPermissionPrefix(user, 'training.certificate.read.');
   return (
     <AttendanceScanScreen
       showTitle

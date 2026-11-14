@@ -22,6 +22,7 @@ import { Screen } from '@/shared/ui/Screen';
 import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   buildDecision,
@@ -111,6 +112,7 @@ function RequestsTab() {
 function RequestSheet({ row, onClose }: { row: ResourceRow | null; onClose: () => void }) {
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [note, setNote] = useState('');
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
@@ -125,15 +127,17 @@ function RequestSheet({ row, onClose }: { row: ResourceRow | null; onClose: () =
     setChosen(new Set(pendingItems.map((item) => text(item, 'id'))));
   }
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (action: () => Promise<unknown>, success: string) => {
     setBusy(true);
     setError(null);
     try {
       await action();
       await queryClient.invalidateQueries({ queryKey: KEY });
+      toast.success(success);
       onClose();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setBusy(false);
     }
@@ -147,10 +151,12 @@ function RequestSheet({ row, onClose }: { row: ResourceRow | null; onClose: () =
       pendingItems.map((item) => text(item, 'id')),
     );
     if (problem) return setError(problem);
-    void run(() =>
-      gateway.call('POST', `${BASE}/requests/${encodeURIComponent(text(row, 'id'))}/decision`, {
-        body,
-      }),
+    void run(
+      () =>
+        gateway.call('POST', `${BASE}/requests/${encodeURIComponent(text(row, 'id'))}/decision`, {
+          body,
+        }),
+      approved ? 'Đã đồng ý, hồ sơ chờ giáo hạt tổ chức khóa duyệt' : 'Đã từ chối yêu cầu',
     );
   };
 
@@ -177,8 +183,10 @@ function RequestSheet({ row, onClose }: { row: ResourceRow | null; onClose: () =
             variant="destructive"
             loading={busy}
             onPress={() =>
-              void run(() =>
-                gateway.call('DELETE', `${BASE}/requests/${encodeURIComponent(text(row, 'id'))}`),
+              void run(
+                () =>
+                  gateway.call('DELETE', `${BASE}/requests/${encodeURIComponent(text(row, 'id'))}`),
+                'Đã thu hồi yêu cầu',
               )
             }
           />
@@ -263,6 +271,7 @@ function RequestSheet({ row, onClose }: { row: ResourceRow | null; onClose: () =
 function SendTab({ onSent }: { onSent: () => void }) {
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [course, setCourse] = useState('');
   const [picked, setPicked] = useState<Map<string, CrossCandidate>>(new Map());
   const [drafts, setDrafts] = useState<Record<string, ItemDraft>>({});
@@ -298,15 +307,23 @@ function SendTab({ onSent }: { onSent: () => void }) {
       return setError(`Còn thiếu lý do cho: ${missing.map((c) => candidateName(c)).join(', ')}`);
     setSaving(true);
     try {
-      await gateway.call('POST', `${BASE}/courses/${encodeURIComponent(course)}/requests`, {
-        body: { items: buildItems(chosen, drafts) },
-      });
+      const result = await gateway.call<{ requestStatus?: string }>(
+        'POST',
+        `${BASE}/courses/${encodeURIComponent(course)}/requests`,
+        { body: { items: buildItems(chosen, drafts) } },
+      );
       await queryClient.invalidateQueries({ queryKey: KEY });
+      toast.success(
+        result?.requestStatus === 'APPROVED'
+          ? 'Đã gửi hồ sơ sang giáo hạt khác, chờ giáo hạt tổ chức khóa duyệt'
+          : 'Đã gửi yêu cầu, chờ giáo hạt nhà đồng ý',
+      );
       setPicked(new Map());
       setDrafts({});
       onSent();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setSaving(false);
     }
@@ -410,6 +427,7 @@ function SendTab({ onSent }: { onSent: () => void }) {
 function InvitationsTab() {
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [deciding, setDeciding] = useState<ResourceRow | null>(null);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -436,9 +454,15 @@ function InvitationsTab() {
         { body: { allowed, note: note.trim() || undefined } },
       );
       await queryClient.invalidateQueries({ queryKey: KEY });
+      toast.success(
+        allowed
+          ? 'Đã cho phép giáo xứ gửi hồ sơ sang khóa này'
+          : 'Đã từ chối cho giáo xứ gửi hồ sơ sang khóa này',
+      );
       setDeciding(null);
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setBusy(false);
     }

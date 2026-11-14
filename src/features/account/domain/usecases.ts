@@ -2,7 +2,14 @@ import { AppError } from '@/core/domain/app-error';
 import type { Page } from '@/core/domain/page';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '@/core/domain/password-rules';
 
-import type { MyPermission, MyProfile, PasswordOtpChallenge } from './entities';
+import type {
+  MyPermission,
+  MyPermissionFilterOptions,
+  MyPermissionFilters,
+  MyProfile,
+  PasswordOtpChallenge,
+} from './entities';
+import type { ProfileChanges } from './profile-edit';
 import type { AccountRepository } from './repository';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -62,10 +69,31 @@ export class ChangePasswordWithToken {
   }
 }
 
+export class UpdateMyProfile {
+  constructor(private readonly repository: AccountRepository) {}
+
+  execute(changes: ProfileChanges): Promise<void> {
+    return this.repository.updateMyProfile(changes);
+  }
+}
+
 export class ListMyPermissions {
   constructor(private readonly repository: AccountRepository) {}
 
-  execute(page: number, size: number, search?: string): Promise<Page<MyPermission>> {
-    return this.repository.listMyPermissions(page, size, search?.trim() || undefined);
+  execute(
+    page: number,
+    size: number,
+    search?: string,
+    filters?: MyPermissionFilters,
+  ): Promise<Page<MyPermission>> {
+    return this.repository.listMyPermissions(page, size, search?.trim() || undefined, filters);
+  }
+}
+
+export class GetMyPermissionFilterOptions {
+  constructor(private readonly repository: AccountRepository) {}
+
+  execute(): Promise<MyPermissionFilterOptions> {
+    return this.repository.myPermissionFilterOptions();
   }
 }

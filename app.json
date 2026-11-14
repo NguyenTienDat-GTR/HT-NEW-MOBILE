@@ -48,6 +48,13 @@
           "recordAudioAndroid": false
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Cho phép C-LEAD đọc ảnh để tìm mã QR trong ảnh.",
+          "microphonePermission": false
+        }
+      ],
       "expo-sharing"
     ],
     "experiments": {

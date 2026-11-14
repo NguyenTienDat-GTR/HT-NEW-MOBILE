@@ -211,6 +211,21 @@ export const MENU_ENTRIES: readonly MenuEntry[] = [
   },
 ];
 
+/** Người dùng được thấy một mục menu (vd. 'courses'); dùng cho các tab dưới cùng. */
+export function canSeeMenuEntry(
+  resource: string,
+  user: PermissionSubject | null | undefined,
+): boolean {
+  const entry = MENU_ENTRIES.find((item) => item.resource === resource);
+  return (
+    !!entry &&
+    canReadRoute(
+      { moduleName: entry.moduleName, permissionPrefixes: entry.permissionPrefixes },
+      user,
+    )
+  );
+}
+
 export interface MenuSection {
   group: MenuGroupId;
   label: string;

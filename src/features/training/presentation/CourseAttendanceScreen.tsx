@@ -153,7 +153,7 @@ export function CourseAttendanceScreen({
             {canScan ? (
               <Button
                 label="Quét mã QR điểm danh"
-                onPress={() => router.push(`/scan?course=${enc}` as Href)}
+                onPress={() => router.push(`/course-scan?course=${enc}` as Href)}
               />
             ) : null}
             {canInvite ? (

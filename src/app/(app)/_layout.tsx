@@ -52,7 +52,7 @@ export default function AppLayout() {
         >
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="analytics" options={{ title: 'Phân tích dữ liệu' }} />
-          <Stack.Screen name="scan" options={{ title: 'Quét mã QR' }} />
+          <Stack.Screen name="course-scan" options={{ title: 'Điểm danh bằng mã QR' }} />
           <Stack.Screen name="profile" options={{ title: 'Hồ sơ cá nhân' }} />
           <Stack.Screen name="my-permissions" options={{ title: 'Quyền của tôi' }} />
           <Stack.Screen name="change-email" options={{ title: 'Đổi email' }} />

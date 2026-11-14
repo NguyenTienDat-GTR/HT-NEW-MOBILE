@@ -89,6 +89,23 @@ describe('luồng quét', () => {
   });
 });
 
+describe('mã chứng nhận và ảnh', () => {
+  it('mở chi tiết chứng nhận xong thì quay về chờ quét', () => {
+    const looking = scanFlowReducer(INITIAL_SCAN_FLOW, { type: 'scanned', token: 'GPPC-1' });
+    expect(scanFlowReducer(looking, { type: 'handed-off' })).toEqual(INITIAL_SCAN_FLOW);
+    expect(scanFlowReducer(INITIAL_SCAN_FLOW, { type: 'handed-off' })).toEqual(INITIAL_SCAN_FLOW);
+  });
+
+  it('ảnh không có mã QR báo lỗi ngay khi đang chờ quét', () => {
+    expect(
+      scanFlowReducer(INITIAL_SCAN_FLOW, {
+        type: 'failed',
+        message: 'Không tìm thấy mã QR trong ảnh.',
+      }),
+    ).toEqual({ step: 'error', message: 'Không tìm thấy mã QR trong ảnh.' });
+  });
+});
+
 describe('chống quét lặp', () => {
   it('cùng mã trong thời gian chờ thì bỏ qua, mã khác hoặc hết thời gian chờ thì xử lý', () => {
     const last = { token: 'a', at: 1000 };

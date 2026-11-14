@@ -34,7 +34,15 @@ export interface ResourceDetailScreenProps {
 
 /** Chi tiết một bản ghi theo cấu hình: đầu trang là tên + nhãn, các nhóm thông tin, hành động theo quyền. */
 export function ResourceDetailScreen({ def, id, subject, onEdit }: ResourceDetailScreenProps) {
+  const gateway = useResourceGateway();
   const query = useResourceRow(def, id);
+  const detailContext = def.detailContext;
+  const context = useQuery({
+    queryKey: detailContext ? [...detailContext.key] : ['detail-context', 'none'],
+    queryFn: () => (detailContext as NonNullable<typeof detailContext>).load(gateway),
+    enabled: Boolean(detailContext),
+    staleTime: 10 * 60_000,
+  });
   const [toggleOpen, setToggleOpen] = useState(false);
   const row = query.data;
 
@@ -56,7 +64,7 @@ export function ResourceDetailScreen({ def, id, subject, onEdit }: ResourceDetai
 
   const canEdit = Boolean(def.form) && def.canUpdate(subject, row);
   const canToggle = Boolean(def.toggle) && def.canToggle(subject, row);
-  const sections = def.detail(row);
+  const sections = def.detail(row, context.data);
 
   return (
     <Screen onRefresh={() => void query.refetch()} refreshing={query.isRefetching}>

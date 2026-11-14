@@ -1,9 +1,15 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatNumber } from '@/core/domain/number-format';
 import { useTheme } from '@/shared/theme/theme-provider';
 import { Badge, type BadgeTone } from '@/shared/ui/Badge';
-import { CheckCircleIcon, InfoIcon, WarningIcon, WarningOctagonIcon } from '@/shared/ui/icons';
+import {
+  CaretRightIcon,
+  CheckCircleIcon,
+  InfoIcon,
+  WarningIcon,
+  WarningOctagonIcon,
+} from '@/shared/ui/icons';
 import { Text } from '@/shared/ui/Text';
 
 import type { Alert, AlertSeverity } from '../../domain/entities';
@@ -25,9 +31,19 @@ function itemValue(value: number | null, suffix?: string): string | null {
 
 /**
  * Điểm cần chú ý: mỗi mục có biểu tượng + nhãn mức độ bằng chữ (không chỉ màu), mô tả và tối đa 3 đối tượng tiêu biểu.
- * Lối tắt xử lý (href của BE) chưa có trên mobile nên chưa hiện.
+ * Mục có màn xử lý (href của BE đã đổi sang màn mobile, và tài khoản có quyền xem) thì cả thẻ bấm được, như nút
+ * "Xử lý" của web; không có màn đích thì chỉ hiển thị.
  */
-export function AlertsList({ alerts }: { alerts: readonly Alert[] }) {
+export function AlertsList({
+  alerts,
+  openable,
+  onOpen,
+}: {
+  alerts: readonly Alert[];
+  /** Đổi href của BE sang đường dẫn mở được trên mobile, hoặc null nếu không mở được. */
+  openable?: (href: string) => string | null;
+  onOpen?: (path: string) => void;
+}) {
   const { colors, iconSize, radius } = useTheme();
   const sorted = [...alerts]
     .filter((a) => ALERT_META[a.key])
@@ -62,11 +78,17 @@ export function AlertsList({ alerts }: { alerts: readonly Alert[] }) {
         const meta = ALERT_META[alert.key];
         if (!meta) return null;
         const { bar, icon, Icon } = palette[alert.severity];
+        const path = alert.href && openable ? openable(alert.href) : null;
+        const label = `${SEVERITY_LABELS[alert.severity]}. ${meta.title}. ${meta.description(alert.count)}`;
+        const Container = path ? Pressable : View;
         return (
-          <View
+          <Container
             key={alert.key}
             accessible
-            accessibilityLabel={`${SEVERITY_LABELS[alert.severity]}. ${meta.title}. ${meta.description(alert.count)}`}
+            accessibilityLabel={path ? `${label}. Mở màn hình xử lý` : label}
+            {...(path
+              ? { accessibilityRole: 'button' as const, onPress: () => onOpen?.(path) }
+              : {})}
             style={[
               styles.item,
               {
@@ -100,7 +122,12 @@ export function AlertsList({ alerts }: { alerts: readonly Alert[] }) {
                 </View>
               ))}
             </View>
-          </View>
+            {path ? (
+              <View style={styles.go}>
+                <CaretRightIcon size={iconSize.sm} color={colors.muted} weight="bold" />
+              </View>
+            ) : null}
+          </Container>
         );
       })}
     </View>
@@ -120,6 +147,7 @@ const styles = StyleSheet.create({
   },
   bar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
   body: { flex: 1, gap: 4 },
+  go: { justifyContent: 'center', minHeight: 48 },
   entry: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   entryLabel: { flex: 1 },
 });

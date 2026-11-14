@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -13,6 +14,7 @@ import { useResourceGateway } from '@/shared/resource/resource-context';
 import { flag, text } from '@/shared/resource/row';
 import type { ResourceDefinition } from '@/shared/resource/types';
 import { resourceKey } from '@/shared/resource/use-resource';
+import { useTheme } from '@/shared/theme/theme-provider';
 import { Badge } from '@/shared/ui/Badge';
 import { Banner } from '@/shared/ui/Banner';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
@@ -25,6 +27,7 @@ import { InfoGrid } from '@/shared/ui/InfoGrid';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
+import { EyeIcon } from '@/shared/ui/icons';
 import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
 
@@ -272,7 +275,21 @@ function InfoTab({
   );
 }
 
+/** Dòng "Xem chi tiết" cuối thẻ: báo thẻ bấm được (như nút mắt của web). */
+function ViewDetailHint() {
+  const { colors, iconSize } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+      <EyeIcon size={iconSize.sm} color={colors.primary} weight="bold" />
+      <Text variant="label" tone="primary">
+        Xem chi tiết
+      </Text>
+    </View>
+  );
+}
+
 function TrainingTab({ id }: { id: string }) {
+  const router = useRouter();
   const gateway = useResourceGateway();
   const query = useQuery({
     queryKey: ['leader-participations', id],
@@ -302,12 +319,20 @@ function TrainingTab({ id }: { id: string }) {
         const result =
           row.passed === true ? 'Đạt' : row.passed === false ? 'Không đạt' : text(row, 'result');
         return (
-          <Card key={String(row.id)}>
+          <Card
+            key={String(row.id)}
+            // Mở chi tiết kết quả khóa huấn luyện (hồ sơ tham dự); BE đã che điểm theo quyền xem điểm của khóa.
+            onPress={() =>
+              router.push(`/res/registrations/${encodeURIComponent(text(row, 'id'))}` as Href)
+            }
+            accessibilityLabel={`Xem chi tiết kết quả: ${text(row, 'courseName') || text(row, 'courseCode')}`}
+          >
             <Text variant="bodyStrong">{text(row, 'courseName') || text(row, 'courseCode')}</Text>
             <InfoRow label="Ngày đăng ký" value={formatDate(text(row, 'registrationDate'))} />
             <InfoRow label="Điểm" value={score} />
             <InfoRow label="Kết quả" value={result} />
             <InfoRow label="Nhận xét" value={text(row, 'scoreNote')} />
+            <ViewDetailHint />
           </Card>
         );
       })}
@@ -316,6 +341,7 @@ function TrainingTab({ id }: { id: string }) {
 }
 
 function CertificatesTab({ id, subject }: { id: string; subject: PermissionSubject | null }) {
+  const router = useRouter();
   const gateway = useResourceGateway();
   const own = canReadLeaderCertificates(subject);
   const query = useQuery({
@@ -336,7 +362,15 @@ function CertificatesTab({ id, subject }: { id: string; subject: PermissionSubje
   return (
     <QueryState query={query} empty="Chưa có chứng nhận nào">
       {(query.data ?? []).map((row) => (
-        <Card key={text(row, 'certificateCode')}>
+        <Card
+          key={text(row, 'certificateCode')}
+          onPress={() =>
+            router.push(
+              `/res/certificates/${encodeURIComponent(text(row, 'certificateCode'))}` as Href,
+            )
+          }
+          accessibilityLabel={`Xem chi tiết chứng nhận: ${text(row, 'certificateName') || text(row, 'certificateCode')}`}
+        >
           <Text variant="bodyStrong">{text(row, 'certificateName')}</Text>
           <InfoRow
             label="Khóa huấn luyện"
@@ -345,6 +379,7 @@ function CertificatesTab({ id, subject }: { id: string; subject: PermissionSubje
           <InfoRow label="Mã chứng nhận" value={text(row, 'certificateCode')} />
           <InfoRow label="Ngày cấp" value={formatDate(text(row, 'issueDate'))} />
           <InfoRow label="Người ký" value={text(row, 'signedBy')} />
+          <ViewDetailHint />
         </Card>
       ))}
     </QueryState>

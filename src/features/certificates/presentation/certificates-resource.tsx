@@ -9,6 +9,7 @@ import {
   certificateCard,
   certificateDetail,
   certificateTitle,
+  LEVEL_NAMES_CONTEXT,
   holderName,
 } from './certificate-view';
 
@@ -22,6 +23,8 @@ const base = {
   detailTitle: (row) => holderName(row) || certificateTitle(row),
   detailBadges: certificateBadges,
   detail: certificateDetail,
+  // Cấp độ khi đạt BE trả theo mã: tra tên theo danh mục của giáo phận.
+  detailContext: LEVEL_NAMES_CONTEXT,
   // Chứng nhận do hệ thống sinh khi hoàn thành khóa; thao tác (duyệt, thu hồi, cấp lại, PDF) nằm ở màn chi tiết.
   renderDetailExtra: ({ row, subject }) => <CertificateActions row={row} subject={subject} />,
   canCreate: () => false,

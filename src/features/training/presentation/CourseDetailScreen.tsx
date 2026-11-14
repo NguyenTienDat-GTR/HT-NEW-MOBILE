@@ -83,7 +83,7 @@ const goto = (path: string, course: string) =>
 
 /**
  * Chi tiết khóa huấn luyện: thông tin, thời gian đăng ký, chấm điểm; các thao tác theo quyền (sửa, mở/đóng đăng ký,
- * khóa điểm, kết thúc, ngưng) và lối tắt tới đăng ký, duyệt, tham dự, chấm điểm của riêng khóa này.
+ * khóa điểm, kết thúc, vô hiệu hóa) và lối tắt tới đăng ký, duyệt, tham dự, chấm điểm của riêng khóa này.
  */
 export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScreenProps) {
   const gateway = useResourceGateway();
@@ -195,7 +195,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
             {text(course, 'courseName')}
           </Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {!active ? <Badge label="Tạm ngưng" tone="warning" /> : null}
+            {!active ? <Badge label="Đã vô hiệu hóa" tone="warning" /> : null}
             <Badge label={ORGANIZING_LABELS[organizing]} tone={ORGANIZING_TONES[organizing]} />
             <Badge
               label={REGISTRATION_LABELS[registration]}
@@ -350,15 +350,30 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
         </CollapsibleSection>
       </Card>
 
-      {canFinish ? (
-        <Button label="Kết thúc khóa" variant="destructive" onPress={() => setPending('finish')} />
-      ) : null}
-      {canToggle && def.toggle ? (
-        <Button
-          label={def.toggle.label(course)}
-          variant={active ? 'destructive' : 'outline'}
-          onPress={() => setToggleOpen(true)}
-        />
+      {canFinish || (canToggle && def.toggle) ? (
+        // Hai nút thao tác nguy hiểm: nhỏ gọn, cùng một hàng.
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {canFinish ? (
+            <View style={{ flex: 1 }}>
+              <Button
+                label="Kết thúc khóa"
+                variant="destructive"
+                size="sm"
+                onPress={() => setPending('finish')}
+              />
+            </View>
+          ) : null}
+          {canToggle && def.toggle ? (
+            <View style={{ flex: 1 }}>
+              <Button
+                label={def.toggle.label(course)}
+                variant={active ? 'destructive' : 'outline'}
+                size="sm"
+                onPress={() => setToggleOpen(true)}
+              />
+            </View>
+          ) : null}
+        </View>
       ) : null}
 
       <ConfirmSheet

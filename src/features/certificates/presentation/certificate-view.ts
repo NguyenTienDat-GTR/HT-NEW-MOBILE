@@ -1,8 +1,14 @@
 import { formatDate, formatDateTime } from '@/core/domain/date-format';
+import { levelLabel } from '@/core/domain/level-labels';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
 import { loadOptions } from '@/shared/resource/options';
 import { flag, joinParts, text } from '@/shared/resource/row';
-import type { CardView, DetailSection, ListFilterDef } from '@/shared/resource/types';
+import type {
+  CardView,
+  DetailSection,
+  ListFilterDef,
+  ResourceDefinition,
+} from '@/shared/resource/types';
 
 import { isAwaitingApproval, isCourseLocked } from '../domain/certificate-permissions';
 import {
@@ -55,7 +61,21 @@ export function certificateCard(row: ResourceRow): CardView {
   };
 }
 
-export function certificateDetail(row: ResourceRow): DetailSection[] {
+/** Danh mục cấp độ của giáo phận (mã -> tên), dùng chung cache với màn chi tiết huynh trưởng. */
+export const LEVEL_NAMES_CONTEXT: NonNullable<ResourceDefinition['detailContext']> = {
+  key: ['leader-level-names'],
+  load: (gateway) =>
+    gateway.call<{ levelCode: string; levelName: string }[]>('GET', '/leader-levels/options'),
+};
+
+function levelNamesOf(context: unknown): ReadonlyMap<string, string> {
+  const list = Array.isArray(context)
+    ? (context as { levelCode: string; levelName: string }[])
+    : [];
+  return new Map(list.map((level) => [level.levelCode, level.levelName]));
+}
+
+export function certificateDetail(row: ResourceRow, context?: unknown): DetailSection[] {
   const status = row.approvalStatus;
   const revoked = status === 'REVOKED';
   const reissuedAt = text(row, 'reissuedAt');
@@ -86,7 +106,10 @@ export function certificateDetail(row: ResourceRow): DetailSection[] {
       fields: [
         { label: 'Tên khóa', value: text(row, 'courseName') },
         { label: 'Loại khóa', value: text(row, 'courseTypeName') },
-        { label: 'Cấp độ khi đạt', value: text(row, 'resultingLevel') },
+        {
+          label: 'Cấp độ khi đạt',
+          value: levelLabel(text(row, 'resultingLevel'), levelNamesOf(context)),
+        },
         { label: 'Năm tổ chức', value: text(row, 'courseHostYear') },
         {
           label: 'Tình trạng khóa',

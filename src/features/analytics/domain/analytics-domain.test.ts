@@ -2,6 +2,7 @@ import {
   DEFAULT_FILTERS,
   activeFilterCount,
   buildAnalyticsQuery,
+  effectiveRange,
   presetLabel,
   resolvePreset,
   withResolvedRange,
@@ -192,5 +193,46 @@ describe('formatRecordValue', () => {
     expect(formatRecordValue('score', 8.5)).toBe('8,5');
     expect(formatRecordValue('hostYear', 2026)).toBe('2026');
     expect(formatRecordValue('x', null)).toBe('');
+  });
+});
+
+describe('khoảng thời gian tùy chọn (date picker)', () => {
+  const today = new Date(2026, 10, 14);
+
+  it('nhãn tùy chọn hiển thị ngày dd/MM/yyyy', () => {
+    expect(
+      presetLabel({
+        ...DEFAULT_FILTERS,
+        preset: 'custom',
+        fromDate: '2026-01-05',
+        toDate: '2026-03-20',
+      }),
+    ).toBe('05/01/2026 → 20/03/2026');
+  });
+
+  it('effectiveRange: preset tính ra, custom theo ngày chọn, 12 tháng qua theo khoảng BE đã dùng', () => {
+    expect(effectiveRange({ ...DEFAULT_FILTERS, preset: 'thisMonth' }, undefined, today)).toEqual({
+      fromDate: '2026-11-01',
+      toDate: '2026-11-30',
+    });
+    expect(
+      effectiveRange({ ...DEFAULT_FILTERS, preset: 'custom', fromDate: '2026-02-01', toDate: '' }),
+    ).toEqual({ fromDate: '2026-02-01', toDate: '' });
+    expect(
+      effectiveRange(DEFAULT_FILTERS, { fromDate: '2025-12-01', toDate: '2026-11-30' }),
+    ).toEqual({ fromDate: '2025-12-01', toDate: '2026-11-30' });
+  });
+
+  it('chọn ngày tùy chọn thì gửi BE đúng khoảng ngày đó', () => {
+    const query = buildAnalyticsQuery(
+      withResolvedRange({
+        ...DEFAULT_FILTERS,
+        preset: 'custom',
+        fromDate: '2026-01-05',
+        toDate: '2026-03-20',
+      }),
+    );
+    expect(query.fromDate).toBe('2026-01-05');
+    expect(query.toDate).toBe('2026-03-20');
   });
 });

@@ -38,7 +38,6 @@ import { KpiGrid } from '../components/KpiGrid';
 import { OpenCoursesList } from '../components/OpenCoursesList';
 import { RecordsSheet } from '../components/RecordsSheet';
 import { WorkQueueGrid } from '../components/WorkQueueGrid';
-import { openableHref } from '../navigation';
 import {
   useAnalyticsReport,
   useAnalyticsScopes,
@@ -60,6 +59,8 @@ export interface DashboardScreenProps {
   /** Quyền của tài khoản: quyết định có hiện "Khóa đang mở đăng ký" cho giáo hạt/giáo phận hay không. */
   permissions: readonly string[];
   onOpenPath: (path: string) => void;
+  /** Đổi href của BE (đường dẫn web) sang đường dẫn mobile; null = màn đích không có/không đủ quyền (không bấm được). */
+  resolveHref: (href: string) => string | null;
   /** Mở màn Phân tích chi tiết. */
   onOpenAnalysis: () => void;
 }
@@ -68,7 +69,12 @@ export interface DashboardScreenProps {
  * Tổng quan theo phạm vi tài khoản (như web): toàn hệ thống chỉ có số tổng; giáo xứ có khóa đang mở, nhân sự và cấp bậc;
  * giáo hạt/giáo phận có việc cần xử lý, cảnh báo, xu hướng, phễu huấn luyện. Một cột, kích thước biểu đồ theo bề rộng màn hình.
  */
-export function DashboardScreen({ permissions, onOpenPath, onOpenAnalysis }: DashboardScreenProps) {
+export function DashboardScreen({
+  permissions,
+  onOpenPath,
+  resolveHref,
+  onOpenAnalysis,
+}: DashboardScreenProps) {
   const { colors } = useTheme();
   const [filters, setFilters] = useState<AnalyticsFilterState>(DEFAULT_FILTERS);
   const [drill, setDrill] = useState<DrillTarget | null>(null);
@@ -172,7 +178,7 @@ export function DashboardScreen({ permissions, onOpenPath, onOpenAnalysis }: Das
                 description="Tự động phát hiện từ dữ liệu của giáo xứ."
                 tone={colors.viz[3]}
               >
-                <AlertsList alerts={report.alerts} />
+                <AlertsList alerts={report.alerts} openable={resolveHref} onOpen={onOpenPath} />
               </ChartCard>
               <ChartCard
                 busy={busy}
@@ -239,7 +245,7 @@ export function DashboardScreen({ permissions, onOpenPath, onOpenAnalysis }: Das
                 {workQueue.data ? (
                   <WorkQueueGrid
                     items={workQueue.data}
-                    openable={openableHref}
+                    openable={resolveHref}
                     onOpen={onOpenPath}
                   />
                 ) : (
@@ -250,7 +256,7 @@ export function DashboardScreen({ permissions, onOpenPath, onOpenAnalysis }: Das
                 title="Điểm cần chú ý"
                 description="Tự động phát hiện từ dữ liệu hiện tại, từ nghiêm trọng tới thông tin."
               >
-                <AlertsList alerts={report.alerts} />
+                <AlertsList alerts={report.alerts} openable={resolveHref} onOpen={onOpenPath} />
               </ChartCard>
               {showOpenCourses ? (
                 <ChartCard

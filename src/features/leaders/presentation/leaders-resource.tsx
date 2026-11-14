@@ -8,6 +8,7 @@ import type { ResourceDefinition, SelectOption } from '@/shared/resource/types';
 import { GENDER_OPTIONS, levelLabel, parishOptionLabel } from '../domain/leader-labels';
 import { canCreateLeader, canToggleLeader, canUpdateLeader } from '../domain/leader-permissions';
 
+import { LeaderAvatarField } from './LeaderAvatarField';
 import { LeaderDetailScreen } from './LeaderDetailScreen';
 
 interface LevelDto {
@@ -120,7 +121,7 @@ export const leadersResource: ResourceDefinition = {
     titleEdit: 'Chỉnh sửa huynh trưởng',
     sections: [
       { title: 'Thông tin cá nhân', fields: ['holyName', 'fullName', 'birthDate', 'gender'] },
-      { title: 'Thông tin liên hệ', fields: ['email', 'phoneNumber'] },
+      { title: 'Thông tin liên hệ', fields: ['email', 'phoneNumber', 'imageAssetId'] },
       { title: 'Phạm vi', fields: ['deaneryId', 'parishId', 'leaderLevel'] },
       { fields: ['subjectConsentConfirmed'] },
     ],
@@ -160,6 +161,13 @@ export const leadersResource: ResourceDefinition = {
       },
       { name: 'email', label: 'Email', kind: 'email', maxLength: 100 },
       {
+        name: 'imageAssetId',
+        label: 'Ảnh đại diện',
+        kind: 'custom',
+        hint: 'Chỉ có thể thay bằng ảnh khác, không xóa được ảnh đại diện.',
+        render: (props) => <LeaderAvatarField {...props} />,
+      },
+      {
         name: 'deaneryId',
         label: 'Giáo hạt',
         kind: 'select',
@@ -196,6 +204,9 @@ export const leadersResource: ResourceDefinition = {
       gender: row ? text(row, 'gender') : '',
       phoneNumber: row ? text(row, 'phoneNumber') : '',
       email: row ? text(row, 'email') : '',
+      // Id ảnh vừa tải lên (rỗng = giữ ảnh cũ); `imageUrl` chỉ để xem trước, không gửi lên.
+      imageAssetId: '',
+      imageUrl: row ? text(row, 'imageThumbUrl') || text(row, 'imageUrl') : '',
       // Như web: tạo mới thì chọn sẵn giáo hạt của tài khoản (admin giáo hạt / giáo xứ).
       deaneryId: row
         ? text(row, 'deaneryId')
@@ -215,6 +226,9 @@ export const leadersResource: ResourceDefinition = {
           phoneNumber: trimmed(values, 'phoneNumber'),
           leaderLevel: values.leaderLevel,
           parishId: values.parishId,
+          ...(optional(values, 'imageAssetId')
+            ? { imageAssetId: optional(values, 'imageAssetId') }
+            : {}),
           subjectConsentConfirmed: true,
         };
       }
@@ -232,6 +246,9 @@ export const leadersResource: ResourceDefinition = {
         gender: values.gender,
         phoneNumber: optional(values, 'phoneNumber'),
         email: optional(values, 'email'),
+        ...(optional(values, 'imageAssetId')
+          ? { imageAssetId: optional(values, 'imageAssetId') }
+          : {}),
         clearFields: clearFields.length > 0 ? clearFields : undefined,
         subjectConsentConfirmed: true,
       };

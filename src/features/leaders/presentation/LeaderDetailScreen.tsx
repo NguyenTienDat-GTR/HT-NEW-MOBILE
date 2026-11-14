@@ -3,6 +3,8 @@ import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
 
+import { readEnv } from '@/core/config/env';
+import { resolveMediaUrl } from '@/core/config/media-url';
 import { errorMessage } from '@/core/domain/app-error';
 import { formatDate } from '@/core/domain/date-format';
 import type { PermissionSubject } from '@/core/domain/permissions';
@@ -15,6 +17,7 @@ import { flag, text } from '@/shared/resource/row';
 import type { ResourceDefinition } from '@/shared/resource/types';
 import { resourceKey } from '@/shared/resource/use-resource';
 import { useTheme } from '@/shared/theme/theme-provider';
+import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
 import { Banner } from '@/shared/ui/Banner';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
@@ -113,6 +116,14 @@ export function LeaderDetailScreen({ def, id, subject, onEdit }: LeaderDetailScr
     <Screen onRefresh={() => void query.refetch()} refreshing={query.isRefetching}>
       <Card>
         <View style={{ gap: 8 }}>
+          <Avatar
+            name={text(leader, 'fullName') || name}
+            size={72}
+            uri={resolveMediaUrl(
+              readEnv().apiBaseUrl,
+              text(leader, 'imageThumbUrl') || text(leader, 'imageUrl'),
+            )}
+          />
           <Text variant="title" accessibilityRole="header">
             {name}
           </Text>

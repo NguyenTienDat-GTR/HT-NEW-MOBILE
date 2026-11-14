@@ -126,9 +126,12 @@ export const coursesResource: ResourceDefinition = {
     sections: [
       {
         title: 'Thông tin khóa',
-        fields: ['courseName', 'courseTypeCode', 'yearsActive', 'location'],
+        fields: ['courseName', 'courseTypeCode', 'location'],
       },
-      { title: 'Thời gian tổ chức', fields: ['startDate', 'endDate', 'hostYear'] },
+      {
+        title: 'Thời gian tổ chức',
+        fields: ['startDate', 'endDate', 'hostYear', 'yearsActive'],
+      },
       {
         title: 'Thời gian đăng ký',
         fields: ['registrationEnabled', 'registrationStartAt', 'registrationEndAt'],
@@ -171,7 +174,7 @@ export const coursesResource: ResourceDefinition = {
         keyboardType: 'number-pad',
         maxLength: 3,
         readOnlyWhen: (values, mode) => mode === 'edit' && values.hasParticipations === true,
-        hint: 'Số năm kể từ lúc huynh trưởng đạt cấp độ yêu cầu (hoặc khóa tiên quyết) đến năm tổ chức. Mặc định 0 (không yêu cầu).',
+        hint: '0 = không yêu cầu.',
         validate: (value) =>
           integerText(value) !== '' && !/^\d+$/.test(integerText(value))
             ? 'Phải là số nguyên không âm'
@@ -200,7 +203,7 @@ export const coursesResource: ResourceDefinition = {
         keyboardType: 'number-pad',
         maxLength: 4,
         readOnlyWhen: (values, mode) => mode === 'edit' && values.hasParticipations === true,
-        hint: 'Dùng để sinh mã chứng nhận. Để trống thì lấy năm của ngày bắt đầu.',
+        hint: 'Để trống thì lấy năm ngày bắt đầu.',
         validate: (value) => {
           const year = integerText(value);
           if (year === '') return null;
@@ -262,7 +265,7 @@ export const coursesResource: ResourceDefinition = {
         required: true,
         maxLength: 6,
         readOnlyWhen: (values, mode) => mode === 'edit' && values.hasParticipations === true,
-        hint: 'Điểm tổng kết (trung bình có hệ số) tối thiểu để đạt khóa.',
+        hint: 'Điểm tổng kết tối thiểu để đạt khóa.',
         validate: (value, values) => {
           const raw = integerText(value);
           if (raw === '') return null;

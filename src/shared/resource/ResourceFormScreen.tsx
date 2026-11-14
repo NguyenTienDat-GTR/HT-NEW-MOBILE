@@ -11,7 +11,13 @@ import { Screen } from '../ui/Screen';
 import { Text } from '../ui/Text';
 
 import { FormFieldView } from './FormFieldView';
-import { applyChange, isFieldVisible, validateForm } from './form-logic';
+import {
+  applyChange,
+  groupFormRows,
+  isCompactField,
+  validateForm,
+  visibleFields,
+} from './form-logic';
 import { useResourceGateway } from './resource-context';
 import type {
   FormDefinition,
@@ -140,22 +146,38 @@ function FormBody({
               {section.title}
             </Text>
           ) : null}
-          {section.fields.map((name) => {
-            const field = form.fields.find((f) => f.name === name);
-            if (!field || !isFieldVisible(field, values, mode)) return null;
-            return (
+          {groupFormRows(visibleFields(form, section.fields, values, mode)).map((fields) => {
+            const views = fields.map((field) => (
               <FormFieldView
-                key={name}
+                key={field.name}
                 field={field}
                 scope={def.id}
-                value={values[name] ?? (field.kind === 'switch' ? false : '')}
+                value={values[field.name] ?? (field.kind === 'switch' ? false : '')}
                 values={values}
                 mode={mode}
                 row={row}
                 subject={subject}
-                error={errors[name]}
+                error={errors[field.name]}
                 onChange={change}
               />
+            ));
+            // Hai ô ngắn chung một hàng; ô khác một hàng riêng.
+            return fields.length === 2 ? (
+              <View key={fields[0]!.name} style={{ flexDirection: 'row', gap: 12 }}>
+                {views.map((view, position) => (
+                  <View key={fields[position]!.name} style={{ flex: 1 }}>
+                    {view}
+                  </View>
+                ))}
+              </View>
+            ) : isCompactField(fields[0]!) ? (
+              // Ô ngắn đứng một mình: nửa chiều rộng, không kéo dài hết dòng.
+              <View key={fields[0]!.name} style={{ flexDirection: 'row', gap: 12 }}>
+                <View style={{ flex: 1 }}>{views[0]}</View>
+                <View style={{ flex: 1 }} />
+              </View>
+            ) : (
+              views[0]
             );
           })}
         </View>

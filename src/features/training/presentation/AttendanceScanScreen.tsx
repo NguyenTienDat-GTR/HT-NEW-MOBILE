@@ -78,6 +78,26 @@ export function AttendanceScanScreen({
     }, []),
   );
 
+  /** Kiểm tra chứng nhận tồn tại trước: không có thì báo ngay ở khung quét, có (kể cả đã thu hồi) thì sang chi tiết. */
+  const openCertificate = async (code: string) => {
+    if (!onCertificate) return;
+    dispatch({ type: 'scanned', token: code });
+    try {
+      const detail = await gateway.get('/certificates', code);
+      queryClient.setQueryData([...resourceKey('certificates'), 'row', code], detail);
+      dispatch({ type: 'handed-off' });
+      onCertificate(code);
+    } catch (exception) {
+      dispatch({
+        type: 'failed',
+        message:
+          isAppError(exception) && exception.status === 404
+            ? CERTIFICATE_NOT_FOUND_MESSAGE(code)
+            : errorMessage(exception),
+      });
+    }
+  };
+
   const handleRaw = async (raw: string) => {
     const payload = classifyScan(raw);
     if (payload.kind === 'attendance') {
@@ -93,22 +113,7 @@ export function AttendanceScanScreen({
       return;
     }
     if (payload.kind === 'certificate' && universal && onCertificate) {
-      dispatch({ type: 'scanned', token: payload.code });
-      try {
-        // Kiểm tra tồn tại trước: không có thì báo ngay ở khung quét, có (kể cả đã thu hồi) thì sang chi tiết.
-        const detail = await gateway.get('/certificates', payload.code);
-        queryClient.setQueryData([...resourceKey('certificates'), 'row', payload.code], detail);
-        dispatch({ type: 'handed-off' });
-        onCertificate(payload.code);
-      } catch (exception) {
-        dispatch({
-          type: 'failed',
-          message:
-            isAppError(exception) && exception.status === 404
-              ? CERTIFICATE_NOT_FOUND_MESSAGE(payload.code)
-              : errorMessage(exception),
-        });
-      }
+      await openCertificate(payload.code);
       return;
     }
     dispatch({
@@ -150,6 +155,13 @@ export function AttendanceScanScreen({
     } catch {
       dispatch({ type: 'failed', message: IMAGE_UNREADABLE_MESSAGE });
     }
+  };
+
+  const submitManual = () => {
+    const code = manual.trim();
+    if (code === '') return;
+    setManual('');
+    void openCertificate(code);
   };
 
   const confirm = async () => {
@@ -246,7 +258,8 @@ export function AttendanceScanScreen({
         ) : permission && !permission.granted ? (
           <Card>
             <Text variant="body">
-              Cần cho phép dùng camera để quét mã QR. Bạn vẫn có thể nhập mã hoặc chọn ảnh bên dưới.
+              Cần cho phép dùng camera để quét mã QR. Nếu không dùng được camera, bạn có thể chọn
+              ảnh có mã QR hoặc nhập mã chứng nhận.
             </Text>
             <Button label="Cho phép dùng camera" onPress={() => void requestPermission()} />
           </Card>
@@ -311,36 +324,28 @@ export function AttendanceScanScreen({
         <Button label="Quét tiếp" onPress={next} />
       ) : null}
 
-      {scanning ? (
+      {/* Không mở được camera: chỉ cho nhập mã chứng nhận (mã điểm danh luôn lấy từ mã QR nên không nhập tay). */}
+      {scanning && !cameraReady && universal && onCertificate ? (
         <View style={{ gap: 8 }}>
           <TextField
-            label="Hoặc nhập / dán mã"
+            label="Nhập mã chứng nhận"
             value={manual}
             onChangeText={setManual}
-            placeholder="Mã điểm danh hoặc mã chứng nhận"
-            autoCapitalize="none"
+            placeholder="Ví dụ GPPC-HTI-2026-1"
+            autoCapitalize="characters"
             returnKeyType="search"
-            onSubmitEditing={() => {
-              if (manual.trim() === '') return;
-              gate.current = null;
-              void handleRaw(manual);
-              setManual('');
-            }}
+            onSubmitEditing={submitManual}
           />
           <Button
-            label="Tra cứu mã"
+            label="Tra cứu chứng nhận"
             variant="outline"
             disabled={manual.trim() === ''}
-            onPress={() => {
-              gate.current = null;
-              void handleRaw(manual);
-              setManual('');
-            }}
+            onPress={submitManual}
           />
-          {Platform.OS !== 'web' ? (
-            <Button label="Chọn ảnh có mã QR" variant="outline" onPress={() => void pickImage()} />
-          ) : null}
         </View>
+      ) : null}
+      {scanning && Platform.OS !== 'web' ? (
+        <Button label="Chọn ảnh có mã QR" variant="outline" onPress={() => void pickImage()} />
       ) : null}
     </Screen>
   );

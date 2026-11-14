@@ -27,8 +27,51 @@ export function isValidDayMonth(value: string): boolean {
   return day <= daysIn;
 }
 
+/** Ô ngắn (ngày, số) có thể xếp cặp hai cột; khai báo `width` thì theo khai báo. */
+export function isCompactField(field: FormFieldDef): boolean {
+  if (field.width) return field.width === 'half';
+  if (field.kind === 'date') return true;
+  return (
+    field.kind === 'text' &&
+    (field.keyboardType === 'number-pad' || field.keyboardType === 'decimal-pad')
+  );
+}
+
+/**
+ * Chia các ô đang hiện thành hàng: hai ô ngắn liền nhau chung một hàng; ô còn lại một hàng riêng (ô ngắn lẻ được
+ * vẽ nửa chiều rộng, không kéo dài hết dòng).
+ */
+export function groupFormRows(fields: readonly FormFieldDef[]): FormFieldDef[][] {
+  const rows: FormFieldDef[][] = [];
+  let index = 0;
+  while (index < fields.length) {
+    const current = fields[index] as FormFieldDef;
+    const next = fields[index + 1];
+    if (next && isCompactField(current) && isCompactField(next)) {
+      rows.push([current, next]);
+      index += 2;
+    } else {
+      rows.push([current]);
+      index += 1;
+    }
+  }
+  return rows;
+}
+
 export function isFieldVisible(field: FormFieldDef, values: FormValues, mode: FormMode): boolean {
   return field.visible ? field.visible(values, mode) : true;
+}
+
+/** Các ô của một nhóm đang hiện, theo thứ tự khai báo trong nhóm (tên không có trong form bị bỏ). */
+export function visibleFields(
+  form: FormDefinition,
+  names: readonly string[],
+  values: FormValues,
+  mode: FormMode,
+): FormFieldDef[] {
+  return names
+    .map((name) => form.fields.find((field) => field.name === name))
+    .filter((field): field is FormFieldDef => !!field && isFieldVisible(field, values, mode));
 }
 
 /** Kiểm tra một trường: bắt buộc, định dạng theo kiểu, giới hạn ngày, rồi validate riêng. Trả lỗi tiếng Việt hoặc null. */

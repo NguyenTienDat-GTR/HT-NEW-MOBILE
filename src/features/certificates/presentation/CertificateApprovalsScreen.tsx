@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useRouter, type Href } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/core/domain/app-error';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
@@ -21,6 +20,7 @@ import { EmptyState } from '@/shared/ui/EmptyState';
 import { FilterChips } from '@/shared/ui/FilterChips';
 import { CheckIcon } from '@/shared/ui/icons';
 import { LoadingState } from '@/shared/ui/LoadingState';
+import { useScreenInsets } from '@/shared/ui/screen-insets';
 import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
@@ -52,7 +52,7 @@ export function CertificateApprovalsScreen({
   subject: PermissionSubject | null;
 }) {
   const { colors, spacing, radius } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const router = useRouter();
   const gateway = useResourceGateway();
   const refresh = useRefreshCertificates();
@@ -173,7 +173,10 @@ export function CertificateApprovalsScreen({
         keyExtractor={(item, index) => rowId(def, item) || String(index)}
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl * 3 }}
+        contentContainerStyle={{
+          padding: spacing.md,
+          paddingBottom: picked.length > 0 ? spacing.xl * 3 : spacing.xl + insets.bottom,
+        }}
         keyboardShouldPersistTaps="handled"
         onEndReachedThreshold={0.4}
         onEndReached={() => {

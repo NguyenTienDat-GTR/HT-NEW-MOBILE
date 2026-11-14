@@ -14,13 +14,17 @@ import type { PermissionSubject, ResourceDefinition } from '@/shared/resource/ty
 import { resourceKey, useInvalidateResource } from '@/shared/resource/use-resource';
 import { Badge } from '@/shared/ui/Badge';
 import { Banner } from '@/shared/ui/Banner';
+import { AccordionGroup } from '@/shared/ui/AccordionGroup';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
 import { CollapsibleSection } from '@/shared/ui/CollapsibleSection';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
+import { ListIcon } from '@/shared/ui/icons';
 import { InfoRow } from '@/shared/ui/InfoRow';
+import { ListRow } from '@/shared/ui/ListRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
+import { useTheme } from '@/shared/theme/theme-provider';
 import { Text } from '@/shared/ui/Text';
 
 import {
@@ -83,6 +87,7 @@ const goto = (path: string, course: string) =>
 export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScreenProps) {
   const gateway = useResourceGateway();
   const router = useRouter();
+  const { colors, iconSize } = useTheme();
   const invalidate = useInvalidateResource(def);
   const [pending, setPending] = useState<Pending>(null);
   const [toggleOpen, setToggleOpen] = useState(false);
@@ -126,6 +131,23 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
     canActOnCourse(user, course, 'score');
   const registrationOpen = registration === 'OPEN';
   const encoded = encodeURIComponent(code);
+
+  const steps: { label: string; href: Href }[] = [
+    { label: 'Hồ sơ đăng ký', href: goto('/res/registrations', code) },
+    ...(canActOnCourse(user, course, 'approve')
+      ? [{ label: 'Duyệt đăng ký', href: goto('/res/approvals', code) }]
+      : []),
+    ...(canSeeParticipants
+      ? [
+          { label: 'Danh sách tham dự', href: goto('/res/participants', code) },
+          { label: 'Chia đội', href: `/res/teams?course=${encoded}` as Href },
+          { label: 'Điểm danh và email mời', href: `/res/attendance?course=${encoded}` as Href },
+        ]
+      : []),
+    ...(canActOnCourse(user, course, 'score')
+      ? [{ label: 'Chấm điểm', href: goto('/res/scores', code) }]
+      : []),
+  ];
 
   const run = async (action: () => Promise<unknown>) => {
     setBusy(true);
@@ -196,54 +218,24 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
       {error && pending === null ? <Banner tone="danger" message={error} /> : null}
 
       <Card>
-        <Text variant="heading" accessibilityRole="header">
-          Hồ sơ của khóa
-        </Text>
         <InfoRow
           label="Tham dự viên đã duyệt"
           value={fmtNumber(count(course, 'approvedParticipantCount'))}
         />
-        <Button
-          label="Hồ sơ đăng ký"
-          variant="outline"
-          onPress={() => router.push(goto('/res/registrations', code))}
-        />
-        {canActOnCourse(user, course, 'approve') ? (
-          <Button
-            label="Duyệt đăng ký"
-            variant="outline"
-            onPress={() => router.push(goto('/res/approvals', code))}
-          />
-        ) : null}
-        {canSeeParticipants ? (
-          <Button
-            label="Danh sách tham dự"
-            variant="outline"
-            onPress={() => router.push(goto('/res/participants', code))}
-          />
-        ) : null}
-        {canSeeParticipants ? (
-          <>
-            <Button
-              label="Chia đội"
-              variant="outline"
-              onPress={() => router.push(`/res/teams?course=${encoded}` as Href)}
-            />
-            <Button
-              label="Điểm danh và email mời"
-              variant="outline"
-              onPress={() => router.push(`/res/attendance?course=${encoded}` as Href)}
-            />
-          </>
-        ) : null}
-        {canActOnCourse(user, course, 'score') ? (
-          <Button
-            label="Chấm điểm"
-            variant="outline"
-            onPress={() => router.push(goto('/res/scores', code))}
-          />
-        ) : null}
       </Card>
+
+      {/* Các bước quy trình của khóa: hamburger ẩn/hiện danh sách, như menu thả xuống của web trên điện thoại. */}
+      {steps.length > 0 ? (
+        <AccordionGroup
+          title="Quy trình huấn luyện"
+          icon={<ListIcon size={iconSize.md} color={colors.primary} weight="bold" />}
+          count={steps.length}
+        >
+          {steps.map((step) => (
+            <ListRow key={step.label} label={step.label} onPress={() => router.push(step.href)} />
+          ))}
+        </AccordionGroup>
+      ) : null}
 
       <Card>
         <View style={{ gap: 12 }}>

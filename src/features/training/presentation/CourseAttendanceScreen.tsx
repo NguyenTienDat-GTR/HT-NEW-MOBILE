@@ -143,6 +143,10 @@ export function CourseAttendanceScreen({
     <Screen
       onRefresh={() => void refresh()}
       refreshing={summary.isRefetching}
+      onEndReached={() => {
+        if (people.hasNextPage && !people.isFetchingNextPage) void people.fetchNextPage();
+      }}
+      loadingMore={people.isFetchingNextPage}
       footer={
         canScan || canInvite ? (
           <>
@@ -251,14 +255,6 @@ export function CourseAttendanceScreen({
         <Text variant="secondary" tone="muted">
           Không có tham dự viên phù hợp.
         </Text>
-      ) : null}
-      {people.hasNextPage ? (
-        <Button
-          label="Tải thêm"
-          variant="outline"
-          loading={people.isFetchingNextPage}
-          onPress={() => void people.fetchNextPage()}
-        />
       ) : null}
 
       <InviteSheet

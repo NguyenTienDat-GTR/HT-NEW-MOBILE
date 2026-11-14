@@ -74,7 +74,7 @@ export function useWorkQueue(scope: string, enabled = true) {
   });
 }
 
-/** Danh sách hồ sơ phía sau một ô biểu đồ, cuộn/“Xem thêm” từng trang 15 dòng. */
+/** Danh sách hồ sơ phía sau một ô biểu đồ, cuộn vô hạn, mỗi trang 15 dòng. */
 export function useAnalyticsRecords(filters: AnalyticsFilterState, target: DrillTarget | null) {
   const deps = useAnalyticsDependencies();
   const key = useResolvedKey(filters);

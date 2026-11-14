@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -8,9 +9,11 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useEndReached } from '../hooks/use-end-reached';
 import { useTheme } from '../theme/theme-provider';
+
+import { useScreenInsets } from './screen-insets';
 
 export interface ScreenProps {
   children: React.ReactNode;
@@ -22,6 +25,13 @@ export interface ScreenProps {
   /** Kéo xuống để tải lại (chỉ khi scroll = true). */
   onRefresh?: () => void;
   refreshing?: boolean;
+  /**
+   * Cuộn vô hạn: gọi khi cuộn gần cuối (hoặc nội dung chưa đầy màn hình). Hàm tự kiểm tra còn trang tiếp và
+   * không đang tải; không cần nút "Tải thêm".
+   */
+  onEndReached?: () => void;
+  /** Đang tải trang kế tiếp: hiện vòng quay ở cuối. */
+  loadingMore?: boolean;
 }
 
 /**
@@ -35,26 +45,47 @@ export function Screen({
   contentStyle,
   onRefresh,
   refreshing = false,
+  onEndReached,
+  loadingMore = false,
 }: ScreenProps) {
+  const endProps = useEndReached(onEndReached);
   const { colors, spacing } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
 
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"
+      {...endProps}
       refreshControl={
         onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
       }
       contentContainerStyle={[
         styles.content,
-        { padding: spacing.md, paddingTop: spacing.md + insets.top, gap: spacing.md },
+        {
+          padding: spacing.md,
+          paddingTop: spacing.md + insets.top,
+          // Không có nút dính đáy thì chừa chỗ cho thanh điều hướng của hệ điều hành để cuộn hết nội dung.
+          paddingBottom: footer ? spacing.md : spacing.md + insets.bottom,
+          gap: spacing.md,
+        },
         contentStyle,
       ]}
     >
       {children}
+      {loadingMore ? (
+        <ActivityIndicator color={colors.primary} accessibilityLabel="Đang tải thêm" />
+      ) : null}
     </ScrollView>
   ) : (
-    <View style={[styles.content, { paddingTop: insets.top }, contentStyle]}>{children}</View>
+    <View
+      style={[
+        styles.content,
+        { paddingTop: insets.top, paddingBottom: footer ? 0 : insets.bottom },
+        contentStyle,
+      ]}
+    >
+      {children}
+    </View>
   );
 
   return (

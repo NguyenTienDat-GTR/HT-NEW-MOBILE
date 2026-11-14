@@ -84,7 +84,10 @@ export function validateField(
   if (!isFieldVisible(field, values, mode)) return null;
   const value = values[field.name] ?? (field.kind === 'switch' ? false : '');
   if (field.kind !== 'switch' && field.required && isEmpty(value)) {
-    return field.kind === 'select' || field.kind === 'date' || field.kind === 'lookup'
+    return field.kind === 'select' ||
+      field.kind === 'date' ||
+      field.kind === 'datetime' ||
+      field.kind === 'lookup'
       ? `Vui lòng chọn ${field.label.toLowerCase()}`
       : `Vui lòng nhập ${field.label.toLowerCase()}`;
   }
@@ -119,6 +122,31 @@ export function validateForm(
     if (error) errors[field.name] = error;
   }
   return errors;
+}
+
+export interface FirstFormError {
+  name: string;
+  /** Chỉ số nhóm (section) chứa ô lỗi. */
+  sectionIndex: number;
+}
+
+/** Ô lỗi đầu tiên theo thứ tự hiển thị của form (nhóm trước, trong nhóm theo thứ tự ô); không có lỗi -> null. */
+export function firstFormError(
+  form: FormDefinition,
+  errors: Record<string, string>,
+): FirstFormError | null {
+  for (const [sectionIndex, section] of form.sections.entries()) {
+    const name = section.fields.find((fieldName) => errors[fieldName]);
+    if (name) return { name, sectionIndex };
+  }
+  return null;
+}
+
+/** Số ô lỗi của từng nhóm (theo chỉ số nhóm) để hiện nhãn lỗi trên tiêu đề nhóm đã thu gọn. */
+export function sectionErrorCounts(form: FormDefinition, errors: Record<string, string>): number[] {
+  return form.sections.map(
+    (section) => section.fields.filter((fieldName) => errors[fieldName]).length,
+  );
 }
 
 /** Cắt khoảng trắng chuỗi, giữ boolean; dùng trong toBody của các định nghĩa. */

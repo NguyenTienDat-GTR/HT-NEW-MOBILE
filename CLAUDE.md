@@ -35,6 +35,8 @@ Vùng an toàn: `Screen`, danh sách và nút dính đáy lấy khoảng chừa 
 
 Bố cục gọn: form xếp cặp hai cột các ô ngắn liền kề (ô ngày, ô số; hoặc `width: 'half'`), ô ngắn lẻ chỉ nửa chiều rộng (`groupFormRows` ở `form-logic.ts`); màn chi tiết bọc các `InfoRow` trong `InfoGrid` để giá trị ngắn xếp hai cột. Ngày luôn chọn bằng `DateField` (lịch hệ điều hành, không gõ tay). Mũi tên quay lại là `HeaderBackButton` tự vẽ để không trùng màu nền thanh tiêu đề.
 
+Form tạo/sửa chia thành các phần gập được (`FormSection`); khi lưu bị lỗi, các phần có lỗi tự mở, màn cuộn tới ô lỗi đầu tiên và focus vào đó (`firstFormError`). Gợi ý của ô (`hint`) hiện sau dấu "?" cạnh nhãn (`FieldLabel`), không in dưới ô. Ngày hiển thị dd/MM/yyyy; ô `datetime` (vd. thời gian đăng ký) chọn ngày rồi giờ, giá trị `yyyy-MM-ddTHH:mm` giờ Việt Nam.
+
 Thanh tab dưới (`src/app/(app)/(tabs)/_layout.tsx`): Tổng quan, Khóa huấn luyện, **Quét QR** (nút nổi ở giữa, `ScanTabButton`), Thông báo, Menu. Tab Khóa huấn luyện và Quét QR ẩn theo quyền (`canSeeMenuEntry`, `canUseQrScanner`). Trình quét chung `AttendanceScanScreen` giống nút quét ở header web (mã điểm danh, mã chứng nhận, nhập/dán mã, chọn ảnh); camera chỉ bật khi màn đang được xem. Điểm danh riêng một khóa mở ở `/course-scan?course=<mã>`.
 
 Thao tác riêng trên một bản ghi (duyệt, thu hồi, chia sẻ PDF…) đặt ở `renderDetailExtra` để dùng lại màn chi tiết chung. Tải nội dung nhị phân (PDF) dùng `gateway.download` (có Bearer và tự làm mới phiên), rồi `shared/files/share-file.ts` ghi vào bộ nhớ đệm và mở hộp chia sẻ của hệ điều hành.

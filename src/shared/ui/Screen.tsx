@@ -1,3 +1,4 @@
+import type { ComponentRef, Ref } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -6,6 +7,8 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -32,6 +35,10 @@ export interface ScreenProps {
   onEndReached?: () => void;
   /** Đang tải trang kế tiếp: hiện vòng quay ở cuối. */
   loadingMore?: boolean;
+  /** Tham chiếu tới vùng cuộn (để màn hình tự cuộn tới một ô, vd. ô form báo lỗi). */
+  scrollRef?: Ref<ComponentRef<typeof ScrollView>>;
+  /** Báo vị trí cuộn hiện tại (dp) mỗi lần cuộn. */
+  onScrollY?: (y: number) => void;
 }
 
 /**
@@ -47,6 +54,8 @@ export function Screen({
   refreshing = false,
   onEndReached,
   loadingMore = false,
+  scrollRef,
+  onScrollY,
 }: ScreenProps) {
   const endProps = useEndReached(onEndReached);
   const { colors, spacing } = useTheme();
@@ -54,8 +63,18 @@ export function Screen({
 
   const body = scroll ? (
     <ScrollView
+      ref={scrollRef}
       keyboardShouldPersistTaps="handled"
       {...endProps}
+      {...(onScrollY
+        ? {
+            scrollEventThrottle: 16,
+            onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+              onScrollY(event.nativeEvent.contentOffset.y);
+              endProps.onScroll?.(event);
+            },
+          }
+        : {})}
       refreshControl={
         onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined
       }

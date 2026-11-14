@@ -1,9 +1,11 @@
 import {
   applyChange,
+  firstFormError,
   groupFormRows,
   isCompactField,
   isValidDayMonth,
   optional,
+  sectionErrorCounts,
   validateField,
   validateForm,
 } from './form-logic';
@@ -144,5 +146,30 @@ describe('bố cục form: xếp cặp ô ngắn', () => {
     expect(isCompactField(mk('a', { kind: 'date', width: 'full' }))).toBe(false);
     expect(isCompactField(mk('b', { width: 'half' }))).toBe(true);
     expect(isCompactField(mk('c', { kind: 'switch' }))).toBe(false);
+  });
+});
+
+describe('lỗi form: tìm ô lỗi đầu tiên', () => {
+  const form = {
+    titleCreate: 'Tạo',
+    titleEdit: 'Sửa',
+    sections: [
+      { title: 'A', fields: ['a1', 'a2'] },
+      { title: 'B', fields: ['b1'] },
+    ],
+    fields: [],
+    initialValues: () => ({}),
+    toBody: () => ({}),
+  } as unknown as FormDefinition;
+
+  it('chọn ô lỗi đầu tiên theo thứ tự hiển thị, không theo thứ tự lỗi được báo', () => {
+    expect(firstFormError(form, { b1: 'x', a2: 'y' })).toEqual({ name: 'a2', sectionIndex: 0 });
+    expect(firstFormError(form, { b1: 'x' })).toEqual({ name: 'b1', sectionIndex: 1 });
+    expect(firstFormError(form, {})).toBeNull();
+  });
+
+  it('đếm số lỗi từng nhóm', () => {
+    expect(sectionErrorCounts(form, { a1: 'x', a2: 'y', b1: 'z' })).toEqual([2, 1]);
+    expect(sectionErrorCounts(form, {})).toEqual([0, 0]);
   });
 });

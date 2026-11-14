@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/theme-provider';
 
 import { BottomSheet } from './BottomSheet';
+import { FieldLabel } from './FieldLabel';
 import { CaretDownIcon, CheckIcon } from './icons';
 import { Text } from './Text';
 import { TextField } from './TextField';
@@ -23,6 +24,8 @@ export interface SelectFieldProps {
   /** false = không có lựa chọn "bỏ chọn". */
   allowClear?: boolean;
   disabled?: boolean;
+  /** Hướng dẫn hiện sau dấu "?" cạnh nhãn. */
+  hint?: string;
 }
 
 const SEARCH_THRESHOLD = 8;
@@ -39,6 +42,7 @@ export function SelectField({
   placeholder = 'Tất cả',
   allowClear = true,
   disabled = false,
+  hint,
 }: SelectFieldProps) {
   const { colors, radius, iconSize, touch } = useTheme();
   const [open, setOpen] = useState(false);
@@ -60,7 +64,7 @@ export function SelectField({
 
   return (
     <View style={styles.wrapper}>
-      <Text variant="label">{label}</Text>
+      <FieldLabel label={label} hint={hint} />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${label}: ${selected?.label ?? placeholder}`}

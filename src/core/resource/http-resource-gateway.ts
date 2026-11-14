@@ -80,9 +80,16 @@ export class HttpResourceGateway implements ResourceGateway {
     options: {
       body?: unknown;
       query?: Record<string, string | number | boolean | readonly string[] | undefined>;
+      headers?: Record<string, string>;
     } = {},
   ): Promise<T> {
-    return this.http.request<T>({ method, path, body: options.body, query: options.query });
+    return this.http.request<T>({
+      method,
+      path,
+      body: options.body,
+      query: options.query,
+      headers: options.headers,
+    });
   }
 
   download(

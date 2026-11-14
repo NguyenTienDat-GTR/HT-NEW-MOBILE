@@ -1,10 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { errorMessage } from '@/core/domain/app-error';
 import { pollJob } from '@/core/jobs/poll-job';
 import type { PermissionSubject } from '@/core/domain/permissions';
-import { safeFileName, shareDownloadedFile } from '@/shared/files/share-file';
+import { IDEMPOTENCY_HEADER, newIdempotencyKey } from '@/core/domain/idempotency';
+import { safeFileName } from '@/shared/files/share-file';
+import { useFileDelivery } from '@/shared/files/use-file-delivery';
 import { useResourceGateway } from '@/shared/resource/resource-context';
 import { Banner } from '@/shared/ui/Banner';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
@@ -72,20 +74,37 @@ export function CourseExportSheet({
   visible: boolean;
   onClose: () => void;
 }) {
-  if (kind === 'badges')
-    return <BadgeSheet courseCode={courseCode} visible={visible} onClose={onClose} />;
-  if (kind === 'certificates')
-    return <CertificatesSheet courseCode={courseCode} visible={visible} onClose={onClose} />;
-  if (kind === 'registrations')
-    return (
-      <RegistrationsSheet
-        courseCode={courseCode}
-        subject={subject}
-        visible={visible}
-        onClose={onClose}
-      />
-    );
-  return null;
+  const delivery = useFileDelivery();
+  return (
+    <>
+      {kind === 'badges' ? (
+        <BadgeSheet
+          courseCode={courseCode}
+          visible={visible}
+          onClose={onClose}
+          offer={delivery.offer}
+        />
+      ) : null}
+      {kind === 'certificates' ? (
+        <CertificatesSheet
+          courseCode={courseCode}
+          visible={visible}
+          onClose={onClose}
+          offer={delivery.offer}
+        />
+      ) : null}
+      {kind === 'registrations' ? (
+        <RegistrationsSheet
+          courseCode={courseCode}
+          subject={subject}
+          visible={visible}
+          onClose={onClose}
+          offer={delivery.offer}
+        />
+      ) : null}
+      {delivery.sheet}
+    </>
+  );
 }
 
 /** Chạy một lần xuất: báo tiến độ, tải file, mở hộp chia sẻ; lỗi hiện ở banner và toast. */
@@ -110,24 +129,18 @@ function useRunExport(onDone: () => void) {
   return { running, error, setError, run };
 }
 
-async function shareOrFail(
-  file: Awaited<ReturnType<ReturnType<typeof useResourceGateway>['download']>>,
-  name: string,
-  extension: string,
-  title: string,
-) {
-  const shared = await shareDownloadedFile(file, safeFileName(name, extension), title);
-  if (!shared) throw new Error('Thiết bị này không hỗ trợ chia sẻ tệp.');
-}
+type Offer = ReturnType<typeof useFileDelivery>['offer'];
 
 function BadgeSheet({
   courseCode,
   visible,
   onClose,
+  offer,
 }: {
   courseCode: string;
   visible: boolean;
   onClose: () => void;
+  offer: Offer;
 }) {
   const gateway = useResourceGateway();
   const [configId, setConfigId] = useState('');
@@ -173,7 +186,7 @@ function BadgeSheet({
         'GET',
         `${base}/badges/export/jobs/${enc(done.jobId)}/file`,
       );
-      await shareOrFail(file, done.filename ?? `the-tham-du-${courseCode}`, 'pdf', 'Thẻ tham dự');
+      offer(file, safeFileName(done.filename ?? `the-tham-du-${courseCode}`, 'pdf'), 'Thẻ tham dự');
       return `Đã xuất ${done.badgeCount ?? 0} thẻ (${done.pageCount ?? 0} trang)`;
     });
 
@@ -256,10 +269,12 @@ function CertificatesSheet({
   courseCode,
   visible,
   onClose,
+  offer,
 }: {
   courseCode: string;
   visible: boolean;
   onClose: () => void;
+  offer: Offer;
 }) {
   const gateway = useResourceGateway();
   const { running, error, run } = useRunExport(onClose);
@@ -286,7 +301,7 @@ function CertificatesSheet({
         'GET',
         `/certificates/export-pdf/jobs/${enc(done.jobId)}/file`,
       );
-      await shareOrFail(file, `chung-nhan-${courseCode}`, 'pdf', 'Chứng nhận của khóa');
+      offer(file, safeFileName(`chung-nhan-${courseCode}`, 'pdf'), 'Chứng nhận của khóa');
       return 'Đã xuất PDF các chứng nhận đã duyệt của khóa';
     });
 
@@ -316,13 +331,18 @@ function RegistrationsSheet({
   subject,
   visible,
   onClose,
+  offer,
 }: {
   courseCode: string;
   subject: PermissionSubject | null;
   visible: boolean;
   onClose: () => void;
+  offer: Offer;
 }) {
   const gateway = useResourceGateway();
+  // BE bắt buộc Idempotency-Key cho tác vụ xuất chạy nền: một khóa cho mỗi lựa chọn (thử lại cùng lựa chọn thì dùng lại
+  // khóa, đổi lựa chọn hoặc sau khi xuất xong thì sinh khóa mới).
+  const keyRef = useRef<{ signature: string; key: string } | null>(null);
   const options = templateGroupOptions(exportLevelOf(subject));
   const [groupBy, setGroupBy] = useState<TemplateGroupBy>('PARISH');
   const [layout, setLayout] = useState<TemplateLayout>('SHEET_PER_GROUP');
@@ -332,12 +352,14 @@ function RegistrationsSheet({
 
   const submit = () =>
     run(async () => {
+      const query = templateExportQuery(courseCode, groupBy, layout, options);
+      const signature = JSON.stringify(query);
+      if (keyRef.current?.signature !== signature)
+        keyRef.current = { signature, key: newIdempotencyKey() };
       const first = await gateway.call<ExcelJob>(
         'POST',
         '/training/participations/template-export',
-        {
-          query: templateExportQuery(courseCode, groupBy, layout, options),
-        },
+        { query, headers: { [IDEMPOTENCY_HEADER]: keyRef.current.key } },
       );
       const done = await pollJob(
         first,
@@ -347,10 +369,12 @@ function RegistrationsSheet({
       if (done.status !== 'SUCCEEDED')
         throw new Error(done.errorMessage || 'Không thể xuất danh sách đăng ký theo mẫu');
       const file = await gateway.download('GET', `/excel-jobs/${enc(done.id)}/file`);
-      await shareOrFail(
+      // Chia theo từng giáo hạt / giáo xứ ra nhiều tệp thì BE có thể trả gói ZIP.
+      const extension = file.contentType.includes('zip') ? 'zip' : 'xlsx';
+      keyRef.current = null;
+      offer(
         file,
-        done.fileName ?? `dang-ky-tham-du-${courseCode}`,
-        'xlsx',
+        safeFileName(done.fileName ?? `dang-ky-tham-du-${courseCode}`, extension),
         'Danh sách đăng ký',
       );
       return 'Đã xuất danh sách đăng ký theo mẫu';

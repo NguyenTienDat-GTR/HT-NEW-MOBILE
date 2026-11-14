@@ -4,7 +4,8 @@ import { View } from 'react-native';
 
 import { errorMessage } from '@/core/domain/app-error';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
-import { shareDownloadedFile, safeFileName } from '@/shared/files/share-file';
+import { safeFileName } from '@/shared/files/share-file';
+import { useFileDelivery } from '@/shared/files/use-file-delivery';
 import { useResourceGateway } from '@/shared/resource/resource-context';
 import { text } from '@/shared/resource/row';
 import type { PermissionSubject } from '@/shared/resource/types';
@@ -50,6 +51,7 @@ export function CertificateActions({
   const gateway = useResourceGateway();
   const refresh = useRefreshCertificates();
   const toast = useToast();
+  const { offer, sheet: deliverySheet } = useFileDelivery();
   const [decision, setDecision] = useState<'approve' | 'reject' | null>(null);
   const [reason, setReason] = useState<ReasonMode | null>(null);
   const [sharing, setSharing] = useState(false);
@@ -74,8 +76,7 @@ export function CertificateActions({
       const file = await gateway.download('POST', '/certificates/export-pdf', {
         body: { certificateCodes: [code] },
       });
-      const shared = await shareDownloadedFile(file, safeFileName(code), `Chứng nhận ${code}`);
-      if (!shared) toast.error('Thiết bị này không hỗ trợ chia sẻ tệp.');
+      offer(file, safeFileName(code), `Chứng nhận ${code}`);
     } catch (exception) {
       toast.error(errorMessage(exception));
       setMessage({ tone: 'danger', text: errorMessage(exception) });
@@ -156,6 +157,7 @@ export function CertificateActions({
           void done(reason === 'revoke' ? 'Đã thu hồi chứng nhận.' : 'Đã cấp lại chứng nhận.')
         }
       />
+      {deliverySheet}
     </Card>
   );
 }

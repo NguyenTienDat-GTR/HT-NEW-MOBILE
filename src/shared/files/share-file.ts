@@ -1,4 +1,4 @@
-import { File, Paths } from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
 import type { DownloadedBytes } from '@/core/network/http-client';
@@ -19,6 +19,32 @@ export function safeFileName(name: string, extension = 'pdf'): string {
 }
 
 /**
+ * Lưu tệp vào máy: người dùng chọn thư mục (Tải xuống, Tài liệu…) rồi ghi tệp vào đó. Trả 'cancelled' nếu người dùng
+ * không chọn thư mục.
+ */
+export async function saveDownloadedFile(
+  downloaded: DownloadedBytes,
+  filename: string,
+): Promise<'saved' | 'cancelled'> {
+  let directory: Directory;
+  try {
+    directory = await Directory.pickDirectoryAsync();
+  } catch (exception) {
+    if (
+      /cancel|dismiss|abort/i.test(
+        exception instanceof Error ? exception.message : String(exception),
+      )
+    )
+      return 'cancelled';
+    throw exception;
+  }
+  const mimeType = downloaded.contentType.split(';')[0]?.trim() || 'application/octet-stream';
+  const file = directory.createFile(filename, mimeType);
+  await file.write(downloaded.bytes);
+  return 'saved';
+}
+
+/**
  * Ghi nội dung tải về vào bộ nhớ đệm rồi mở hộp chia sẻ của hệ điều hành (lưu, gửi Zalo/mail, in…).
  * Trả về false nếu thiết bị không có hộp chia sẻ (vd. bản web xem thử).
  */
@@ -36,7 +62,9 @@ export async function shareDownloadedFile(
     mimeType,
     UTI: mimeType.includes('spreadsheetml')
       ? 'org.openxmlformats.spreadsheetml.sheet'
-      : 'com.adobe.pdf',
+      : mimeType.includes('zip')
+        ? 'public.zip-archive'
+        : 'com.adobe.pdf',
     dialogTitle,
   });
   return true;

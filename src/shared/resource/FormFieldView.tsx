@@ -3,13 +3,15 @@ import { StyleSheet, View } from 'react-native';
 
 import type { ResourceRow } from '@/core/resource/resource-gateway';
 
+import { ConsentCheckbox } from '../ui/ConsentCheckbox';
 import { DateField } from '../ui/DateField';
+import { FieldError } from '../ui/FieldError';
+import { MultiSelectField } from '../ui/MultiSelectField';
 import { SelectField } from '../ui/SelectField';
 import { SwitchRow } from '../ui/SwitchRow';
-import { Text } from '../ui/Text';
 import { TextField, type TextInputHandle } from '../ui/TextField';
 
-import { todayIso } from './form-logic';
+import { isRequired, parseMulti, stringifyMulti, todayIso } from './form-logic';
 import type { FormFieldDef, FormMode, FormValues, PermissionSubject } from './types';
 import { LookupField } from './LookupField';
 import { useOptions } from './use-resource';
@@ -46,6 +48,7 @@ function SelectView({
   mode,
   row,
   subject,
+  error,
   onChange,
 }: FormFieldViewProps) {
   const { options, loading } = useOptions(
@@ -59,8 +62,10 @@ function SelectView({
       value={String(value)}
       options={options}
       placeholder={loading ? 'Đang tải…' : (field.placeholder ?? 'Chọn')}
-      allowClear={!field.required}
+      allowClear={!isRequired(field, mode)}
       hint={field.hint}
+      error={error}
+      required={isRequired(field, mode)}
       disabled={
         (field.lockedOnEdit && mode === 'edit') || Boolean(field.readOnlyWhen?.(values, mode))
       }
@@ -82,6 +87,7 @@ function DayMonthView({ field, value, onChange, mode }: FormFieldViewProps) {
           label={`${field.label} (ngày)`}
           value={day}
           options={DAYS}
+          required={isRequired(field, mode)}
           disabled={locked}
           onChange={(d) => set(month, d)}
         />
@@ -91,11 +97,46 @@ function DayMonthView({ field, value, onChange, mode }: FormFieldViewProps) {
           label={`${field.label} (tháng)`}
           value={month}
           options={MONTHS}
+          required={isRequired(field, mode)}
           disabled={locked}
           onChange={(m) => set(m, day)}
         />
       </View>
     </View>
+  );
+}
+
+function MultiSelectView({
+  field,
+  scope,
+  value,
+  values,
+  mode,
+  row,
+  subject,
+  error,
+  onChange,
+}: FormFieldViewProps) {
+  const { options, loading } = useOptions(
+    field.options,
+    { values, mode, row, subject },
+    `${scope}:${field.name}`,
+  );
+  return (
+    <MultiSelectField
+      label={field.label}
+      value={parseMulti(value)}
+      options={options}
+      placeholder={field.placeholder}
+      hint={field.hint}
+      error={error}
+      required={isRequired(field, mode)}
+      loading={loading}
+      disabled={
+        (field.lockedOnEdit && mode === 'edit') || Boolean(field.readOnlyWhen?.(values, mode))
+      }
+      onChange={(next) => onChange(field.name, stringifyMulti(next))}
+    />
   );
 }
 
@@ -115,34 +156,29 @@ function FormFieldViewBase(props: FormFieldViewProps) {
             error,
             locked,
           })}
-          {error ? <ErrorText message={error} /> : null}
+          {error ? <FieldError message={error} /> : null}
         </View>
       );
     case 'select':
-      return (
-        <View style={styles.block}>
-          <SelectView {...props} />
-          {error ? <ErrorText message={error} /> : null}
-        </View>
-      );
+      return <SelectView {...props} />;
+    case 'multiselect':
+      return <MultiSelectView {...props} />;
     case 'lookup':
       return (
-        <View style={styles.block}>
-          <LookupField
-            field={field}
-            scope={props.scope}
-            value={String(value)}
-            disabled={locked}
-            onChange={(next) => onChange(field.name, next)}
-          />
-          {error ? <ErrorText message={error} /> : null}
-        </View>
+        <LookupField
+          field={field}
+          scope={props.scope}
+          value={String(value)}
+          disabled={locked}
+          error={error}
+          onChange={(next) => onChange(field.name, next)}
+        />
       );
     case 'daymonth':
       return (
         <View style={styles.block}>
           <DayMonthView {...props} />
-          {error ? <ErrorText message={error} /> : null}
+          {error ? <FieldError message={error} /> : null}
         </View>
       );
     case 'date':
@@ -153,10 +189,11 @@ function FormFieldViewBase(props: FormFieldViewProps) {
           onChange={(next) => onChange(field.name, next)}
           error={error}
           hint={field.hint}
+          required={isRequired(field, mode)}
           disabled={locked}
           maximumDate={field.maxDate === 'today' ? todayIso() : field.maxDate}
           minimumDate={field.minDate}
-          clearable={!field.required}
+          clearable={!isRequired(field, mode)}
         />
       );
     case 'datetime':
@@ -167,9 +204,20 @@ function FormFieldViewBase(props: FormFieldViewProps) {
           onChange={(next) => onChange(field.name, next)}
           error={error}
           hint={field.hint}
+          required={isRequired(field, mode)}
           disabled={locked}
           withTime
-          clearable={!field.required}
+          clearable={!isRequired(field, mode)}
+        />
+      );
+    case 'consent':
+      return (
+        <ConsentCheckbox
+          variant="attestation"
+          checked={Boolean(value)}
+          disabled={locked}
+          error={error}
+          onChange={(next) => onChange(field.name, next)}
         />
       );
     case 'switch':
@@ -182,7 +230,7 @@ function FormFieldViewBase(props: FormFieldViewProps) {
             disabled={locked}
             onChange={(next) => onChange(field.name, next)}
           />
-          {error ? <ErrorText message={error} /> : null}
+          {error ? <FieldError message={error} /> : null}
         </View>
       );
     default:
@@ -194,6 +242,7 @@ function FormFieldViewBase(props: FormFieldViewProps) {
           onChangeText={(next) => onChange(field.name, next)}
           error={error}
           hint={field.hint}
+          required={isRequired(field, mode)}
           placeholder={field.placeholder}
           maxLength={field.maxLength}
           editable={!locked}
@@ -212,14 +261,6 @@ function FormFieldViewBase(props: FormFieldViewProps) {
         />
       );
   }
-}
-
-function ErrorText({ message }: { message: string }) {
-  return (
-    <Text variant="secondary" tone="danger" accessibilityLiveRegion="polite">
-      {message}
-    </Text>
-  );
 }
 
 export const FormFieldView = memo(FormFieldViewBase);

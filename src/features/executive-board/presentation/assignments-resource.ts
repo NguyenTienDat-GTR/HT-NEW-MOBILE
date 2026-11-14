@@ -35,6 +35,7 @@ export const assignmentsResource: ResourceDefinition = {
   id: 'assignments',
   title: 'Phân công ban điều hành',
   singular: 'Phân công',
+  createLabel: 'Phân công',
   endpoint: '/executive-board/assignments',
   searchFields: ['leader.lastName+leader.firstName', 'leader.holyName', 'position.positionName'],
   searchPlaceholder: 'Huynh trưởng hoặc chức vụ',
@@ -63,36 +64,37 @@ export const assignmentsResource: ResourceDefinition = {
   detailBadges: (row) => [statusBadge(flag(row, 'status'))],
   detail: (row) => [
     {
-      title: 'Phân công',
+      title: 'Thông tin phân công',
       fields: [
+        { label: 'Giáo xứ / giáo họ / giáo điểm', value: text(row, 'leaderParishName') },
+        { label: 'Giáo hạt', value: text(row, 'leaderDeaneryName') },
         { label: 'Chức vụ', value: text(row, 'positionName') },
         { label: 'Cấp áp dụng', value: unitTypeLabel(text(row, 'unitType')) },
         { label: 'Đơn vị', value: text(row, 'unitName') },
+      ],
+    },
+    {
+      title: 'Thời gian hiệu lực',
+      fields: [
         { label: 'Ngày bắt đầu', value: formatDate(text(row, 'startDate')) },
         { label: 'Ngày kết thúc', value: formatDate(text(row, 'endDate')) },
       ],
     },
     {
-      title: 'Huynh trưởng',
-      fields: [
-        { label: 'Giáo xứ / họ / điểm', value: text(row, 'leaderParishName') },
-        { label: 'Giáo hạt', value: text(row, 'leaderDeaneryName') },
-      ],
-    },
-    {
-      title: 'Dấu vết ghi nhận',
+      title: 'Lịch sử ghi nhận',
       collapsed: true,
       fields: [
-        { label: 'Tạo bởi', value: text(row, 'createdByName') },
-        { label: 'Tạo lúc', value: formatDate(text(row, 'createdAt')) },
-        { label: 'Sửa bởi', value: text(row, 'updatedByName') },
-        { label: 'Sửa lúc', value: formatDate(text(row, 'updatedAt')) },
+        { label: 'Người tạo', value: text(row, 'createdByName') },
+        { label: 'Ngày tạo', value: formatDate(text(row, 'createdAt')) },
+        { label: 'Người cập nhật', value: text(row, 'updatedByName') },
+        { label: 'Ngày cập nhật', value: formatDate(text(row, 'updatedAt')) },
       ],
     },
   ],
   form: {
-    titleCreate: 'Phân công chức vụ',
-    titleEdit: 'Phân công chức vụ',
+    titleCreate: 'Phân công ban điều hành',
+    titleEdit: 'Phân công ban điều hành',
+    submitLabels: { create: 'Phân công' },
     sections: [{ fields: ['unitType', 'leaderId', 'positionCode', 'startDate', 'endDate'] }],
     fields: [
       {

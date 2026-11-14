@@ -13,7 +13,13 @@ export function InfoRow({
   children?: React.ReactNode;
 }) {
   return (
-    <View style={styles.row} accessible accessibilityLabel={`${label}: ${value ?? ''}`}>
+    <View
+      style={styles.row}
+      accessible
+      // Có nội dung riêng (nhãn trạng thái, nhiều dòng…) thì để trình đọc màn hình tự ghép chữ bên trong, không đọc
+      // "nhãn:" rồi bỏ mất giá trị.
+      accessibilityLabel={children ? undefined : `${label}: ${value || 'chưa có'}`}
+    >
       <Text variant="secondary" tone="muted">
         {label}
       </Text>

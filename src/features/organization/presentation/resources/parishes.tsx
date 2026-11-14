@@ -30,7 +30,7 @@ const UNIT_TYPES = [
 ] as const;
 
 function statusBadge(row: ResourceRow) {
-  if (!flag(row, 'status')) return { label: 'Tạm ngưng', tone: 'warning' as const };
+  if (!flag(row, 'status')) return { label: 'Tạm ngưng', tone: 'neutral' as const };
   if (row.effectiveStatus === false)
     return { label: 'Ngưng theo đơn vị cha', tone: 'warning' as const };
   return { label: 'Đang hoạt động', tone: 'success' as const };
@@ -40,8 +40,9 @@ const isSubUnit = (unitType: unknown) => unitType === 'GIAO_HO' || unitType === 
 
 export const parishesResource: ResourceDefinition = {
   id: 'parishes',
-  title: 'Giáo xứ / họ / điểm',
+  title: 'Giáo xứ, giáo họ, giáo điểm',
   singular: 'Giáo xứ',
+  createLabel: 'Thêm giáo xứ / họ / điểm',
   endpoint: '/parishes',
   searchFields: ['name', 'chapterName'],
   searchPlaceholder: 'Tên đơn vị hoặc xứ đoàn',
@@ -94,13 +95,14 @@ export const parishesResource: ResourceDefinition = {
     auditSection(row),
   ],
   form: {
-    titleCreate: 'Thêm giáo xứ / họ / điểm',
-    titleEdit: 'Sửa đơn vị',
+    titleCreate: 'Thêm giáo xứ / giáo họ / giáo điểm',
+    titleEdit: 'Chỉnh sửa giáo xứ / giáo họ / giáo điểm',
     sections: [
       {
         title: 'Thông tin cơ bản',
-        fields: ['unitType', 'name', 'chapterName', 'deaneryId', 'parentParishId', 'chaplain'],
+        fields: ['unitType', 'name', 'chapterName', 'chaplain'],
       },
+      { title: 'Phạm vi', fields: ['deaneryId', 'parentParishId'] },
       { title: 'Thông tin liên hệ', fields: ['phoneNumber', 'email'] },
       { title: 'Mốc thời gian', fields: ['patronSaintDay', 'establishmentDate'] },
       { fields: ['subjectConsentConfirmed'] },
@@ -114,6 +116,7 @@ export const parishesResource: ResourceDefinition = {
         lockedOnEdit: true,
         options: UNIT_TYPES,
         resets: ['parentParishId'],
+        hint: 'Giáo họ / giáo điểm thuộc một giáo xứ và có admin riêng; admin giáo xứ cha không quản lý giáo họ / giáo điểm của mình.',
       },
       { name: 'name', label: 'Tên đơn vị', kind: 'text', required: true, maxLength: 100 },
       {
@@ -121,7 +124,7 @@ export const parishesResource: ResourceDefinition = {
         label: 'Tên xứ đoàn',
         kind: 'text',
         maxLength: 100,
-        hint: 'Bỏ trống nếu đơn vị chưa thành lập xứ đoàn.',
+        hint: 'Không bắt buộc - bỏ trống nếu đơn vị chưa thành lập xứ đoàn.',
       },
       {
         name: 'deaneryId',

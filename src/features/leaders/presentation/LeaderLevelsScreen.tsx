@@ -16,6 +16,7 @@ import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   canMove,
@@ -50,6 +51,7 @@ const KEY = ['leader-levels'] as const;
 export function LeaderLevelsScreen({ subject }: { subject: PermissionSubject | null }) {
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const query = useQuery({
     queryKey: KEY,
     queryFn: () => gateway.call<Level[]>('GET', '/leader-levels'),
@@ -71,15 +73,17 @@ export function LeaderLevelsScreen({ subject }: { subject: PermissionSubject | n
     await queryClient.invalidateQueries({ queryKey: ['resource-options'] });
   };
 
-  const run = async (action: () => Promise<unknown>, after?: () => void) => {
+  const run = async (action: () => Promise<unknown>, success: string, after?: () => void) => {
     setBusy(true);
     setError(null);
     try {
       await action();
       await refresh();
+      toast.success(success);
       after?.();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setBusy(false);
     }
@@ -94,6 +98,7 @@ export function LeaderLevelsScreen({ subject }: { subject: PermissionSubject | n
             firstTierBase: firstTierIsBase(query.data ?? []),
           },
         }),
+      'Đã lưu thứ tự cấp độ',
       () => setSelected(null),
     );
 
@@ -222,6 +227,9 @@ export function LeaderLevelsScreen({ subject }: { subject: PermissionSubject | n
                     body: { levelName: body.levelName, description: body.description },
                   })
                 : gateway.call('POST', '/leader-levels', { body }),
+            code
+              ? 'Đã cập nhật cấp độ'
+              : 'Đã thêm cấp độ (nằm trên cùng, dùng nút Chuyển lên / Chuyển xuống để đổi vị trí)',
             () => setEditing(null),
           )
         }
@@ -243,6 +251,7 @@ export function LeaderLevelsScreen({ subject }: { subject: PermissionSubject | n
                     'DELETE',
                     `/leader-levels/${encodeURIComponent(deleting.levelCode)}`,
                   ),
+                'Đã xóa cấp độ',
                 () => setDeleting(null),
               )
             : undefined

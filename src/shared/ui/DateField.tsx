@@ -14,8 +14,9 @@ import { useTheme } from '../theme/theme-provider';
 
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
+import { FieldError } from './FieldError';
 import { FieldLabel } from './FieldLabel';
-import { CaretDownIcon, WarningCircleIcon } from './icons';
+import { CaretDownIcon } from './icons';
 import { Text } from './Text';
 import { TextField } from './TextField';
 
@@ -26,6 +27,8 @@ export interface DateFieldProps {
   onChange: (value: string) => void;
   error?: string;
   hint?: string;
+  /** Ô bắt buộc: nhãn có dấu "*". */
+  required?: boolean;
   /** yyyy-MM-dd */
   minimumDate?: string;
   maximumDate?: string;
@@ -65,6 +68,7 @@ export function DateField({
   onChange,
   error,
   hint,
+  required = false,
   minimumDate,
   maximumDate,
   disabled = false,
@@ -83,6 +87,7 @@ export function DateField({
         onChange={onChange}
         error={error}
         hint={hint}
+        required={required}
         disabled={disabled}
         withTime={withTime}
       />
@@ -127,10 +132,10 @@ export function DateField({
 
   return (
     <View style={styles.wrapper}>
-      <FieldLabel label={label} hint={hint} />
+      <FieldLabel label={label} hint={hint} required={required} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${shown || 'chưa chọn'}`}
+        accessibilityLabel={`${label}${required ? ', bắt buộc' : ''}: ${shown || 'chưa chọn'}`}
         accessibilityState={{ disabled }}
         onPress={open}
         style={({ pressed }) => [
@@ -162,14 +167,7 @@ export function DateField({
           onPress={() => onChange('')}
         />
       ) : null}
-      {error ? (
-        <View style={styles.message} accessibilityLiveRegion="polite">
-          <WarningCircleIcon size={iconSize.sm} color={colors.danger} weight="bold" />
-          <Text variant="secondary" tone="danger" style={styles.value}>
-            {error}
-          </Text>
-        </View>
-      ) : null}
+      {error ? <FieldError message={error} /> : null}
 
       {Platform.OS === 'ios' ? (
         <BottomSheet
@@ -209,9 +207,13 @@ function WebDateInput({
   onChange,
   error,
   hint,
+  required,
   disabled,
   withTime,
-}: Pick<DateFieldProps, 'label' | 'value' | 'onChange' | 'error' | 'hint' | 'disabled'> & {
+}: Pick<
+  DateFieldProps,
+  'label' | 'value' | 'onChange' | 'error' | 'hint' | 'required' | 'disabled'
+> & {
   withTime: boolean;
 }) {
   const [typed, setTyped] = useState<string | null>(null);
@@ -239,6 +241,7 @@ function WebDateInput({
       maxLength={withTime ? 16 : 10}
       error={error ?? (invalid ? `Nhập đúng dạng ${format}` : undefined)}
       hint={hint ?? `Nhập theo dạng ${format}`}
+      required={required}
       editable={!disabled}
     />
   );
@@ -254,5 +257,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   value: { flex: 1 },
-  message: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
 });

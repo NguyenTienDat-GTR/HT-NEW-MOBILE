@@ -14,7 +14,7 @@ const PARTICIPATION: Record<string, LabeledTone> = {
 };
 
 const APPROVAL: Record<string, LabeledTone> = {
-  NOT_REQUIRED: { label: 'Không yêu cầu duyệt', tone: 'neutral' },
+  NOT_REQUIRED: { label: 'Không yêu cầu', tone: 'neutral' },
   PENDING: { label: 'Chờ xử lý', tone: 'warning' },
   SUBMITTED: { label: 'Đã gửi', tone: 'warning' },
   APPROVED: { label: 'Đã duyệt', tone: 'success' },

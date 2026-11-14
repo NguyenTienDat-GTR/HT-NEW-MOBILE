@@ -16,7 +16,7 @@ const badges = (row: ResourceRow) => [
   ...(flag(row, 'isSystem') ? [{ label: 'Vai trò hệ thống', tone: 'info' as const }] : []),
   flag(row, 'status')
     ? { label: 'Đang hoạt động', tone: 'success' as const }
-    : { label: 'Tạm ngưng', tone: 'warning' as const },
+    : { label: 'Tạm ngưng', tone: 'neutral' as const },
 ];
 
 /** Vai trò: danh sách, chi tiết, thêm/sửa và bật/tắt (vai trò hệ thống chỉ quản trị hệ thống sửa). */
@@ -50,13 +50,13 @@ export const rolesResource: ResourceDefinition = {
   detailBadges: badges,
   detail: (row) => [
     {
-      title: 'Vai trò',
+      title: 'Thông tin vai trò',
       fields: [
         { label: 'Mã vai trò', value: text(row, 'roleCode') },
         { label: 'Tên vai trò', value: text(row, 'roleName') },
         { label: 'Mô tả', value: text(row, 'description') },
         { label: 'Thứ tự hiển thị', value: text(row, 'displayOrder') },
-        { label: 'Loại', value: flag(row, 'isSystem') ? 'Vai trò hệ thống' : 'Vai trò tự tạo' },
+        { label: 'Vai trò hệ thống', value: flag(row, 'isSystem') ? 'Có' : 'Không' },
       ],
     },
     {
@@ -72,7 +72,7 @@ export const rolesResource: ResourceDefinition = {
   ],
   form: {
     titleCreate: 'Thêm vai trò',
-    titleEdit: 'Sửa vai trò',
+    titleEdit: 'Chỉnh sửa vai trò',
     sections: [
       { title: 'Thông tin vai trò', fields: ['roleCode', 'roleName', 'description'] },
       { title: 'Hiển thị', fields: ['displayOrder'] },

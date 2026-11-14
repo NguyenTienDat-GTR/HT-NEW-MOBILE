@@ -10,6 +10,27 @@ export function todayIso(now: Date = new Date()): string {
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
 
+/** Đọc giá trị của ô `multiselect` (chuỗi JSON mảng) thành mảng chuỗi; sai dạng thì coi như rỗng. */
+export function parseMulti(value: string | boolean | undefined): string[] {
+  if (typeof value !== 'string' || value.trim() === '') return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+export const stringifyMulti = (items: readonly string[]): string => JSON.stringify(items);
+
+/** Ô có bắt buộc ở chế độ hiện tại không (dấu * và kiểm tra bắt buộc dùng chung hàm này). */
+export const isRequired = (field: FormFieldDef, mode: FormMode): boolean =>
+  Boolean(field.required) && !(field.requiredOnCreateOnly && mode === 'edit');
+
+/** Ô có giá trị đúng/sai (công tắc, ô đồng ý). */
+export const isBooleanField = (field: FormFieldDef | undefined): boolean =>
+  field?.kind === 'switch' || field?.kind === 'consent';
+
 function isEmpty(value: string | boolean | undefined): boolean {
   return (
     value === undefined || value === false || (typeof value === 'string' && value.trim() === '')
@@ -82,8 +103,8 @@ export function validateField(
   today = todayIso(),
 ): string | null {
   if (!isFieldVisible(field, values, mode)) return null;
-  const value = values[field.name] ?? (field.kind === 'switch' ? false : '');
-  if (field.kind !== 'switch' && field.required && isEmpty(value)) {
+  const value = values[field.name] ?? (isBooleanField(field) ? false : '');
+  if (!isBooleanField(field) && isRequired(field, mode) && isEmpty(value)) {
     return field.kind === 'select' ||
       field.kind === 'date' ||
       field.kind === 'datetime' ||
@@ -175,7 +196,7 @@ export function applyChange(
   const result: FormValues = { ...values, [name]: next };
   for (const reset of field?.resets ?? []) {
     const target = form.fields.find((f) => f.name === reset);
-    result[reset] = target?.kind === 'switch' ? false : '';
+    result[reset] = isBooleanField(target) ? false : '';
   }
   return result;
 }

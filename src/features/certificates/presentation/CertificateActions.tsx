@@ -13,6 +13,7 @@ import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   canApproveRow,
@@ -48,6 +49,7 @@ export function CertificateActions({
 }) {
   const gateway = useResourceGateway();
   const refresh = useRefreshCertificates();
+  const toast = useToast();
   const [decision, setDecision] = useState<'approve' | 'reject' | null>(null);
   const [reason, setReason] = useState<ReasonMode | null>(null);
   const [sharing, setSharing] = useState(false);
@@ -73,8 +75,9 @@ export function CertificateActions({
         body: { certificateCodes: [code] },
       });
       const shared = await shareDownloadedFile(file, safeFileName(code), `Chứng nhận ${code}`);
-      if (!shared) setMessage({ tone: 'info', text: 'Thiết bị này không hỗ trợ chia sẻ tệp.' });
+      if (!shared) toast.error('Thiết bị này không hỗ trợ chia sẻ tệp.');
     } catch (exception) {
+      toast.error(errorMessage(exception));
       setMessage({ tone: 'danger', text: errorMessage(exception) });
     } finally {
       setSharing(false);
@@ -84,7 +87,7 @@ export function CertificateActions({
   const done = async (notice: string) => {
     setDecision(null);
     setReason(null);
-    setMessage({ tone: 'info', text: notice });
+    toast.success(notice.replace(/\.$/, ''));
     await refresh();
   };
 

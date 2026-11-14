@@ -1,8 +1,8 @@
-import type { ComponentRef, Ref } from 'react';
+import { HeaderHeightContext } from 'expo-router/react-navigation';
+import { useContext, type ComponentRef, type Ref } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -60,6 +60,9 @@ export function Screen({
   const endProps = useEndReached(onEndReached);
   const { colors, spacing } = useTheme();
   const insets = useScreenInsets();
+  // Màn nằm dưới thanh tiêu đề thì khung bắt đầu thấp hơn mép trên màn hình đúng bằng chiều cao thanh đó; phải báo
+  // cho KeyboardAvoidingView, nếu không phần đáy (nút lưu) vẫn bị bàn phím che một đoạn. Màn không có thanh tiêu đề: 0.
+  const headerHeight = useContext(HeaderHeightContext) ?? 0;
 
   const body = scroll ? (
     <ScrollView
@@ -110,7 +113,10 @@ export function Screen({
   return (
     <KeyboardAvoidingView
       style={[styles.root, { backgroundColor: colors.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Cả hai nền tảng: app Expo trên Android vẽ tràn viền (edge-to-edge) nên cửa sổ không tự co khi bàn phím mở;
+      // không đặt `behavior` thì ô nhập và nút dính đáy nằm dưới bàn phím.
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
     >
       {body}
       {footer ? (

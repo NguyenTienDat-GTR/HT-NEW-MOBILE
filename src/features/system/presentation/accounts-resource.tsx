@@ -1,5 +1,6 @@
 import { formatDateTime } from '@/core/domain/date-format';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
+import { CONSENT_FIELD } from '@/shared/resource/consent-field';
 import { loadOptions } from '@/shared/resource/options';
 import { flag, joinParts, text } from '@/shared/resource/row';
 import type {
@@ -41,25 +42,25 @@ const unitName = (row: ResourceRow) =>
 const statusBadge = (row: ResourceRow) =>
   flag(row, 'status')
     ? { label: 'Đang hoạt động', tone: 'success' as const }
-    : { label: 'Tạm ngưng', tone: 'warning' as const };
+    : { label: 'Tạm ngưng', tone: 'neutral' as const };
 
 function accountDetail(row: ResourceRow): DetailSection[] {
   const others = Array.isArray(row.secondaryRoleNames) ? row.secondaryRoleNames.map(String) : [];
   return [
     {
-      title: 'Tài khoản',
+      title: 'Thông tin tài khoản',
       fields: [
         { label: 'Tên đăng nhập', value: text(row, 'username') },
         { label: 'Email', value: text(row, 'email') },
         { label: 'Vai trò chính', value: text(row, 'primaryRoleName') },
-        { label: 'Vai trò khác', value: others.join(', ') },
+        { label: 'Vai trò phụ', value: others.join(', ') },
         { label: 'Trạng thái', value: flag(row, 'status') ? 'Đang hoạt động' : 'Tạm ngưng' },
       ],
     },
     {
       title: 'Huynh trưởng liên kết',
       fields: [
-        { label: 'Họ tên', value: leaderName(row) },
+        { label: 'Họ và tên', value: leaderName(row) },
         { label: 'Giáo xứ', value: text(row, 'leaderParishName') },
         { label: 'Giáo họ / giáo điểm', value: text(row, 'leaderSubUnitName') },
       ],
@@ -69,7 +70,7 @@ function accountDetail(row: ResourceRow): DetailSection[] {
       fields: [
         { label: 'Giáo phận', value: text(row, 'dioceseName') },
         { label: 'Giáo hạt', value: text(row, 'deaneryName') },
-        { label: 'Giáo xứ', value: text(row, 'parishName') },
+        { label: 'Giáo xứ / giáo họ / giáo điểm', value: text(row, 'parishName') },
       ],
     },
     {
@@ -104,7 +105,7 @@ const unitFilters: ListFilterDef[] = [
   },
   {
     key: 'parish.id',
-    label: 'Giáo xứ / họ / điểm',
+    label: 'Giáo xứ / giáo họ / giáo điểm',
     dependsOn: ['deanery.id'],
     options: {
       dependsOn: ['deanery.id'],
@@ -145,6 +146,7 @@ export const accountsResource: ResourceDefinition = {
   id: 'accounts',
   title: 'Tài khoản',
   singular: 'Tài khoản',
+  createLabel: 'Tạo tài khoản',
   endpoint: '/system/accounts',
   idField: 'username',
   searchFields: ['username', 'leaderFullName', 'primaryRoleCode', 'dioceseName'],
@@ -235,13 +237,7 @@ export const accountsResource: ResourceDefinition = {
           parseRoleChoice(String(value)).codes.length > 0 ? null : 'Chọn ít nhất một vai trò',
         render: (props) => <AccountRolesField {...props} />,
       },
-      {
-        name: 'subjectConsentConfirmed',
-        label:
-          'Tôi xác nhận người sở hữu tài khoản này đã được thông báo và đồng ý để hệ thống xử lý dữ liệu cá nhân của họ phục vụ quản lý tài khoản.',
-        kind: 'switch',
-        validate: (value) => (value === true ? null : 'Vui lòng xác nhận trước khi lưu'),
-      },
+      CONSENT_FIELD,
     ],
     initialValues: (_row, subject) => ({
       variant: accountVariant(subject),

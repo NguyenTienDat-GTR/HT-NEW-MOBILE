@@ -10,15 +10,17 @@ import { Banner } from '@/shared/ui/Banner';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Card } from '@/shared/ui/Card';
 import { EmptyState } from '@/shared/ui/EmptyState';
+import { FilterChips, type ChipOption } from '@/shared/ui/FilterChips';
 import { KeyIcon } from '@/shared/ui/icons';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { useScreenInsets } from '@/shared/ui/screen-insets';
+import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
-import type { MyPermission } from '../../domain/entities';
-import { useMyPermissions } from '../use-account-queries';
+import type { MyPermission, MyPermissionFilters } from '../../domain/entities';
+import { useMyPermissionFilterOptions, useMyPermissions } from '../use-account-queries';
 
 function summary(permission: MyPermission): string {
   return [permission.moduleName, permission.actionName, permission.scopeName]
@@ -27,12 +29,33 @@ function summary(permission: MyPermission): string {
 }
 
 /** Quyền của tôi: danh sách thẻ (tên quyền, phân hệ · thao tác · phạm vi, nguồn); chi tiết đầy đủ mở trong sheet. */
+type SourceChoice = 'all' | 'ROLE' | 'ACCOUNT';
+
+const SOURCE_OPTIONS: readonly ChipOption<SourceChoice>[] = [
+  { value: 'all', label: 'Tất cả nguồn quyền' },
+  { value: 'ROLE', label: 'Từ vai trò' },
+  { value: 'ACCOUNT', label: 'Quyền riêng của tài khoản' },
+];
+
 export function MyPermissionsScreen() {
   const { colors, spacing } = useTheme();
   const insets = useScreenInsets();
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search.trim());
-  const query = useMyPermissions(debounced);
+  const [source, setSource] = useState<SourceChoice>('all');
+  const [moduleName, setModuleName] = useState('');
+  const [actionName, setActionName] = useState('');
+  const options = useMyPermissionFilterOptions();
+  const filters = useMemo<MyPermissionFilters>(
+    () => ({
+      ...(source === 'all' ? {} : { sourceType: source }),
+      ...(moduleName ? { moduleName } : {}),
+      ...(actionName ? { actionName } : {}),
+    }),
+    [source, moduleName, actionName],
+  );
+  const filtering = Object.keys(filters).length > 0;
+  const query = useMyPermissions(debounced, filters);
   const [selected, setSelected] = useState<MyPermission | null>(null);
 
   const items = useMemo(
@@ -51,7 +74,7 @@ export function MyPermissionsScreen() {
           </Text>
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             <Badge
-              label={item.source === 'ROLE' ? item.roleName || 'Từ vai trò' : 'Cấp riêng'}
+              label={item.source === 'ROLE' ? item.roleName || 'Từ vai trò' : 'Quyền riêng'}
               tone={item.source === 'ROLE' ? 'neutral' : 'info'}
             />
             {item.expiresAt ? (
@@ -70,9 +93,24 @@ export function MyPermissionsScreen() {
         label="Tìm quyền"
         value={search}
         onChangeText={setSearch}
-        placeholder="Tên quyền hoặc mã quyền"
+        placeholder="Tìm theo tên quyền, mô tả, vai trò"
         returnKeyType="search"
         autoCapitalize="none"
+      />
+      <FilterChips options={SOURCE_OPTIONS} value={source} onChange={setSource} />
+      <SelectField
+        label="Phân hệ"
+        placeholder="Tất cả phân hệ"
+        value={moduleName}
+        options={(options.data?.modules ?? []).map((value) => ({ value, label: value }))}
+        onChange={setModuleName}
+      />
+      <SelectField
+        label="Hành động"
+        placeholder="Tất cả hành động"
+        value={actionName}
+        options={(options.data?.actions ?? []).map((value) => ({ value, label: value }))}
+        onChange={setActionName}
       />
       <Text variant="secondary" tone="muted" accessibilityLiveRegion="polite">
         {query.isPending ? '' : `${total} quyền`}
@@ -107,8 +145,12 @@ export function MyPermissionsScreen() {
           ) : (
             <EmptyState
               icon={<KeyIcon size={32} color={colors.primary} weight="bold" />}
-              title="Không có quyền phù hợp"
-              hint={debounced ? 'Thử từ khóa khác.' : 'Tài khoản chưa được cấp quyền nào.'}
+              title="Không có quyền nào phù hợp"
+              hint={
+                debounced || filtering
+                  ? 'Thử từ khóa hoặc bộ lọc khác.'
+                  : 'Tài khoản chưa được cấp quyền nào.'
+              }
             />
           )
         }
@@ -126,21 +168,21 @@ export function MyPermissionsScreen() {
             <InfoRow label="Mã quyền" value={selected.code} />
             <InfoRow label="Mô tả" value={selected.description} />
             <InfoRow label="Phân hệ" value={selected.moduleName} />
-            <InfoRow label="Đối tượng" value={selected.resourceName} />
-            <InfoRow label="Thao tác" value={selected.actionName} />
+            <InfoRow label="Tài nguyên" value={selected.resourceName} />
+            <InfoRow label="Hành động" value={selected.actionName} />
             <InfoRow label="Phạm vi" value={selected.scopeName} />
             <InfoRow
-              label="Nguồn"
+              label="Nguồn cấp"
               value={
                 selected.source === 'ROLE'
                   ? `Vai trò ${selected.roleName ?? ''}`.trim()
-                  : 'Cấp riêng cho tài khoản'
+                  : 'Quyền riêng của tài khoản'
               }
             />
-            <InfoRow label="Người cấp" value={selected.assignedByName} />
-            <InfoRow label="Ngày cấp" value={formatDate(selected.assignedAt)} />
+            <InfoRow label="Người phân quyền" value={selected.assignedByName} />
+            <InfoRow label="Ngày phân quyền" value={formatDate(selected.assignedAt)} />
             <InfoRow label="Hết hạn" value={formatDate(selected.expiresAt) || 'Không giới hạn'} />
-            <InfoRow label="Ghi chú" value={selected.note} />
+            <InfoRow label="Ghi chú / lý do" value={selected.note} />
           </>
         ) : null}
       </BottomSheet>

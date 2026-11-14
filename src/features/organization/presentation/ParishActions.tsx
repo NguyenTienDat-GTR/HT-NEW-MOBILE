@@ -15,6 +15,7 @@ import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import { SelectField, type SelectOption } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 import { useQuery } from '@tanstack/react-query';
 
 import { canChangeParishParent } from '../domain/organization-permissions';
@@ -34,12 +35,12 @@ export function ParishActions({
 }) {
   const gateway = useResourceGateway();
   const invalidate = useInvalidateResource(def);
+  const toast = useToast();
   const [parentOpen, setParentOpen] = useState(false);
   const [promoteOpen, setPromoteOpen] = useState(false);
   const [parentId, setParentId] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
 
   const id = text(row, 'id');
   const deaneryId = text(row, 'deaneryId');
@@ -63,24 +64,24 @@ export function ParishActions({
     try {
       await action();
       await invalidate();
-      setDone(success);
+      toast.success(success);
       close();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setPending(false);
     }
   };
 
   return (
-    <Card>
+    <Card style={{ gap: 12 }}>
       <Text variant="heading" accessibilityRole="header">
         Giáo xứ cha
       </Text>
       <Text variant="body" tone="textSecondary">
         {text(row, 'parentParishName') || 'Chưa có giáo xứ cha'}
       </Text>
-      {done ? <Banner tone="info" message={done} /> : null}
       <Button
         label="Đổi giáo xứ cha"
         variant="outline"

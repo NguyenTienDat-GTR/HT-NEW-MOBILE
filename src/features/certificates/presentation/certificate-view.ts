@@ -81,7 +81,7 @@ export function certificateDetail(row: ResourceRow, context?: unknown): DetailSe
   const reissuedAt = text(row, 'reissuedAt');
   const sections: DetailSection[] = [
     {
-      title: 'Chứng nhận',
+      title: 'Thông tin chứng nhận',
       fields: [
         { label: 'Mã chứng nhận', value: text(row, 'certificateCode') },
         { label: 'Mã cũ', value: text(row, 'oldCertificateCode') },
@@ -94,9 +94,9 @@ export function certificateDetail(row: ResourceRow, context?: unknown): DetailSe
     {
       title: 'Huynh trưởng',
       fields: [
-        { label: 'Họ tên', value: holderName(row) },
+        { label: 'Họ và tên', value: holderName(row) },
         { label: 'Ngày sinh', value: formatDate(text(row, 'leaderBirthDate')) },
-        { label: 'Giáo xứ / họ / điểm', value: text(row, 'leaderParishName') },
+        { label: 'Giáo xứ / giáo họ / giáo điểm', value: text(row, 'leaderParishName') },
         { label: 'Giáo hạt', value: text(row, 'leaderDeaneryName') },
         { label: 'Giáo phận', value: text(row, 'leaderDioceseName') },
       ],
@@ -115,8 +115,8 @@ export function certificateDetail(row: ResourceRow, context?: unknown): DetailSe
           label: 'Tình trạng khóa',
           value: row.courseFinished === true ? 'Đã kết thúc' : 'Đang diễn ra',
         },
-        { label: 'Bắt đầu', value: formatDate(text(row, 'courseStartDate')) },
-        { label: 'Kết thúc', value: formatDate(text(row, 'courseEndDate')) },
+        { label: 'Ngày bắt đầu', value: formatDate(text(row, 'courseStartDate')) },
+        { label: 'Ngày kết thúc', value: formatDate(text(row, 'courseEndDate')) },
       ],
     },
     {
@@ -128,7 +128,7 @@ export function certificateDetail(row: ResourceRow, context?: unknown): DetailSe
         },
         { label: 'Điểm đạt', value: text(row, 'passingScore') },
         {
-          label: 'Đánh giá',
+          label: 'Đánh giá điểm',
           value: flag(row, 'scoreHidden')
             ? ''
             : row.passed === true
@@ -158,7 +158,7 @@ export function certificateDetail(row: ResourceRow, context?: unknown): DetailSe
   ];
   if (revoked)
     sections.push({
-      title: 'Thu hồi',
+      title: 'Thu hồi chứng nhận',
       fields: [
         { label: 'Ngày thu hồi', value: formatDateTime(text(row, 'revokedAt')) },
         { label: 'Người thu hồi', value: text(row, 'revokedByName') },
@@ -168,7 +168,7 @@ export function certificateDetail(row: ResourceRow, context?: unknown): DetailSe
     });
   else if (reissuedAt)
     sections.push({
-      title: 'Cấp lại',
+      title: 'Cấp lại chứng nhận',
       fields: [
         { label: 'Ngày cấp lại', value: formatDateTime(reissuedAt) },
         { label: 'Người cấp lại', value: text(row, 'reissuedByName') },
@@ -229,7 +229,7 @@ const unitFilters: ListFilterDef[] = [
   },
   {
     key: 'leader.parish.id',
-    label: 'Giáo xứ / họ / điểm',
+    label: 'Giáo xứ / giáo họ / giáo điểm',
     dependsOn: ['leader.parish.deanery.id'],
     options: {
       dependsOn: ['leader.parish.deanery.id'],

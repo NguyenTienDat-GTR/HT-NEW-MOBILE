@@ -17,6 +17,7 @@ import { InfoRow } from '@/shared/ui/InfoRow';
 import { Screen } from '@/shared/ui/Screen';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   CERTIFICATE_NOT_FOUND_MESSAGE,
@@ -164,6 +165,7 @@ export function AttendanceScanScreen({
     void openCertificate(code);
   };
 
+  const toast = useToast();
   const confirm = async () => {
     if (state.step !== 'confirm') return;
     dispatch({ type: 'confirm' });
@@ -172,10 +174,14 @@ export function AttendanceScanScreen({
         body: { token: state.token },
       });
       dispatch({ type: 'confirmed', person });
+      toast.success(
+        `Đã điểm danh ${[person.holyName, person.fullName].filter(Boolean).join(' ')}`.trim(),
+      );
       // Số liệu điểm danh, tham dự, tổng quan đổi theo: làm mới các danh sách đang giữ trong bộ nhớ đệm.
       void queryClient.invalidateQueries({ queryKey: ['resource'] });
     } catch (exception) {
       dispatch({ type: 'failed', message: errorMessage(exception) });
+      toast.error(errorMessage(exception));
     }
   };
 

@@ -10,6 +10,7 @@ export default function ProfileRoute() {
     <ProfileScreen
       username={user?.username ?? ''}
       roleCodes={user?.roles ?? []}
+      onEditProfile={() => router.push('/edit-profile' as Href)}
       onChangeEmail={() => router.push('/change-email' as Href)}
       onChangePassword={() => router.push('/account-password' as Href)}
     />

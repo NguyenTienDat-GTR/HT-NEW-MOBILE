@@ -8,6 +8,7 @@ import { useResourceGateway } from '@/shared/resource/resource-context';
 import { text } from '@/shared/resource/row';
 import type { PermissionSubject } from '@/shared/resource/types';
 import { resourceKey } from '@/shared/resource/use-resource';
+import { isCourseEnded } from '../domain/course-state';
 import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
@@ -16,11 +17,14 @@ import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   buildScoreBody,
+  hasAnyScore,
   previewTotal,
-  validateScores,
+  scoringBlockedReason,
+  validateFilledScores,
   type ScoreComponent,
 } from '../domain/score-entry';
 import { canScoreParticipants } from '../domain/training-permissions';
@@ -55,7 +59,13 @@ export function ScoreEntryScreen({
     enabled: courseCode !== '',
   });
 
-  if (participant.isPending || (courseCode !== '' && components.isPending))
+  const course = useQuery({
+    queryKey: ['score-course', courseCode],
+    queryFn: () => gateway.get('/training/courses', courseCode),
+    enabled: courseCode !== '',
+  });
+
+  if (participant.isPending || (courseCode !== '' && (components.isPending || course.isPending)))
     return (
       <Screen>
         <LoadingState />
@@ -79,6 +89,7 @@ export function ScoreEntryScreen({
       // Nạp lại biểu mẫu khi dữ liệu hồ sơ đổi (sau khi lưu).
       key={`${id}-${text(participant.data, 'updatedAt')}`}
       row={participant.data}
+      course={course.data ?? null}
       components={[...(components.data ?? [])].sort(
         (a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0),
       )}
@@ -93,16 +104,19 @@ export function ScoreEntryScreen({
 
 function ScoreForm({
   row,
+  course,
   components,
   subject,
   onSaved,
 }: {
   row: ResourceRow;
+  course: ResourceRow | null;
   components: ScoreComponent[];
   subject: PermissionSubject | null;
   onSaved: () => Promise<void>;
 }) {
   const gateway = useResourceGateway();
+  const toast = useToast();
   const saved = Array.isArray(row.componentScores) ? (row.componentScores as ResourceRow[]) : [];
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(saved.map((item) => [text(item, 'componentId'), text(item, 'score')])),
@@ -115,26 +129,54 @@ function ScoreForm({
 
   const total = previewTotal(components, values);
   const allowed = canScoreParticipants(subject);
+  // Như web: điểm chỉ nhập được khi khóa đang diễn ra, chưa khóa chỉnh sửa điểm và chứng nhận chưa được duyệt; nhận
+  // xét vẫn sửa được cả khi điểm đã khóa, chỉ chặn khi khóa đã kết thúc hoặc bị vô hiệu hóa.
+  const blocked = course ? scoringBlockedReason(course, row) : null;
+  const scoresEditable = allowed && blocked === null;
+  const courseEnded = course ? isCourseEnded(course) || course.finishedAt != null : false;
+  const notesEditable = allowed && !courseEnded && course?.status !== false;
+  const noteChanged = scoreNote.trim() !== text(row, 'scoreNote').trim();
 
   const submit = async () => {
     setMessage(null);
-    const found = validateScores(components, values);
+    const id = encodeURIComponent(text(row, 'id'));
+    // Chỉ sửa nhận xét (điểm đã khóa hoặc chưa nhập điểm nào): gửi riêng, không động tới điểm.
+    const scoring = scoresEditable && hasAnyScore(components, values);
+    if (!scoring) {
+      if (!noteChanged || !notesEditable) {
+        const reason = scoresEditable ? 'Chưa nhập điểm nào.' : 'Không có thay đổi nào để lưu.';
+        setMessage({ tone: 'danger', text: reason });
+        return;
+      }
+      setSaving(true);
+      try {
+        await gateway.call('PATCH', `/training/participations/${id}/score-note`, {
+          body: { note: scoreNote.trim() },
+        });
+        toast.success('Đã lưu nhận xét');
+        await onSaved();
+      } catch (exception) {
+        setMessage({ tone: 'danger', text: errorMessage(exception) });
+        toast.error(errorMessage(exception));
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
+    const found = validateFilledScores(components, values);
     setErrors(found);
     if (Object.keys(found).length > 0)
       return setMessage({ tone: 'danger', text: 'Vui lòng kiểm tra các ô điểm được đánh dấu.' });
     setSaving(true);
     try {
-      await gateway.call(
-        'PATCH',
-        `/training/participations/${encodeURIComponent(text(row, 'id'))}/score`,
-        {
-          body: buildScoreBody(components, values, review, scoreNote),
-        },
-      );
-      setMessage({ tone: 'info', text: 'Đã lưu điểm.' });
+      await gateway.call('PATCH', `/training/participations/${id}/score`, {
+        body: buildScoreBody(components, values, review, scoreNote),
+      });
+      toast.success('Đã lưu điểm');
       await onSaved();
     } catch (exception) {
       setMessage({ tone: 'danger', text: errorMessage(exception) });
+      toast.error(errorMessage(exception));
     } finally {
       setSaving(false);
     }
@@ -143,8 +185,12 @@ function ScoreForm({
   return (
     <Screen
       footer={
-        allowed ? (
-          <Button label="Lưu điểm" loading={saving} onPress={() => void submit()} />
+        allowed && (scoresEditable || notesEditable) ? (
+          <Button
+            label={scoresEditable ? 'Lưu điểm' : 'Lưu nhận xét'}
+            loading={saving}
+            onPress={() => void submit()}
+          />
         ) : undefined
       }
     >
@@ -165,6 +211,8 @@ function ScoreForm({
       {message ? <Banner tone={message.tone} message={message.text} /> : null}
       {!allowed ? (
         <Banner tone="warning" message="Tài khoản của bạn không có quyền chấm điểm." />
+      ) : blocked ? (
+        <Banner tone="warning" message={blocked} />
       ) : null}
 
       <Card>
@@ -188,7 +236,7 @@ function ScoreForm({
               }}
               keyboardType="decimal-pad"
               error={errors[component.id]}
-              editable={allowed}
+              editable={scoresEditable}
             />
           ))}
         </View>
@@ -211,7 +259,7 @@ function ScoreForm({
         onChangeText={setScoreNote}
         multiline
         maxLength={1000}
-        editable={allowed}
+        editable={notesEditable}
       />
       <TextField
         label="Ghi chú của người chấm"
@@ -219,7 +267,7 @@ function ScoreForm({
         onChangeText={setReview}
         multiline
         maxLength={1000}
-        editable={allowed}
+        editable={scoresEditable}
       />
     </Screen>
   );

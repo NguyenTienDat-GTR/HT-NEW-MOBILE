@@ -12,6 +12,7 @@ import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 
 import { canResetPasswordRow, type SystemSubject } from '../domain/system-permissions';
 
@@ -31,6 +32,7 @@ export function AccountActions({
   subject: PermissionSubject | null;
 }) {
   const gateway = useResourceGateway();
+  const toast = useToast();
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'info' | 'danger'; text: string } | null>(null);
@@ -53,8 +55,12 @@ export function AccountActions({
         tone: 'info',
         text: `Đã gửi mật khẩu tạm tới ${result.maskedEmail ?? 'email của tài khoản'}.${expires}`,
       });
+      toast.success(
+        `Đã gửi mật khẩu tạm tới ${result.maskedEmail ?? 'email đã đăng ký'}, hiệu lực 10 phút`,
+      );
       setAsking(false);
     } catch (exception) {
+      toast.error(errorMessage(exception));
       setMessage({ tone: 'danger', text: errorMessage(exception) });
       setAsking(false);
     } finally {

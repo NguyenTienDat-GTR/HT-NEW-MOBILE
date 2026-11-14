@@ -16,7 +16,7 @@ import { Banner } from '@/shared/ui/Banner';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
-import { CheckIcon } from '@/shared/ui/icons';
+import { CheckIcon, ProhibitIcon } from '@/shared/ui/icons';
 import { EmptyState } from '@/shared/ui/EmptyState';
 import { FilterChips } from '@/shared/ui/FilterChips';
 import { LoadingState } from '@/shared/ui/LoadingState';
@@ -25,6 +25,7 @@ import { useScreenInsets } from '@/shared/ui/screen-insets';
 import { pickAllowed } from '@/shared/resource/initial-filters';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import { achievableLevels, type LevelInfo } from '../domain/achievable-levels';
 import { canApproveRegistrations } from '../domain/training-permissions';
@@ -48,6 +49,8 @@ interface BulkResult {
 const isPending = (row: ResourceRow) =>
   row.approvalStatus === 'PENDING' || row.approvalStatus === 'SUBMITTED';
 const isException = (row: ResourceRow) => row.eligible === false;
+/** Như web: khóa đã kết thúc (trừ khóa quá khứ) thì hồ sơ chỉ xem, không duyệt / từ chối được nữa. */
+const isSelectable = (row: ResourceRow) => row.courseFinished !== true || row.coursePast === true;
 
 /**
  * Duyệt đăng ký: chọn một hoặc nhiều hồ sơ rồi Duyệt / Từ chối cùng lúc. Hồ sơ đã bị từ chối chỉ duyệt lại được.
@@ -67,6 +70,7 @@ export function ApprovalsScreen({
   const insets = useScreenInsets();
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusChoice>(
     pickAllowed(initialFilters?.approvalStatus, ['PENDING', 'REJECTED'] as const, 'all'),
@@ -106,11 +110,21 @@ export function ApprovalsScreen({
       else next.set(id, row);
       return next;
     });
+  const selectableRows = rows.filter(isSelectable);
   const picked = [...selected.values()];
   const canReject = picked.length > 0 && picked.every(isPending);
 
-  const finish = async (data: BulkResult) => {
+  const finish = async (data: BulkResult, approved: boolean) => {
     setResult(data);
+    // Như web: báo số hồ sơ thành công; có hồ sơ lỗi thì báo riêng kèm lý do.
+    if (data.successCount > 0)
+      toast.success(`${approved ? 'Duyệt' : 'Từ chối'} ${data.successCount} hồ sơ thành công`);
+    if (data.failedCount > 0)
+      toast.error(
+        `${data.failedCount} hồ sơ không xử lý được: ${data.failures
+          .map((item) => `${item.leaderFullName || 'Hồ sơ'} (${item.reason})`)
+          .join('; ')}`,
+      );
     setSelected(new Map());
     setAction(null);
     await queryClient.invalidateQueries({ queryKey: resourceKey('approvals') });
@@ -146,6 +160,24 @@ export function ApprovalsScreen({
           setSelected(new Map());
         }}
       />
+      {selectableRows.length > 0 ? (
+        <Button
+          label={
+            picked.length === selectableRows.length
+              ? 'Bỏ chọn tất cả'
+              : `Chọn tất cả ${selectableRows.length} hồ sơ đang hiện`
+          }
+          variant="outline"
+          size="sm"
+          onPress={() =>
+            setSelected(
+              picked.length === selectableRows.length
+                ? new Map()
+                : new Map(selectableRows.map((row) => [rowId(def, row), row])),
+            )
+          }
+        />
+      ) : null}
       {result ? (
         <Banner
           tone={result.failedCount > 0 ? 'warning' : 'info'}
@@ -197,10 +229,11 @@ export function ApprovalsScreen({
         renderItem={({ item }) => {
           const view = registrationCard(item);
           const on = selected.has(rowId(def, item));
+          const selectable = isSelectable(item);
           return (
             <Card
-              onPress={() => toggle(item)}
-              accessibilityLabel={`${view.title}. ${on ? 'Đã chọn' : 'Chưa chọn'}`}
+              onPress={selectable ? () => toggle(item) : undefined}
+              accessibilityLabel={`${view.title}. ${selectable ? (on ? 'Đã chọn' : 'Chưa chọn') : 'Khóa đã kết thúc, chỉ xem'}`}
               style={on ? { borderColor: colors.primary, borderWidth: 2 } : undefined}
             >
               <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
@@ -219,6 +252,9 @@ export function ApprovalsScreen({
                   {on ? (
                     <CheckIcon size={18} color={colors.primaryForeground} weight="bold" />
                   ) : null}
+                  {!selectable ? (
+                    <ProhibitIcon size={18} color={colors.muted} weight="bold" />
+                  ) : null}
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="bodyStrong">{view.title}</Text>
@@ -235,6 +271,21 @@ export function ApprovalsScreen({
                   {text(item, 'exceptionReason') ? (
                     <Text variant="secondary" tone="muted">
                       {`Lý do ngoại lệ: ${text(item, 'exceptionReason')}`}
+                    </Text>
+                  ) : null}
+                  {text(item, 'offTargetReason') ? (
+                    <Text variant="secondary" tone="muted">
+                      {`Gửi ngoài đợt: ${text(item, 'offTargetReason')}`}
+                    </Text>
+                  ) : null}
+                  {text(item, 'crossDeaneryReason') ? (
+                    <Text variant="secondary" tone="muted">
+                      {`Gửi liên giáo hạt${text(item, 'homeDeaneryName') ? ` (từ ${text(item, 'homeDeaneryName')})` : ''}: ${text(item, 'crossDeaneryReason')}`}
+                    </Text>
+                  ) : null}
+                  {!selectable ? (
+                    <Text variant="secondary" tone="muted">
+                      Khóa đã kết thúc nên chỉ xem, không duyệt hay từ chối được nữa.
                     </Text>
                   ) : null}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
@@ -278,7 +329,7 @@ export function ApprovalsScreen({
         action={action}
         rows={picked}
         onClose={() => setAction(null)}
-        onDone={(data) => void finish(data)}
+        onDone={(data, approved) => void finish(data, approved)}
       />
     </View>
   );
@@ -293,7 +344,7 @@ function DecisionSheet({
   action: 'approve' | 'reject' | null;
   rows: ResourceRow[];
   onClose: () => void;
-  onDone: (result: BulkResult) => void;
+  onDone: (result: BulkResult, approved: boolean) => void;
 }) {
   const gateway = useResourceGateway();
   const [note, setNote] = useState('');
@@ -335,7 +386,7 @@ function DecisionSheet({
           achievedLevels: Object.keys(achieved).length ? achieved : undefined,
         },
       });
-      onDone(data);
+      onDone(data, !rejecting);
     } catch (exception) {
       setError(errorMessage(exception));
     } finally {

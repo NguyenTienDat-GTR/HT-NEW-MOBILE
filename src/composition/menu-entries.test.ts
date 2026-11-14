@@ -8,13 +8,20 @@ const labels = (u: ReturnType<typeof user> | null) =>
   visibleMenuSections(u).flatMap((s) => s.entries.map((e) => e.label));
 
 describe('visibleMenuSections', () => {
+  it('đơn vị bị khóa thì ẩn mọi mục dù còn quyền (như web)', () => {
+    const locked = { ...user(['organization.parish.read.deanery']), unitLocked: true };
+    expect(visibleMenuSections(locked)).toEqual([]);
+  });
+
   it('ẩn mục không có quyền và ẩn cả nhóm trống', () => {
     expect(labels(user([]))).toEqual([]);
     const sections = visibleMenuSections(
       user(['organization.parish.read.deanery', 'organization.leader.read.deanery']),
     );
     expect(sections.map((s) => s.group)).toEqual(['organization', 'leaders']);
-    expect(labels(user(['organization.parish.read.deanery']))).toEqual(['Giáo xứ / họ / điểm']);
+    expect(labels(user(['organization.parish.read.deanery']))).toEqual([
+      'Giáo xứ, giáo họ, giáo điểm',
+    ]);
   });
 
   it('phân công ban điều hành hiện với một trong hai tiền tố quyền', () => {
@@ -44,7 +51,10 @@ describe('visibleMenuSections', () => {
   });
 
   it('chứng nhận: xem danh sách khi có quyền đọc, mục duyệt chỉ hiện khi có quyền duyệt', () => {
-    expect(labels(user(['training.certificate.read.deanery']))).toEqual(['Danh sách chứng nhận']);
+    expect(labels(user(['training.certificate.read.deanery']))).toEqual([
+      'Chứng nhận',
+      'Duyệt chứng nhận',
+    ]);
     expect(labels(user(['training.certificate.approve.diocese']))).toEqual(['Duyệt chứng nhận']);
     expect(
       visibleMenuSections(

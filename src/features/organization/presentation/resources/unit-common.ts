@@ -12,13 +12,7 @@ import type {
 /** Điện thoại di động VN của đơn vị: 10 số, đầu 0, số thứ hai khác 0 (giống BE). */
 const UNIT_PHONE = /^0[1-9]\d{8}$/;
 
-export const CONSENT_FIELD: FormFieldDef = {
-  name: 'subjectConsentConfirmed',
-  label:
-    'Tôi xác nhận người có thông tin dưới đây đã được thông báo và đồng ý để hệ thống xử lý dữ liệu cá nhân của họ phục vụ quản lý hồ sơ huynh trưởng, đào tạo và cấp chứng nhận.',
-  kind: 'switch',
-  validate: (value) => (value === true ? null : 'Vui lòng xác nhận trước khi lưu'),
-};
+export { CONSENT_FIELD } from '@/shared/resource/consent-field';
 
 export const CONTACT_FIELDS: readonly FormFieldDef[] = [
   { name: 'chaplain', label: 'Cha tuyên úy', kind: 'text', maxLength: 100 },
@@ -94,13 +88,13 @@ export function milestoneFields(row: ResourceRow) {
 
 export function auditSection(row: ResourceRow): DetailSection {
   return {
-    title: 'Dấu vết ghi nhận',
+    title: 'Lịch sử ghi nhận',
     collapsed: true,
     fields: [
-      { label: 'Tạo bởi', value: text(row, 'createdByName') },
-      { label: 'Tạo lúc', value: formatDate(text(row, 'createdAt')) },
-      { label: 'Sửa bởi', value: text(row, 'updatedByName') },
-      { label: 'Sửa lúc', value: formatDate(text(row, 'updatedAt')) },
+      { label: 'Người tạo', value: text(row, 'createdByName') },
+      { label: 'Ngày tạo', value: formatDate(text(row, 'createdAt')) },
+      { label: 'Người cập nhật', value: text(row, 'updatedByName') },
+      { label: 'Ngày cập nhật', value: formatDate(text(row, 'updatedAt')) },
     ],
   };
 }
@@ -128,6 +122,11 @@ export function unitToggle(endpoint: string, noun: string): ToggleDefinition {
       flag(row, 'status')
         ? `Ngưng hoạt động ${noun} sẽ khóa các tài khoản thuộc đơn vị và các đơn vị con. Bạn có thể bật lại sau.`
         : `Bật lại ${noun}. Các tài khoản và đơn vị con ngưng theo đơn vị này được mở lại nếu không còn bị khóa riêng.`,
+    confirmLabel: (row) => (flag(row, 'status') ? 'Ngưng hoạt động' : 'Bật lại'),
+    successMessage: (row) =>
+      flag(row, 'status') ? `Đã ngưng hoạt động ${noun}` : `Đã bật lại ${noun}`,
+    reasonLabel: 'Lý do ngưng hoạt động',
+    reasonPlaceholder: 'Ví dụ: sáp nhập giáo xứ, tạm ngưng theo quyết định…',
     requiresReason: (row) => flag(row, 'status'),
     requiresConfirmText: () => true,
     impact: async (gateway, row) => {

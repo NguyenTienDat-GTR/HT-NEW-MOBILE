@@ -99,6 +99,7 @@ export const rolePermissionsResource: ResourceDefinition = {
   id: 'role-permissions',
   title: 'Phân quyền vai trò',
   singular: 'Quyền của vai trò',
+  createLabel: 'Phân quyền',
   endpoint: '/system/role-permissions',
   idField: 'id',
   searchFields: ['role.roleCode', 'role.roleName', ...permissionSearch],
@@ -129,7 +130,7 @@ export const rolePermissionsResource: ResourceDefinition = {
         { label: 'Vai trò', value: text(row, 'roleName') },
         { label: 'Quyền', value: text(row, 'permissionName') },
         { label: 'Mã quyền', value: text(row, 'permissionCode') },
-        { label: 'Tình trạng', value: validityLabel(row.validity)?.label ?? '' },
+        { label: 'Tình trạng quyền', value: validityLabel(row.validity)?.label ?? '' },
         { label: 'Điều kiện áp dụng', value: text(row, 'conditions') },
       ],
     },
@@ -158,7 +159,7 @@ export const rolePermissionsResource: ResourceDefinition = {
   ),
   form: {
     titleCreate: 'Phân quyền cho vai trò',
-    titleEdit: 'Sửa hạn quyền của vai trò',
+    titleEdit: 'Chỉnh sửa quyền của vai trò',
     sections: [
       { title: 'Vai trò', fields: ['roleCode', 'roleView', 'permissionView'] },
       { title: 'Quyền', fields: ['permissions'] },
@@ -255,6 +256,7 @@ export const accountPermissionsResource: ResourceDefinition = {
   id: 'account-permissions',
   title: 'Phân quyền tài khoản',
   singular: 'Quyền của tài khoản',
+  createLabel: 'Phân quyền',
   endpoint: '/system/account-permissions',
   idField: 'id',
   searchFields: ['account.username', ...permissionSearch, 'reason'],
@@ -294,7 +296,7 @@ export const accountPermissionsResource: ResourceDefinition = {
         { label: 'Huynh trưởng', value: text(row, 'leaderFullName') },
         { label: 'Quyền', value: text(row, 'permissionName') },
         { label: 'Mã quyền', value: text(row, 'permissionCode') },
-        { label: 'Tình trạng', value: validityLabel(row.validity)?.label ?? '' },
+        { label: 'Tình trạng quyền', value: validityLabel(row.validity)?.label ?? '' },
         { label: 'Lý do cấp', value: text(row, 'reason') },
       ],
     },
@@ -318,7 +320,7 @@ export const accountPermissionsResource: ResourceDefinition = {
   ),
   form: {
     titleCreate: 'Phân quyền cho tài khoản',
-    titleEdit: 'Sửa quyền của tài khoản',
+    titleEdit: 'Chỉnh sửa quyền của tài khoản',
     sections: [
       { title: 'Tài khoản', fields: ['username', 'accountView', 'permissionView'] },
       { title: 'Quyền', fields: ['permissions'] },

@@ -58,6 +58,7 @@ export default function AppLayout() {
           <Stack.Screen name="course-scan" options={{ title: 'Điểm danh bằng mã QR' }} />
           <Stack.Screen name="profile" options={{ title: 'Hồ sơ cá nhân' }} />
           <Stack.Screen name="my-permissions" options={{ title: 'Quyền của tôi' }} />
+          <Stack.Screen name="edit-profile" options={{ title: 'Chỉnh sửa hồ sơ cá nhân' }} />
           <Stack.Screen name="change-email" options={{ title: 'Đổi email' }} />
           <Stack.Screen name="account-password" options={{ title: 'Đổi mật khẩu' }} />
         </Stack>

@@ -11,20 +11,31 @@ export interface FieldLabelProps {
   /** Hướng dẫn của ô: hiện sau dấu "?" cạnh nhãn (như HelpTip của web), không chiếm chỗ dưới ô nhập. */
   hint?: string;
   variant?: TextProps['variant'];
+  /** Ô bắt buộc: thêm dấu "*" màu danger sau nhãn (như web); trình đọc màn hình đọc là "bắt buộc". */
+  required?: boolean;
 }
 
 /**
  * Nhãn của ô nhập kèm dấu "?" nhỏ: chạm để mở/đóng khung hướng dẫn ngay dưới nhãn. Dấu "?" nhìn 24dp nhưng vùng chạm
  * mở rộng đủ 48dp; nút có nhãn đọc được và báo trạng thái mở/đóng cho trình đọc màn hình.
  */
-export function FieldLabel({ label, hint, variant = 'label' }: FieldLabelProps) {
+export function FieldLabel({ label, hint, variant = 'label', required = false }: FieldLabelProps) {
   const { colors, radius } = useTheme();
   const [open, setOpen] = useState(false);
   return (
     <View style={styles.wrapper}>
       <View style={styles.row}>
-        <Text variant={variant} style={styles.label}>
+        <Text
+          variant={variant}
+          style={styles.label}
+          accessibilityLabel={required ? `${label}, bắt buộc` : undefined}
+        >
           {label}
+          {required ? (
+            <Text variant={variant} tone="danger">
+              {' *'}
+            </Text>
+          ) : null}
         </Text>
         {hint ? (
           <Pressable
@@ -33,7 +44,16 @@ export function FieldLabel({ label, hint, variant = 'label' }: FieldLabelProps) 
             accessibilityState={{ expanded: open }}
             hitSlop={12}
             onPress={() => setOpen((value) => !value)}
-            style={[styles.icon, { backgroundColor: open ? colors.primarySoft : colors.surface2 }]}
+            style={({ pressed }) => [
+              styles.icon,
+              {
+                backgroundColor: pressed
+                  ? colors.border
+                  : open
+                    ? colors.primarySoft
+                    : colors.surface2,
+              },
+            ]}
           >
             <QuestionIcon size={16} color={open ? colors.primary : colors.muted} weight="bold" />
           </Pressable>

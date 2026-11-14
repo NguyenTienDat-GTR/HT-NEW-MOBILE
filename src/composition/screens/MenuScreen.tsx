@@ -50,7 +50,9 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
   const name = displayName(undefined, user?.username ?? '');
   // Như web: xem phân tích chi tiết khi có quyền analytics.dashboard.read.* và không phải quản trị hệ thống.
   const canSeeAnalytics =
-    !isSuperAdmin(user) && hasPermissionPrefix(user, 'analytics.dashboard.read.');
+    !user?.unitLocked &&
+    !isSuperAdmin(user) &&
+    hasPermissionPrefix(user, 'analytics.dashboard.read.');
   const sections = visibleMenuSections(user);
   const groupIcon: Record<MenuGroupId, typeof KeyIcon> = {
     organization: BuildingsIcon,

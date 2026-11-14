@@ -22,6 +22,7 @@ import { SelectField } from '@/shared/ui/SelectField';
 import { SwitchRow } from '@/shared/ui/SwitchRow';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   buildDivideBody,
@@ -65,6 +66,7 @@ export function CourseTeamsScreen({
 }) {
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const code = courseCode ?? '';
   const enc = encodeURIComponent(code);
   const [search, setSearch] = useState('');
@@ -122,15 +124,17 @@ export function CourseTeamsScreen({
     await queryClient.invalidateQueries({ queryKey: baseKey(code) });
     await queryClient.invalidateQueries({ queryKey: ['resource', 'participants'] });
   };
-  const run = async (action: () => Promise<unknown>, after: () => void) => {
+  const run = async (action: () => Promise<unknown>, success: string, after: () => void) => {
     setBusy(true);
     setError(null);
     try {
       await action();
       await refresh();
+      toast.success(success);
       after();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setBusy(false);
     }
@@ -257,6 +261,7 @@ export function CourseTeamsScreen({
               gateway.call('POST', `/training/courses/${enc}/teams/divide`, {
                 body: buildDivideBody(draft),
               }),
+            'Chia đội thành công',
             () => setDivideOpen(false),
           )
         }
@@ -275,6 +280,7 @@ export function CourseTeamsScreen({
         onConfirm={() =>
           void run(
             () => gateway.call('DELETE', `/training/courses/${enc}/teams`),
+            'Đã xóa chia đội của khóa',
             () => setClearOpen(false),
           )
         }
@@ -295,6 +301,7 @@ export function CourseTeamsScreen({
                   gateway.call('PATCH', `/training/courses/${enc}/teams/assignments`, {
                     body: { assignments: [{ participationId: text(assigning, 'id'), teamName }] },
                   }),
+                'Đã lưu đội cho hồ sơ',
                 () => setAssigning(null),
               )
             : undefined

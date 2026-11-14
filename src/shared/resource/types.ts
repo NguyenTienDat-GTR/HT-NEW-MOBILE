@@ -40,6 +40,10 @@ export type FieldKind =
   | 'daymonth'
   | 'select'
   | 'switch'
+  /** Ô đồng ý xử lý dữ liệu cá nhân (tích kèm liên kết chính sách); giá trị boolean như `switch`. */
+  | 'consent'
+  /** Chọn nhiều giá trị từ `options`; giá trị lưu dạng chuỗi JSON mảng (đọc/ghi bằng parseMulti / stringifyMulti). */
+  | 'multiselect'
   | 'lookup'
   | 'custom';
 
@@ -48,6 +52,8 @@ export interface FormFieldDef {
   label: string;
   kind: FieldKind;
   required?: boolean;
+  /** Chỉ bắt buộc khi tạo; khi sửa được bỏ trống (vd. số điện thoại của huynh trưởng, như web). */
+  requiredOnCreateOnly?: boolean;
   hint?: string;
   maxLength?: number;
   /** Khóa khi sửa (vd. họ tên, cấp ban đầu): hiển thị nhưng không đổi được. */
@@ -103,9 +109,11 @@ export interface FormDefinition {
     row: ResourceRow | null,
     subject: PermissionSubject | null,
   ) => unknown;
-  /** Thông báo thành công. */
+  /** Thông báo thành công (mặc định "Tạo mới thành công" / "Lưu cập nhật thành công" như web). */
   successCreate?: string;
   successEdit?: string;
+  /** Chữ trên nút gửi form khi web đặt tên riêng (vd. "Phân công"); mặc định "Tạo mới" / "Lưu cập nhật". */
+  submitLabels?: { create?: string; edit?: string };
   /** Gọi API khác endpoint chuẩn (mặc định POST endpoint / PUT endpoint/{id}). */
   submit?: (context: {
     gateway: ResourceGateway;
@@ -166,6 +174,13 @@ export interface ToggleDefinition {
   ) => Promise<unknown>;
   /** Câu hỏi xác nhận. */
   confirmMessage: (row: ResourceRow) => string;
+  /** Thông báo sau khi đổi trạng thái thành công; mặc định "Đổi trạng thái thành công" như web. */
+  successMessage?: (row: ResourceRow) => string;
+  /** Chữ trên nút xác nhận khi web đặt tên riêng (vd. "Ngưng hoạt động"); mặc định "Xác nhận". */
+  confirmLabel?: (row: ResourceRow) => string;
+  /** Nhãn và gợi ý của ô lý do khi web đặt tên riêng; mặc định "Lý do". */
+  reasonLabel?: string;
+  reasonPlaceholder?: string;
   /** Trạng thái hiện tại đang bật? (quyết định chữ và độ nguy hiểm). */
   isActive: (row: ResourceRow) => boolean;
 }
@@ -175,6 +190,8 @@ export interface ResourceDefinition {
   /** Tiêu đề danh sách (số nhiều) và tên một bản ghi (số ít, dùng cho nút "Thêm …"). */
   title: string;
   singular: string;
+  /** Chữ trên nút tạo mới khi web đặt tên riêng (vd. "Tạo khóa", "Gửi đăng ký"); mặc định "Thêm <singular>". */
+  createLabel?: string;
   endpoint: string;
   idField?: string;
   searchFields: readonly string[];

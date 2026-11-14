@@ -12,6 +12,7 @@ import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
 import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 
 /**
  * Thu hồi một quyền đã phân (cho vai trò hoặc tài khoản). Thu hồi là vĩnh viễn: quyền đã thu hồi không bật lại được,
@@ -33,6 +34,7 @@ export function RevokeGrantAction({
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'info' | 'danger'; text: string } | null>(null);
+  const toast = useToast();
 
   if (!visible && !message) return null;
 
@@ -48,8 +50,10 @@ export function RevokeGrantAction({
         },
       });
       setMessage({ tone: 'info', text: 'Đã thu hồi quyền.' });
+      toast.success('Đã thu hồi quyền');
       await queryClient.invalidateQueries({ queryKey: resourceKey(resourceId) });
     } catch (exception) {
+      toast.error(errorMessage(exception));
       setMessage({ tone: 'danger', text: errorMessage(exception) });
     } finally {
       setBusy(false);

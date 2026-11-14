@@ -60,7 +60,7 @@ export const auditLogsResource: ResourceDefinition = {
         label: taxonomyLabel('resource', value),
       })),
     },
-    { key: 'statusCode', label: 'Kết quả', options: AUDIT_STATUS_CODE_OPTIONS },
+    { key: 'statusCode', label: 'Mã kết quả HTTP', options: AUDIT_STATUS_CODE_OPTIONS },
     { key: 'unitType', label: 'Cấp đơn vị', options: AUDIT_UNIT_OPTIONS },
   ],
   card: (row) => ({
@@ -79,12 +79,12 @@ export const auditLogsResource: ResourceDefinition = {
     const status = code(row);
     return [
       {
-        title: 'Thao tác',
+        title: 'Thông tin thao tác',
         fields: [
           { label: 'Thời gian', value: formatDateTime(text(row, 'loggedAt')) },
-          { label: 'Người thực hiện', value: text(row, 'username') },
+          { label: 'Tài khoản thực hiện', value: text(row, 'username') },
           { label: 'Thao tác', value: auditOperationLabel(row.operation) },
-          { label: 'Đối tượng', value: taxonomyLabel('resource', row.resource) },
+          { label: 'Loại đối tượng', value: taxonomyLabel('resource', row.resource) },
           { label: 'Tên / mã đối tượng', value: auditTargetText(row) },
           { label: 'Phân hệ', value: taxonomyLabel('module', row.module) },
           { label: 'Cấp đơn vị', value: unitLabel(row.unitType) },
@@ -94,26 +94,26 @@ export const auditLogsResource: ResourceDefinition = {
         title: 'Kết quả',
         fields: [
           {
-            label: 'Mã kết quả',
+            label: 'Mã phản hồi HTTP',
             value: status === null ? '' : `${status} · ${auditStatusText(status)}`,
           },
           {
             label: 'Thời gian xử lý',
             value: row.durationMs != null ? `${text(row, 'durationMs')} ms` : '',
           },
-          { label: 'Thông báo', value: text(row, 'message') },
-          { label: 'Lỗi', value: text(row, 'errorMessage') },
+          { label: 'Nội dung', value: text(row, 'message') },
+          { label: 'Thông báo lỗi', value: text(row, 'errorMessage') },
         ],
       },
       {
-        title: 'Yêu cầu',
+        title: 'Yêu cầu kỹ thuật',
         collapsed: true,
         fields: [
           { label: 'Phương thức', value: text(row, 'httpMethod') },
           { label: 'Đường dẫn', value: text(row, 'requestPath') },
-          { label: 'Tham số', value: text(row, 'queryString') },
+          { label: 'Bộ lọc yêu cầu', value: text(row, 'queryString') },
           { label: 'Địa chỉ IP', value: text(row, 'ipAddress') },
-          { label: 'Trình duyệt / thiết bị', value: text(row, 'userAgent') },
+          { label: 'Thiết bị / trình duyệt', value: text(row, 'userAgent') },
         ],
       },
     ];

@@ -1,6 +1,13 @@
 import type { Page } from '@/core/domain/page';
 
-import type { MyPermission, MyProfile, PasswordOtpChallenge } from '../domain/entities';
+import type {
+  MyPermission,
+  MyPermissionFilterOptions,
+  MyPermissionFilters,
+  MyProfile,
+  PasswordOtpChallenge,
+} from '../domain/entities';
+import type { ProfileChanges } from '../domain/profile-edit';
 import type { AccountRepository } from '../domain/repository';
 
 import { toMyProfile, toPasswordOtp, toPermissionPage } from './account-mapper';
@@ -11,6 +18,10 @@ export class AccountRepositoryImpl implements AccountRepository {
 
   async getProfile(): Promise<MyProfile> {
     return toMyProfile(await this.remote.profile());
+  }
+
+  async updateMyProfile(changes: ProfileChanges): Promise<void> {
+    await this.remote.updateProfile({ ...changes });
   }
 
   async changeEmail(email: string, currentPassword: string): Promise<void> {
@@ -33,7 +44,16 @@ export class AccountRepositoryImpl implements AccountRepository {
     page: number,
     size: number,
     search?: string,
+    filters?: MyPermissionFilters,
   ): Promise<Page<MyPermission>> {
-    return toPermissionPage(await this.remote.permissions(page, size, search));
+    const clean = Object.fromEntries(
+      Object.entries(filters ?? {}).filter(([, value]) => Boolean(value)),
+    ) as Record<string, string>;
+    return toPermissionPage(await this.remote.permissions(page, size, search, clean));
+  }
+
+  async myPermissionFilterOptions(): Promise<MyPermissionFilterOptions> {
+    const data = await this.remote.permissionFilterOptions();
+    return { modules: data.modules ?? [], actions: data.actions ?? [] };
   }
 }

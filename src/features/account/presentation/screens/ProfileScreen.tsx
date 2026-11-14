@@ -27,6 +27,7 @@ export interface ProfileScreenProps {
   /** Dự phòng khi hồ sơ chưa tải xong (lấy từ phiên đăng nhập). */
   username: string;
   roleCodes: readonly string[];
+  onEditProfile: () => void;
   onChangeEmail: () => void;
   onChangePassword: () => void;
 }
@@ -38,6 +39,7 @@ export interface ProfileScreenProps {
 export function ProfileScreen({
   username,
   roleCodes,
+  onEditProfile,
   onChangeEmail,
   onChangePassword,
 }: ProfileScreenProps) {
@@ -70,11 +72,12 @@ export function ProfileScreen({
       {leader ? (
         <Card>
           <View style={{ gap: spacing.sm }}>
-            <Text variant="heading">Huynh trưởng</Text>
+            <Text variant="heading">Thông tin Huynh Trưởng</Text>
+            <Button label="Chỉnh sửa hồ sơ" variant="outline" onPress={onEditProfile} />
             <InfoRow label="Cấp huynh trưởng">
               <Badge label={leaderLevelName(leader.leaderLevel) || 'Chưa có cấp'} tone="info" />
             </InfoRow>
-            <InfoRow label="Giáo xứ" value={leader.parishName} />
+            <InfoRow label="Giáo xứ / giáo họ / giáo điểm" value={leader.parishName} />
             <InfoRow label="Giáo hạt" value={leader.deaneryName} />
             <CollapsibleSection title="Thông tin liên hệ">
               <InfoRow label="Ngày sinh" value={formatDate(leader.birthDate)} />
@@ -82,7 +85,7 @@ export function ProfileScreen({
               <InfoRow label="Số điện thoại" value={leader.phoneNumber} />
               <InfoRow label="Email" value={leader.email} />
             </CollapsibleSection>
-            <CollapsibleSection title="Lịch sử cấp bậc" count={profile?.rankHistory.length ?? 0}>
+            <CollapsibleSection title="Lịch sử cấp độ" count={profile?.rankHistory.length ?? 0}>
               {(profile?.rankHistory ?? []).map((row, index) => (
                 <InfoRow
                   key={`${row.promotionDate}-${index}`}
@@ -92,7 +95,7 @@ export function ProfileScreen({
               ))}
               {(profile?.rankHistory.length ?? 0) === 0 ? (
                 <Text variant="secondary" tone="muted">
-                  Chưa có lịch sử thăng cấp.
+                  Chưa có lịch sử cấp độ.
                 </Text>
               ) : null}
             </CollapsibleSection>
@@ -123,8 +126,25 @@ export function ProfileScreen({
       <Card>
         <View style={{ gap: spacing.sm }}>
           <Text variant="heading">Tài khoản</Text>
-          <InfoRow label="Email nhận thông tin" value={profile?.email} />
-          <Button label="Đổi email" variant="outline" onPress={onChangeEmail} />
+          <InfoRow label="Email nhận OTP" value={profile?.email || 'Chưa có email'} />
+          {/* Như web: tài khoản gắn huynh trưởng dùng email trong hồ sơ huynh trưởng nên không tự đổi tại đây. */}
+          {profile && !leader ? (
+            <Button
+              label={profile.email ? 'Đổi email' : 'Thêm email'}
+              variant="outline"
+              onPress={onChangeEmail}
+            />
+          ) : null}
+          {profile && !profile.email ? (
+            <Banner
+              tone="warning"
+              message={
+                leader
+                  ? 'Tài khoản chưa có email nên chưa thể đổi mật khẩu bằng OTP. Vui lòng liên hệ quản trị viên.'
+                  : 'Tài khoản chưa có email nên chưa thể đổi mật khẩu bằng OTP. Hãy thêm email ở trên.'
+              }
+            />
+          ) : null}
           <Button label="Đổi mật khẩu" variant="outline" onPress={onChangePassword} />
         </View>
       </Card>

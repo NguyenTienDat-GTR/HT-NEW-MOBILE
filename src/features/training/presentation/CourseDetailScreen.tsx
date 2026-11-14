@@ -27,6 +27,7 @@ import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
 import { useTheme } from '@/shared/theme/theme-provider';
 import { Text } from '@/shared/ui/Text';
+import { useToast } from '@/shared/ui/Toast';
 
 import {
   isCourseEnded,
@@ -52,20 +53,20 @@ const MESSAGES: Record<
   { title: string; message: string; confirm: string }
 > = {
   finish: {
-    title: 'Kết thúc khóa',
+    title: 'Kết thúc khóa huấn luyện',
     message:
       'Kết thúc khóa sẽ chốt kết quả và thăng cấp cho hồ sơ đạt theo quy định. Không hoàn tác được.',
     confirm: 'Kết thúc khóa',
   },
   lock: {
-    title: 'Khóa điểm',
+    title: 'Khóa chỉnh sửa điểm',
     message: 'Sau khi khóa điểm, không ai sửa được điểm của khóa này cho tới khi mở khóa.',
-    confirm: 'Khóa điểm',
+    confirm: 'Khóa chỉnh sửa điểm',
   },
   unlock: {
-    title: 'Mở khóa điểm',
+    title: 'Mở chỉnh sửa điểm',
     message: 'Cho phép sửa lại điểm của khóa này.',
-    confirm: 'Mở khóa điểm',
+    confirm: 'Mở chỉnh sửa điểm',
   },
   open: { title: 'Mở đăng ký', message: 'Khóa sẽ nhận đăng ký ngay.', confirm: 'Mở đăng ký' },
   close: { title: 'Đóng đăng ký', message: 'Khóa sẽ ngừng nhận đăng ký.', confirm: 'Đóng đăng ký' },
@@ -87,6 +88,7 @@ const goto = (path: string, course: string) =>
  */
 export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScreenProps) {
   const gateway = useResourceGateway();
+  const toast = useToast();
   const router = useRouter();
   const { colors, iconSize } = useTheme();
   const invalidate = useInvalidateResource(def);
@@ -150,15 +152,17 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
       : []),
   ];
 
-  const run = async (action: () => Promise<unknown>) => {
+  const run = async (action: () => Promise<unknown>, success: string) => {
     setBusy(true);
     setError(null);
     try {
       await action();
       await invalidate();
+      toast.success(success);
       setPending(null);
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setBusy(false);
     }
@@ -166,17 +170,24 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
 
   const confirmPending = () => {
     if (pending === 'finish')
-      return run(() => gateway.call('POST', `/training/courses/${encoded}/finish`));
-    if (pending === 'lock' || pending === 'unlock')
-      return run(() =>
-        gateway.call('PATCH', `/training/courses/${encoded}/score-lock`, {
-          body: { locked: pending === 'lock' },
-        }),
+      return run(
+        () => gateway.call('POST', `/training/courses/${encoded}/finish`),
+        'Đã kết thúc khóa huấn luyện',
       );
-    return run(() =>
-      gateway.call('PATCH', `/training/courses/${encoded}/registration`, {
-        body: { open: pending === 'open' },
-      }),
+    if (pending === 'lock' || pending === 'unlock')
+      return run(
+        () =>
+          gateway.call('PATCH', `/training/courses/${encoded}/score-lock`, {
+            body: { locked: pending === 'lock' },
+          }),
+        pending === 'lock' ? 'Đã khóa chỉnh sửa điểm' : 'Đã mở chỉnh sửa điểm',
+      );
+    return run(
+      () =>
+        gateway.call('PATCH', `/training/courses/${encoded}/registration`, {
+          body: { open: pending === 'open' },
+        }),
+      pending === 'open' ? 'Đã mở đăng ký' : 'Đã đóng đăng ký',
     );
   };
 
@@ -264,7 +275,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           />
           <InfoRow label="Số năm hoạt động" value={text(course, 'yearsActive')} />
           <InfoRow label="Cấp độ yêu cầu" value={text(course, 'requiredCurrentLevelName')} />
-          <InfoRow label="Cấp độ khi hoàn thành" value={text(course, 'resultingLevelName')} />
+          <InfoRow label="Cấp độ đạt được" value={text(course, 'resultingLevelName')} />
           <InfoRow label="Khóa tiên quyết" value={text(course, 'prerequisiteTypeName')} />
           <InfoRow label="Dành cho giáo hạt" value={targets || 'Tất cả giáo hạt'} />
         </InfoGrid>
@@ -293,7 +304,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
             value={flag(course, 'autoApproveEligible') ? 'Có' : 'Không'}
           />
           <InfoRow
-            label="Điểm danh bằng mã QR"
+            label="Bật điểm danh bằng QR"
             value={flag(course, 'attendanceEnabled') ? 'Bật' : 'Tắt'}
           />
           {canUpdate && !flag(course, 'pastCourse') && registration !== 'ENDED' ? (
@@ -313,7 +324,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           </Text>
           <InfoRow label="Điểm đạt" value={text(course, 'passingScore')} />
           <InfoRow
-            label="Hiển thị điểm cho giáo xứ và huynh trưởng"
+            label="Hiển thị điểm của khóa"
             value={flag(course, 'scoreVisible') ? 'Có' : 'Không'}
           />
           {components.map((item) => (
@@ -327,7 +338,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           ))}
           {canLock ? (
             <Button
-              label={flag(course, 'scoreLocked') ? 'Mở khóa điểm' : 'Khóa điểm'}
+              label={flag(course, 'scoreLocked') ? 'Mở chỉnh sửa điểm' : 'Khóa chỉnh sửa điểm'}
               variant="outline"
               onPress={() => setPending(flag(course, 'scoreLocked') ? 'unlock' : 'lock')}
             />
@@ -342,10 +353,10 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
       ) : null}
 
       <Card>
-        <CollapsibleSection title="Dấu vết ghi nhận">
-          <InfoRow label="Tạo bởi" value={text(course, 'createdByName')} />
-          <InfoRow label="Tạo lúc" value={formatDate(text(course, 'createdAt'))} />
-          <InfoRow label="Sửa bởi" value={text(course, 'updatedByName')} />
+        <CollapsibleSection title="Lịch sử ghi nhận">
+          <InfoRow label="Người tạo" value={text(course, 'createdByName')} />
+          <InfoRow label="Ngày tạo" value={formatDate(text(course, 'createdAt'))} />
+          <InfoRow label="Người cập nhật" value={text(course, 'updatedByName')} />
           <InfoRow label="Kết thúc bởi" value={text(course, 'finishedByName')} />
         </CollapsibleSection>
       </Card>

@@ -32,7 +32,10 @@ export interface ResourceGateway {
   call<T>(
     method: HttpVerb,
     path: string,
-    options?: { body?: unknown; query?: Record<string, string | number | boolean | undefined> },
+    options?: {
+      body?: unknown;
+      query?: Record<string, string | number | boolean | readonly string[] | undefined>;
+    },
   ): Promise<T>;
   /** Tải nội dung nhị phân (vd. PDF) bằng một lời gọi có Bearer. */
   download(method: HttpVerb, path: string, options?: { body?: unknown }): Promise<DownloadedBytes>;

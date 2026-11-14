@@ -1,4 +1,12 @@
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useEndReached } from '../hooks/use-end-reached';
@@ -46,7 +54,8 @@ export function BottomSheet({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={styles.root}>
+      {/* Sheet có ô nhập (tìm kiếm, lý do…): đẩy cả sheet lên trên bàn phím để ô đang gõ và nút xác nhận không bị che. */}
+      <KeyboardAvoidingView style={styles.root} behavior="padding">
         <Pressable
           accessibilityLabel="Đóng"
           accessibilityRole="button"
@@ -102,14 +111,16 @@ export function BottomSheet({
             <View style={{ paddingHorizontal: spacing.md, gap: spacing.xs }}>{footer}</View>
           ) : null}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { maxHeight: '88%' },
+  // flexShrink: khi bàn phím mở, sheet co lại trong phần còn trống (vùng cuộn bên trong tự thu ngắn) thay vì bị đẩy
+  // tiêu đề ra khỏi mép trên màn hình.
+  sheet: { maxHeight: '88%', flexShrink: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

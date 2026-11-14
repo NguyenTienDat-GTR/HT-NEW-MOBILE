@@ -6,6 +6,7 @@ import { errorMessage } from '@/core/domain/app-error';
 import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
 import { Screen } from '@/shared/ui/Screen';
+import { useToast } from '@/shared/ui/Toast';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
@@ -27,15 +28,18 @@ export function ChangePasswordScreen() {
   const { control, formState } = form;
   const newPasswordValue = useWatch({ control, name: 'newPassword' });
 
+  const toast = useToast();
   const submit = form.handleSubmit(async (values) => {
     setFormError(null);
     try {
       await deps.changeTemporaryPassword.execute(values.oldPassword, values.newPassword);
+      toast.success('Đổi mật khẩu thành công, vui lòng đăng nhập lại');
       useAuthStore
         .getState()
         .setAnonymous('Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.');
     } catch (error) {
       setFormError(errorMessage(error));
+      toast.error(errorMessage(error));
     }
   });
 

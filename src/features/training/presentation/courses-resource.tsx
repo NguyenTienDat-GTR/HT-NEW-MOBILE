@@ -1,6 +1,8 @@
 import { formatDate } from '@/core/domain/date-format';
 import { fmtNumber } from '@/core/domain/number-format';
-import { optional, trimmed } from '@/shared/resource/form-logic';
+import { hasPermissionPrefix } from '@/core/domain/permissions';
+import type { ResourceRow } from '@/core/resource/resource-gateway';
+import { optional, parseMulti, stringifyMulti, trimmed } from '@/shared/resource/form-logic';
 import { loadOptions } from '@/shared/resource/options';
 import { count, flag, joinParts, text } from '@/shared/resource/row';
 import type { ResourceDefinition } from '@/shared/resource/types';
@@ -32,6 +34,14 @@ import {
   type TrainingSubject,
 } from '../domain/training-permissions';
 
+import {
+  buildCopyBody,
+  EMPTY_COPY,
+  parseCopyState,
+  stringifyCopyState,
+} from '../domain/copy-participants';
+
+import { CopyParticipantsField } from './CopyParticipantsField';
 import { CourseDetailScreen } from './CourseDetailScreen';
 import { ScoreComponentsEditor } from './ScoreComponentsEditor';
 
@@ -63,6 +73,36 @@ export const courseFilterOptions = {
     loadOptions(gateway, '/training/courses', { value: 'courseCode', label: 'courseName' }),
 };
 
+/** Mảng giá trị chuỗi từ dữ liệu BE (không phải mảng thì rỗng). */
+const arrayOfText = (value: unknown): string[] => (Array.isArray(value) ? value.map(String) : []);
+
+/**
+ * Giá trị ẩn (không gửi BE) giúp các ô "Đợt của khóa" và "Sao chép danh sách tham dự" biết có hiện hay không, giống luật
+ * của web: cấp tài khoản được quản lý, cấp quản lý của khóa đang sửa, quyền duyệt đăng ký.
+ */
+function courseScopeValues(row: ResourceRow | null, subject: unknown) {
+  const types = managedUnitTypes(subject as TrainingSubject | null, 'course');
+  const canApprove = hasPermissionPrefix(
+    subject as TrainingSubject | null,
+    'training.participation.approve.',
+  );
+  return {
+    canDioceseCourse: types.includes('DIOCESE'),
+    canDeaneryCourse: types.includes('DEANERY'),
+    // Sửa khóa: theo cấp quản lý của khóa; tạo mới chỉ một cấp thì cấp đó, nhiều cấp thì chưa biết (hiện cả hai ô).
+    courseLevel: row ? text(row, 'managementUnitType') : types.length === 1 ? types[0]! : '',
+    // Sao chép chỉ khi có quyền duyệt đăng ký; khóa đã kết thúc hoặc ngừng hoạt động thì không sao chép được.
+    copyAllowed: row
+      ? canApprove && organizingState(row) === 'UPCOMING' && row.status !== false
+      : canApprove,
+  };
+}
+
+const showsTargetDeaneries = (values: Record<string, string | boolean>) =>
+  values.canDioceseCourse === true && values.courseLevel !== 'DEANERY';
+const showsOpenToOthers = (values: Record<string, string | boolean>) =>
+  values.canDeaneryCourse === true && values.courseLevel !== 'DIOCESE';
+
 const decimal = /^\d+([.,]\d+)?$/;
 const integerText = (value: string | boolean) => (typeof value === 'string' ? value.trim() : '');
 
@@ -86,6 +126,7 @@ export const coursesResource: ResourceDefinition = {
   id: 'courses',
   title: 'Khóa huấn luyện',
   singular: 'Khóa huấn luyện',
+  createLabel: 'Tạo khóa',
   endpoint: '/training/courses',
   idField: 'courseCode',
   searchFields: ['courseName', 'location'],
@@ -121,15 +162,15 @@ export const coursesResource: ResourceDefinition = {
   ),
   form: {
     titleCreate: 'Tạo khóa huấn luyện',
-    titleEdit: 'Sửa khóa huấn luyện',
+    titleEdit: 'Chỉnh sửa khóa huấn luyện',
     sections: [
       {
         title: 'Thông tin khóa',
-        fields: ['courseName', 'courseTypeCode', 'location'],
+        fields: ['courseName', 'courseTypeCode', 'yearsActive', 'location'],
       },
       {
         title: 'Thời gian tổ chức',
-        fields: ['startDate', 'endDate', 'hostYear', 'yearsActive'],
+        fields: ['startDate', 'endDate', 'hostYear'],
       },
       {
         title: 'Thời gian đăng ký',
@@ -137,9 +178,16 @@ export const coursesResource: ResourceDefinition = {
       },
       { title: 'Cấu hình chấm điểm', fields: ['passingScore', 'scoreComponents'] },
       {
-        title: 'Duyệt, hiển thị và điểm danh',
-        fields: ['autoApproveEligible', 'scoreVisible', 'attendanceEnabled', 'autoSendInvitation'],
+        title: 'Duyệt và hiển thị',
+        fields: ['autoApproveEligible', 'scoreVisible'],
       },
+      {
+        title: 'Điểm danh và thẻ tham dự',
+        fields: ['attendanceEnabled', 'autoSendInvitation'],
+      },
+      { title: 'Đợt của khóa', fields: ['targetDeaneryIds', 'openToOtherDeaneries'] },
+      { title: 'Sao chép danh sách tham dự', fields: ['copySourceCourseCodes'] },
+      { title: 'Người nhận danh sách đăng ký', fields: ['recipientUsernames'] },
       { title: 'Thông tin bổ sung', fields: ['additionalNotes'] },
     ],
     fields: [
@@ -276,7 +324,7 @@ export const coursesResource: ResourceDefinition = {
       },
       {
         name: 'scoreComponents',
-        label: 'Thành phần điểm',
+        label: 'Thành phần điểm của khóa',
         kind: 'custom',
         render: (props) => <ScoreComponentsEditor {...props} />,
         validate: (value) => scoreComponentsError(parseScoreComponents(String(value))),
@@ -305,9 +353,71 @@ export const coursesResource: ResourceDefinition = {
         kind: 'switch',
         hint: 'Hồ sơ được duyệt sẽ nhận email thông tin tham dự (kèm mã QR nếu bật điểm danh).',
       },
+      {
+        name: 'targetDeaneryIds',
+        label: 'Khóa dành cho giáo hạt',
+        kind: 'multiselect',
+        placeholder: 'Chọn các giáo hạt mà khóa này (một đợt) dành cho',
+        hint: 'Bỏ trống nếu khóa mở cho tất cả giáo hạt. Giáo xứ thuộc giáo hạt khác vẫn đăng ký được nhưng phải kèm lí do riêng cho từng hồ sơ và hồ sơ được duyệt thủ công.',
+        // Chỉ khóa giáo phận: giáo hạt khác gửi hồ sơ sang khóa giáo hạt qua màn Gửi liên giáo hạt.
+        visible: (values) => showsTargetDeaneries(values),
+        options: {
+          load: ({ gateway }) => loadOptions(gateway, '/deaneries', { value: 'id', label: 'name' }),
+        },
+      },
+      {
+        name: 'openToOtherDeaneries',
+        label: 'Mở đăng ký cho các giáo hạt khác',
+        kind: 'switch',
+        hint: 'Khi bật, admin các giáo hạt khác nhận thông báo kèm thông tin khóa. Chỉ giáo xứ của giáo hạt được cho phép mới gửi được hồ sơ liên giáo hạt (giáo hạt nhà vẫn đồng ý từng yêu cầu, rồi giáo hạt bạn duyệt).',
+        // Chỉ khóa giáo hạt: admin giáo hạt khác nhận thông báo và quyết định có cho giáo xứ của mình gửi hồ sơ hay không.
+        visible: (values) => showsOpenToOthers(values),
+      },
+      {
+        name: 'copySourceCourseCodes',
+        label: 'Khóa tiên quyết',
+        kind: 'custom',
+        visible: (values, mode) =>
+          values.copyAllowed === true &&
+          (mode === 'edit' || String(values.courseTypeCode ?? '') !== ''),
+        render: (props) => <CopyParticipantsField {...props} />,
+      },
+      {
+        name: 'recipientUsernames',
+        label: 'Tài khoản nhận danh sách đăng ký',
+        kind: 'multiselect',
+        placeholder: 'Chọn người nhận danh sách đăng ký',
+        hint: 'Chỉ hiển thị tài khoản có quyền duyệt danh sách đăng ký trong phạm vi của bạn. Bỏ trống để gửi cho tất cả tài khoản đủ quyền.',
+        options: {
+          dependsOn: ['courseTypeCode'],
+          load: async ({ gateway, values }) => {
+            const courseTypeCode = String(values.courseTypeCode ?? '');
+            if (!courseTypeCode) return [];
+            const people = await gateway.call<Record<string, unknown>[]>(
+              'GET',
+              '/training/courses/recipient-candidates',
+              { query: { courseTypeCode } },
+            );
+            return people.map((person) => ({
+              value: text(person, 'username'),
+              label: joinParts([
+                text(person, 'fullName') || text(person, 'username'),
+                text(person, 'roleName'),
+              ]),
+            }));
+          },
+        },
+      },
       { name: 'additionalNotes', label: 'Ghi chú', kind: 'multiline', maxLength: 2000 },
     ],
-    initialValues: (row) => ({
+    initialValues: (row, subject) => ({
+      ...courseScopeValues(row, subject),
+      targetDeaneryIds: stringifyMulti(arrayOfText(row?.targetDeaneryIds)),
+      openToOtherDeaneries: row ? flag(row, 'openToOtherDeaneries') : false,
+      copySourceCourseCodes: stringifyCopyState(EMPTY_COPY),
+      // Mã khóa đang sửa (ô sao chép dùng để lấy khóa nguồn đúng phạm vi); không gửi BE.
+      courseCode: row ? text(row, 'courseCode') : '',
+      recipientUsernames: stringifyMulti(arrayOfText(row?.recipientUsernames)),
       courseName: row ? text(row, 'courseName') : '',
       courseTypeCode: row ? text(row, 'courseTypeCode') : '',
       yearsActive: row ? text(row, 'yearsActive') : '0',
@@ -363,6 +473,15 @@ export const coursesResource: ResourceDefinition = {
         additionalNotes: optional(values, 'additionalNotes'),
       };
       if (mode === 'edit') delete body.courseCode;
+      // Người nhận danh sách đăng ký: gửi cả danh sách rỗng để bỏ chọn toàn bộ (như web).
+      body.recipientUsernames = parseMulti(values.recipientUsernames);
+      // Đợt của khóa: chỉ gửi khi ô đang hiện; BE từ chối giá trị không hợp lệ với cấp quản lý của khóa.
+      if (showsTargetDeaneries(values)) body.targetDeaneryIds = parseMulti(values.targetDeaneryIds);
+      if (showsOpenToOthers(values))
+        body.openToOtherDeaneries = values.openToOtherDeaneries === true;
+      // Sao chép danh sách tham dự chỉ gửi khi có chọn khóa nguồn.
+      if (values.copyAllowed === true)
+        Object.assign(body, buildCopyBody(parseCopyState(values.copySourceCourseCodes)));
       return body;
     },
     successCreate: 'Tạo khóa thành công',
@@ -371,6 +490,9 @@ export const coursesResource: ResourceDefinition = {
   toggle: {
     isActive: (row) => flag(row, 'status'),
     label: (row) => (flag(row, 'status') ? 'Vô hiệu hóa khóa' : 'Bật lại khóa'),
+    confirmLabel: (row) => (flag(row, 'status') ? 'Vô hiệu hóa khóa' : 'Bật lại khóa'),
+    successMessage: (row) =>
+      flag(row, 'status') ? 'Đã vô hiệu hóa khóa huấn luyện' : 'Đã bật lại khóa huấn luyện',
     confirmMessage: (row) =>
       flag(row, 'status')
         ? 'Khóa bị vô hiệu hóa chỉ xem được, không nhận đăng ký, duyệt hay chấm điểm; chứng nhận đã duyệt có thể bị thu hồi. Gõ "Xác nhận" để tiếp tục.'

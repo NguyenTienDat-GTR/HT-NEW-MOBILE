@@ -10,6 +10,7 @@ import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
 import { EnvelopeSimpleIcon } from '@/shared/ui/icons';
 import { Screen } from '@/shared/ui/Screen';
+import { useToast } from '@/shared/ui/Toast';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
@@ -41,14 +42,17 @@ export function ChangeEmailScreen({ currentEmail, onDone }: ChangeEmailScreenPro
     defaultValues: { email: '', currentPassword: '' },
   });
 
+  const toast = useToast();
   const submit = handleSubmit(async (values) => {
     setFormError(null);
     try {
       await deps.changeMyEmail.execute(values.email, values.currentPassword);
       await queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_KEY });
+      toast.success('Đã cập nhật email');
       setSaved(true);
     } catch (error) {
       setFormError(errorMessage(error));
+      toast.error(errorMessage(error));
     }
   });
 

@@ -20,6 +20,7 @@ export function toMyProfile(dto: MyProfileDto): MyProfile {
     })),
     email: dto.email ?? null,
     hasLeader: dto.hasLeader ?? leader != null,
+    canEditBirthDate: dto.canEditBirthDate === true,
     leader: leader
       ? {
           id: leader.id,
@@ -32,6 +33,7 @@ export function toMyProfile(dto: MyProfileDto): MyProfile {
           leaderLevel: leader.leaderLevel ?? null,
           deaneryName: leader.deaneryName ?? null,
           parishName: leader.parishName ?? null,
+          imageUrl: leader.imageThumbUrl ?? leader.imageUrl ?? null,
         }
       : null,
     rankHistory: (dto.rankHistory ?? []).map((row) => ({

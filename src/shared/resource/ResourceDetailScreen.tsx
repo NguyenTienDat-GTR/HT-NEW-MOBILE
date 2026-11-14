@@ -16,6 +16,7 @@ import { LoadingState } from '../ui/LoadingState';
 import { Screen } from '../ui/Screen';
 import { Text } from '../ui/Text';
 import { TextField } from '../ui/TextField';
+import { useToast } from '../ui/Toast';
 
 import { useResourceGateway } from './resource-context';
 import type { PermissionSubject, ResourceDefinition } from './types';
@@ -156,6 +157,7 @@ export function ToggleSheet({
   const toggle = def.toggle;
   const gateway = useResourceGateway();
   const invalidate = useInvalidateResource(def);
+  const toast = useToast();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reason, setReason] = useState('');
@@ -187,11 +189,13 @@ export function ToggleSheet({
     try {
       await toggle.run(gateway, row, { reason: reason.trim(), confirmText: CONFIRM_WORD });
       await invalidate();
+      toast.success(toggle.successMessage?.(row) ?? 'Đổi trạng thái thành công');
       setReason('');
       setConfirmText('');
       onClose();
     } catch (exception) {
       setError(errorMessage(exception));
+      toast.error(errorMessage(exception));
     } finally {
       setPending(false);
     }
@@ -205,7 +209,7 @@ export function ToggleSheet({
       footer={
         <>
           <Button
-            label="Xác nhận"
+            label={toggle.confirmLabel?.(row) ?? 'Xác nhận'}
             variant={toggle.isActive(row) ? 'destructive' : 'primary'}
             loading={pending}
             disabled={!ready}
@@ -231,9 +235,12 @@ export function ToggleSheet({
       ) : null}
       {needsReason ? (
         <TextField
-          label="Lý do (bắt buộc)"
+          label={toggle.reasonLabel ?? 'Lý do'}
+          required
           value={reason}
           onChangeText={setReason}
+          placeholder={toggle.reasonPlaceholder}
+          autoCapitalize="sentences"
           multiline
           maxLength={MAX_REASON_LENGTH}
           hint={`Tối đa ${MAX_REASON_LENGTH} ký tự`}
@@ -241,10 +248,11 @@ export function ToggleSheet({
       ) : null}
       {needsConfirmText ? (
         <TextField
-          label={`Gõ "${CONFIRM_WORD}" để tiếp tục`}
+          label={`Nhập chính xác "${CONFIRM_WORD}" để tiếp tục`}
           value={confirmText}
           onChangeText={setConfirmText}
           placeholder={CONFIRM_WORD}
+          autoCapitalize="sentences"
         />
       ) : null}
       {error ? <Banner tone="danger" message={error} /> : null}

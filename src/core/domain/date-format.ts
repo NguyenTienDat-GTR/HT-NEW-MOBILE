@@ -36,3 +36,51 @@ export function relativeTime(value?: string | null, now = Date.now()): string {
   if (days < 7) return `${days} ngày trước`;
   return formatDate(value);
 }
+
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+const isLeap = (year: number) => (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+
+/** Ngày dd/MM/yyyy có tồn tại trên lịch không (kể cả năm nhuận). */
+function isRealDate(day: number, month: number, year: number): boolean {
+  if (year < 1900 || year > 2200 || month < 1 || month > 12 || day < 1) return false;
+  const max = month === 2 && isLeap(year) ? 29 : (DAYS_IN_MONTH[month - 1] as number);
+  return day <= max;
+}
+
+/** "13/11/2026" -> "2026-11-13"; sai định dạng hoặc ngày không có thật -> null. */
+export function parseVnDate(text: string): string | null {
+  const match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(text.trim());
+  if (!match) return null;
+  const [day, month, year] = [Number(match[1]), Number(match[2]), Number(match[3])];
+  return isRealDate(day, month, year) ? `${match[3]}-${pad(month)}-${pad(day)}` : null;
+}
+
+/** "13/11/2026 09:05" -> "2026-11-13T09:05"; sai định dạng, ngày hoặc giờ không có thật -> null. */
+export function parseVnDateTime(text: string): string | null {
+  const match = /^(\S+)\s+(\d{1,2}):(\d{2})$/.exec(text.trim());
+  if (!match) return null;
+  const date = parseVnDate(match[1] as string);
+  const [hour, minute] = [Number(match[2]), Number(match[3])];
+  if (!date || hour > 23 || minute > 59) return null;
+  return `${date}T${pad(hour)}:${pad(minute)}`;
+}
+
+/** "2026-11-13T09:05" (giờ Việt Nam, không múi giờ) -> "13/11/2026 09:05"; không hợp lệ -> "". */
+export function formatLocalDateTime(value?: string | null): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value ?? '');
+  return match ? `${match[3]}/${match[2]}/${match[1]} ${match[4]}:${match[5]}` : '';
+}
+
+/**
+ * Gõ tay ngày/giờ: tự thêm dấu "/" và khoảng trắng/":" để người dùng chỉ gõ chữ số
+ * ("13112026" -> "13/11/2026", "131120260905" -> "13/11/2026 09:05").
+ */
+export function maskVnDateInput(raw: string, withTime: boolean): string {
+  const digits = raw.replace(/\D/g, '').slice(0, withTime ? 12 : 8);
+  let out = digits.slice(0, 2);
+  if (digits.length > 2) out += `/${digits.slice(2, 4)}`;
+  if (digits.length > 4) out += `/${digits.slice(4, 8)}`;
+  if (withTime && digits.length > 8) out += ` ${digits.slice(8, 10)}`;
+  if (withTime && digits.length > 10) out += `:${digits.slice(10, 12)}`;
+  return out;
+}

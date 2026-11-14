@@ -4,6 +4,7 @@
  */
 export {
   ArrowCounterClockwiseIcon,
+  ArrowLeftIcon,
   ArrowRightIcon,
   BellIcon,
   BellSlashIcon,
@@ -30,6 +31,7 @@ export {
   InfoIcon,
   KeyIcon,
   QrCodeIcon,
+  QuestionIcon,
   ListIcon,
   LockKeyIcon,
   MapPinIcon,

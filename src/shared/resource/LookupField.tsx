@@ -8,6 +8,7 @@ import { useDebouncedValue } from '../hooks/use-debounced-value';
 import { useTheme } from '../theme/theme-provider';
 import { Banner } from '../ui/Banner';
 import { BottomSheet } from '../ui/BottomSheet';
+import { FieldLabel } from '../ui/FieldLabel';
 import { CaretDownIcon, CheckIcon } from '../ui/icons';
 import { LoadingState } from '../ui/LoadingState';
 import { Text } from '../ui/Text';
@@ -53,7 +54,7 @@ export function LookupField({ field, scope, value, disabled = false, onChange }:
 
   return (
     <View style={styles.wrapper}>
-      <Text variant="label">{field.label}</Text>
+      <FieldLabel label={field.label} hint={field.hint} />
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`${field.label}: ${label || 'Chưa chọn'}`}

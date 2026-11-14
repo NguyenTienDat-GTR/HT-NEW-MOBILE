@@ -35,6 +35,8 @@ export type FieldKind =
   | 'phone'
   | 'multiline'
   | 'date'
+  /** Ngày kèm giờ (giờ Việt Nam): giá trị dạng yyyy-MM-ddTHH:mm. */
+  | 'datetime'
   | 'daymonth'
   | 'select'
   | 'switch'
@@ -68,6 +70,11 @@ export interface FormFieldDef {
   minDate?: string;
   placeholder?: string;
   keyboardType?: 'default' | 'number-pad' | 'decimal-pad';
+  /**
+   * Bố cục: `half` = ô ngắn, xếp cặp hai cột với ô ngắn liền kề; `full` = luôn chiếm cả dòng. Không khai báo thì ô
+   * ngày và ô số tự coi là ngắn, các kiểu còn lại chiếm cả dòng.
+   */
+  width?: 'half' | 'full';
   /** Khóa theo giá trị các trường khác (vd. khóa đã có hồ sơ thì không đổi loại khóa). */
   readOnlyWhen?: (values: FormValues, mode: FormMode) => boolean;
   /** kind 'custom': ô nhập riêng của tính năng; giá trị lưu dạng chuỗi (thường là JSON). */

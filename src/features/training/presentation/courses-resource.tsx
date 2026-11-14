@@ -12,10 +12,9 @@ import {
   organizingState,
   REGISTRATION_LABELS,
   REGISTRATION_TONES,
-  registrationEndIso,
-  registrationStartIso,
+  registrationIso,
   registrationState,
-  vnDateOf,
+  vnLocalDateTimeOf,
 } from '../domain/course-state';
 import {
   DEFAULT_SCORE_COMPONENT,
@@ -126,9 +125,12 @@ export const coursesResource: ResourceDefinition = {
     sections: [
       {
         title: 'Thông tin khóa',
-        fields: ['courseName', 'courseTypeCode', 'yearsActive', 'location'],
+        fields: ['courseName', 'courseTypeCode', 'location'],
       },
-      { title: 'Thời gian tổ chức', fields: ['startDate', 'endDate', 'hostYear'] },
+      {
+        title: 'Thời gian tổ chức',
+        fields: ['startDate', 'endDate', 'hostYear', 'yearsActive'],
+      },
       {
         title: 'Thời gian đăng ký',
         fields: ['registrationEnabled', 'registrationStartAt', 'registrationEndAt'],
@@ -171,7 +173,7 @@ export const coursesResource: ResourceDefinition = {
         keyboardType: 'number-pad',
         maxLength: 3,
         readOnlyWhen: (values, mode) => mode === 'edit' && values.hasParticipations === true,
-        hint: 'Số năm kể từ lúc huynh trưởng đạt cấp độ yêu cầu (hoặc khóa tiên quyết) đến năm tổ chức. Mặc định 0 (không yêu cầu).',
+        hint: '0 = không yêu cầu.',
         validate: (value) =>
           integerText(value) !== '' && !/^\d+$/.test(integerText(value))
             ? 'Phải là số nguyên không âm'
@@ -200,7 +202,7 @@ export const coursesResource: ResourceDefinition = {
         keyboardType: 'number-pad',
         maxLength: 4,
         readOnlyWhen: (values, mode) => mode === 'edit' && values.hasParticipations === true,
-        hint: 'Dùng để sinh mã chứng nhận. Để trống thì lấy năm của ngày bắt đầu.',
+        hint: 'Để trống thì lấy năm ngày bắt đầu.',
         validate: (value) => {
           const year = integerText(value);
           if (year === '') return null;
@@ -217,8 +219,8 @@ export const coursesResource: ResourceDefinition = {
       },
       {
         name: 'registrationStartAt',
-        label: 'Ngày mở đăng ký',
-        kind: 'date',
+        label: 'Mở đăng ký (ngày giờ)',
+        kind: 'datetime',
         required: true,
         visible: (values) => values.registrationEnabled === true,
         validate: (value, values) =>
@@ -226,31 +228,30 @@ export const coursesResource: ResourceDefinition = {
           value !== '' &&
           typeof values.startDate === 'string' &&
           values.startDate !== '' &&
-          value > values.startDate
-            ? 'Ngày mở đăng ký không được sau ngày bắt đầu khóa'
+          value.slice(0, 10) > values.startDate
+            ? 'Thời gian mở đăng ký không được sau ngày bắt đầu khóa'
             : null,
       },
       {
         name: 'registrationEndAt',
-        label: 'Ngày đóng đăng ký',
-        kind: 'date',
+        label: 'Đóng đăng ký (ngày giờ)',
+        kind: 'datetime',
         required: true,
         visible: (values) => values.registrationEnabled === true,
-        hint: 'Đăng ký đóng vào cuối ngày này.',
         validate: (value, values) => {
           if (typeof value !== 'string' || value === '') return null;
           if (
             typeof values.startDate === 'string' &&
             values.startDate !== '' &&
-            value > values.startDate
+            value.slice(0, 10) > values.startDate
           )
-            return 'Ngày đóng đăng ký không được sau ngày bắt đầu khóa';
+            return 'Thời gian đóng đăng ký không được sau ngày bắt đầu khóa';
           if (
             typeof values.registrationStartAt === 'string' &&
             values.registrationStartAt !== '' &&
             value < values.registrationStartAt
           )
-            return 'Ngày đóng đăng ký không được trước ngày mở';
+            return 'Thời gian đóng đăng ký không được trước thời gian mở';
           return null;
         },
       },
@@ -262,7 +263,7 @@ export const coursesResource: ResourceDefinition = {
         required: true,
         maxLength: 6,
         readOnlyWhen: (values, mode) => mode === 'edit' && values.hasParticipations === true,
-        hint: 'Điểm tổng kết (trung bình có hệ số) tối thiểu để đạt khóa.',
+        hint: 'Điểm tổng kết tối thiểu để đạt khóa.',
         validate: (value, values) => {
           const raw = integerText(value);
           if (raw === '') return null;
@@ -315,8 +316,8 @@ export const coursesResource: ResourceDefinition = {
       endDate: row ? text(row, 'endDate') : '',
       hostYear: row ? text(row, 'hostYear') : '',
       registrationEnabled: row ? row.registrationEnabled !== false : true,
-      registrationStartAt: row ? vnDateOf(row.registrationStartAt) : '',
-      registrationEndAt: row ? vnDateOf(row.registrationEndAt) : '',
+      registrationStartAt: row ? vnLocalDateTimeOf(row.registrationStartAt) : '',
+      registrationEndAt: row ? vnLocalDateTimeOf(row.registrationEndAt) : '',
       passingScore: row ? text(row, 'passingScore') : '',
       scoreComponents: stringifyScoreComponents(
         row
@@ -347,11 +348,11 @@ export const coursesResource: ResourceDefinition = {
         registrationEnabled: enabled,
         registrationStartAt:
           enabled && trimmed(values, 'registrationStartAt')
-            ? registrationStartIso(trimmed(values, 'registrationStartAt'))
+            ? registrationIso(trimmed(values, 'registrationStartAt'))
             : undefined,
         registrationEndAt:
           enabled && trimmed(values, 'registrationEndAt')
-            ? registrationEndIso(trimmed(values, 'registrationEndAt'))
+            ? registrationIso(trimmed(values, 'registrationEndAt'))
             : undefined,
         passingScore: Number(trimmed(values, 'passingScore').replace(',', '.')),
         scoreComponents: scoreComponentsBody(parseScoreComponents(String(values.scoreComponents))),

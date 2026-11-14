@@ -92,6 +92,11 @@ export function vnDateOf(value: unknown): string {
   return parsed === undefined ? '' : vnToday(parsed);
 }
 
-/** Mốc mở đăng ký (đầu ngày) và đóng đăng ký (cuối ngày) theo giờ Việt Nam từ ô chọn ngày. */
-export const registrationStartIso = (date: string) => `${date}T00:00:00+07:00`;
-export const registrationEndIso = (date: string) => `${date}T23:59:00+07:00`;
+/** Ngày giờ (yyyy-MM-ddTHH:mm, giờ Việt Nam) của một mốc ISO có múi giờ; rỗng nếu không hợp lệ. */
+export function vnLocalDateTimeOf(value: unknown): string {
+  const parsed = time(value);
+  return parsed === undefined ? '' : new Date(parsed + VN_OFFSET_MS).toISOString().slice(0, 16);
+}
+
+/** Ô chọn ngày giờ (yyyy-MM-ddTHH:mm, giờ Việt Nam) -> mốc ISO có múi giờ gửi BE. */
+export const registrationIso = (localDateTime: string) => `${localDateTime}:00+07:00`;

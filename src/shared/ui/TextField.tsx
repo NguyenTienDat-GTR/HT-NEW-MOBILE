@@ -13,6 +13,7 @@ import { fontFamily } from '../theme/tokens';
 import { useTheme } from '../theme/theme-provider';
 
 import { EyeIcon, EyeSlashIcon, WarningCircleIcon } from './icons';
+import { FieldLabel } from './FieldLabel';
 import { Text } from './Text';
 
 /** Kiểu tham chiếu tới ô nhập (để chuyển focus giữa các ô). */
@@ -74,9 +75,7 @@ export function TextField({
   return (
     <View style={styles.wrapper}>
       {/* Nhãn luôn hiện phía trên, không thay bằng placeholder. */}
-      <Text variant="label" tone="foreground">
-        {label}
-      </Text>
+      <FieldLabel label={label} hint={hint} />
       <View
         style={[
           styles.field,
@@ -154,10 +153,6 @@ export function TextField({
             {error}
           </Text>
         </View>
-      ) : hint ? (
-        <Text variant="secondary" tone="muted">
-          {hint}
-        </Text>
       ) : null}
     </View>
   );

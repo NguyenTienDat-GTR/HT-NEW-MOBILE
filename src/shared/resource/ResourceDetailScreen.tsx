@@ -10,6 +10,7 @@ import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { CollapsibleSection } from '../ui/CollapsibleSection';
+import { InfoGrid } from '../ui/InfoGrid';
 import { InfoRow } from '../ui/InfoRow';
 import { LoadingState } from '../ui/LoadingState';
 import { Screen } from '../ui/Screen';
@@ -75,6 +76,8 @@ export function ResourceDetailScreen({ def, id, subject, onEdit }: ResourceDetai
             <Button
               label={`Sửa ${def.singular.toLowerCase()}`}
               variant="outline"
+              size="sm"
+              fullWidth={false}
               onPress={onEdit}
             />
           ) : null}
@@ -85,9 +88,11 @@ export function ResourceDetailScreen({ def, id, subject, onEdit }: ResourceDetai
         <Card key={section.title ?? index}>
           {section.collapsed && section.title ? (
             <CollapsibleSection title={section.title}>
-              {section.fields.map((field) => (
-                <InfoRow key={field.label} label={field.label} value={field.value} />
-              ))}
+              <InfoGrid>
+                {section.fields.map((field) => (
+                  <InfoRow key={field.label} label={field.label} value={field.value} />
+                ))}
+              </InfoGrid>
             </CollapsibleSection>
           ) : (
             <View style={{ gap: 12 }}>
@@ -96,9 +101,11 @@ export function ResourceDetailScreen({ def, id, subject, onEdit }: ResourceDetai
                   {section.title}
                 </Text>
               ) : null}
-              {section.fields.map((field) => (
-                <InfoRow key={field.label} label={field.label} value={field.value} />
-              ))}
+              <InfoGrid>
+                {section.fields.map((field) => (
+                  <InfoRow key={field.label} label={field.label} value={field.value} />
+                ))}
+              </InfoGrid>
             </View>
           )}
         </Card>

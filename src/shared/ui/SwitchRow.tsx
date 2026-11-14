@@ -2,7 +2,7 @@ import { StyleSheet, Switch, View } from 'react-native';
 
 import { useTheme } from '../theme/theme-provider';
 
-import { Text } from './Text';
+import { FieldLabel } from './FieldLabel';
 
 export interface SwitchRowProps {
   label: string;
@@ -18,12 +18,7 @@ export function SwitchRow({ label, value, onChange, hint, disabled = false }: Sw
   return (
     <View style={styles.row}>
       <View style={styles.texts}>
-        <Text variant="bodyStrong">{label}</Text>
-        {hint ? (
-          <Text variant="secondary" tone="muted">
-            {hint}
-          </Text>
-        ) : null}
+        <FieldLabel label={label} hint={hint} variant="bodyStrong" />
       </View>
       <Switch
         accessibilityLabel={label}

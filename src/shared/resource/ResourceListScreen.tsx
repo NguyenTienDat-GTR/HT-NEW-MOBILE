@@ -39,6 +39,8 @@ export interface ResourceListScreenProps {
   onCreate: () => void;
   /** Bộ lọc áp sẵn khi mở (vd. từ chi tiết khóa sang danh sách đăng ký của khóa đó). */
   initialFilters?: Record<string, string>;
+  /** Trạng thái hoạt động áp sẵn khi mở (vd. từ tổng quan: chỉ đơn vị ngưng hoạt động). */
+  initialStatus?: StatusChoice;
 }
 
 /**
@@ -51,11 +53,12 @@ export function ResourceListScreen({
   onOpen,
   onCreate,
   initialFilters,
+  initialStatus,
 }: ResourceListScreenProps) {
   const { colors, spacing } = useTheme();
   const insets = useScreenInsets();
   const [search, setSearch] = useState('');
-  const [statusChoice, setStatusChoice] = useState<StatusChoice>('all');
+  const [statusChoice, setStatusChoice] = useState<StatusChoice>(initialStatus ?? 'all');
   const [filters, setFilters] = useState<Record<string, string>>(initialFilters ?? {});
   const [sheetOpen, setSheetOpen] = useState(false);
   const debounced = useDebouncedValue(search.trim());

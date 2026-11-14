@@ -26,7 +26,7 @@ const ICONS = {
 export interface WorkQueueGridProps {
   items: readonly WorkQueueItem[];
   /** Trả đường dẫn mở được trên mobile cho href của BE, hoặc null nếu màn đích chưa có (ô không bấm được). */
-  openable: (href: string) => string | null;
+  openable: (key: string, href: string) => string | null;
   onOpen: (path: string) => void;
 }
 
@@ -54,7 +54,7 @@ export function WorkQueueGrid({ items, openable, onOpen }: WorkQueueGridProps) {
             const Icon = ICONS[item.key as keyof typeof ICONS] ?? ClipboardTextIcon;
             const tone = tones[item.key] ?? colors.primary;
             const hasWork = item.count > 0;
-            const path = openable(item.href);
+            const path = openable(item.key, item.href);
             const tile = (
               <View style={styles.tile}>
                 <View style={[styles.icon, { backgroundColor: mixWithWhite(tone, 0.14) }]}>

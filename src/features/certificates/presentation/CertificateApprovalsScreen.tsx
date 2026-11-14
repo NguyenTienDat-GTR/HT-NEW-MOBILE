@@ -22,6 +22,7 @@ import { CheckIcon } from '@/shared/ui/icons';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { useScreenInsets } from '@/shared/ui/screen-insets';
 import { SelectField } from '@/shared/ui/SelectField';
+import { pickAllowed } from '@/shared/resource/initial-filters';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
@@ -47,9 +48,12 @@ const STATUS_OPTIONS = [
 export function CertificateApprovalsScreen({
   def,
   subject,
+  initialFilters,
 }: {
   def: ResourceDefinition;
   subject: PermissionSubject | null;
+  /** Bộ lọc áp sẵn từ đường dẫn (vd. từ tổng quan: chờ duyệt / bị từ chối). */
+  initialFilters?: Record<string, string>;
 }) {
   const { colors, spacing, radius } = useTheme();
   const insets = useScreenInsets();
@@ -57,8 +61,14 @@ export function CertificateApprovalsScreen({
   const gateway = useResourceGateway();
   const refresh = useRefreshCertificates();
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<StatusChoice>('PENDING');
-  const [course, setCourse] = useState('');
+  const [status, setStatus] = useState<StatusChoice>(
+    pickAllowed(
+      initialFilters?.approvalStatus,
+      ['PENDING', 'APPROVED', 'REJECTED', 'all'] as const,
+      'PENDING',
+    ),
+  );
+  const [course, setCourse] = useState(initialFilters?.['course.courseCode'] ?? '');
   const [selected, setSelected] = useState<Map<string, ResourceRow>>(new Map());
   const [action, setAction] = useState<'approve' | 'reject' | null>(null);
   const [result, setResult] = useState<DecisionResult | null>(null);

@@ -19,6 +19,18 @@ export interface CourseOwner {
   deaneryId?: unknown;
 }
 
+/**
+ * Dùng được trình quét QR chung (như nút quét ở header web): quyền quét điểm danh (tài khoản không bị khóa đơn vị)
+ * hoặc quyền xem chứng nhận. Quyền từng loại mã do BE kiểm tra khi quét.
+ */
+export function canUseQrScanner(
+  user: (TrainingSubject & { unitLocked?: boolean }) | null | undefined,
+): boolean {
+  const canScanAttendance =
+    hasPermissionPrefix(user, 'training.attendance.scan.') && !user?.unitLocked;
+  return canScanAttendance || hasPermissionPrefix(user, 'training.certificate.read.');
+}
+
 export type CourseAction =
   'update' | 'toggle' | 'finish' | 'lockScore' | 'approve' | 'score' | 'read' | 'scan';
 

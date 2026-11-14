@@ -43,6 +43,16 @@ export function classifyScan(raw: string): ScanPayload {
   return code ? { kind: 'certificate', code } : { kind: 'unknown' };
 }
 
+/** Quét ở trình quét chung (cả mã điểm danh lẫn mã chứng nhận) gặp mã lạ. */
+export const UNKNOWN_UNIVERSAL_SCAN_MESSAGE =
+  'Mã QR không phải mã điểm danh hay mã chứng nhận của hệ thống.';
+
+export const CERTIFICATE_NOT_FOUND_MESSAGE = (code: string) =>
+  `Không tìm thấy chứng nhận ${code}. Hãy kiểm tra lại mã QR.`;
+
+export const IMAGE_NO_QR_MESSAGE = 'Không tìm thấy mã QR trong ảnh.';
+export const IMAGE_UNREADABLE_MESSAGE = 'Không đọc được ảnh đã chọn.';
+
 export const UNKNOWN_SCAN_MESSAGE =
   'Mã QR không phải mã điểm danh của hệ thống. Hãy quét mã trên thẻ tham dự hoặc trong email.';
 
@@ -78,7 +88,9 @@ export type ScanFlowEvent =
   | { type: 'confirmed'; person: ScanPerson }
   | { type: 'failed'; message: string }
   | { type: 'skip' }
-  | { type: 'next' };
+  | { type: 'next' }
+  /** Mã chứng nhận hợp lệ đã được mở sang màn chi tiết: quay về chờ quét. */
+  | { type: 'handed-off' };
 
 export const INITIAL_SCAN_FLOW: ScanFlowState = { step: 'scanning' };
 
@@ -104,6 +116,8 @@ export function scanFlowReducer(state: ScanFlowState, event: ScanFlowEvent): Sca
         : state;
     case 'skip':
       return state.step === 'confirm' ? INITIAL_SCAN_FLOW : state;
+    case 'handed-off':
+      return state.step === 'looking' ? INITIAL_SCAN_FLOW : state;
     case 'next':
       return state.step === 'done' || state.step === 'already' || state.step === 'error'
         ? INITIAL_SCAN_FLOW

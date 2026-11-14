@@ -21,7 +21,6 @@ import {
   ChartLineUpIcon,
   UsersThreeIcon,
   KeyIcon,
-  QrCodeIcon,
   LockKeyIcon,
   ShieldCheckIcon,
   SignOutIcon,
@@ -50,11 +49,6 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
 
   const name = displayName(undefined, user?.username ?? '');
   // Như web: xem phân tích chi tiết khi có quyền analytics.dashboard.read.* và không phải quản trị hệ thống.
-  // Quét QR điểm danh: quyền riêng training.attendance.scan.*, không dùng cho quản trị hệ thống.
-  const canScan =
-    !isSuperAdmin(user) &&
-    (hasPermissionPrefix(user, 'training.attendance.scan.') ||
-      hasPermissionPrefix(user, 'training.certificate.read.'));
   const canSeeAnalytics =
     !isSuperAdmin(user) && hasPermissionPrefix(user, 'analytics.dashboard.read.');
   const sections = visibleMenuSections(user);
@@ -115,17 +109,6 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
           ))}
         </AccordionGroup>
       ))}
-
-      {canScan ? (
-        <Card style={{ padding: 0, overflow: 'hidden' }}>
-          <ListRow
-            label="Quét mã QR"
-            hint="Điểm danh khóa huấn luyện hoặc xem chứng nhận"
-            icon={icon(QrCodeIcon)}
-            onPress={() => onNavigate('/scan')}
-          />
-        </Card>
-      ) : null}
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
         {canSeeAnalytics ? (

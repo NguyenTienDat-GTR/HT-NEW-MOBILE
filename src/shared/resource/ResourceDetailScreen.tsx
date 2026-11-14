@@ -75,8 +75,8 @@ export function ResourceDetailScreen({ def, id, subject, onEdit }: ResourceDetai
           </Text>
           {def.detailBadges ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {def.detailBadges(row).map((badge) => (
-                <Badge key={badge.label} label={badge.label} tone={badge.tone} />
+              {def.detailBadges(row).map((badge, index) => (
+                <Badge key={`${badge.label}-${index}`} label={badge.label} tone={badge.tone} />
               ))}
             </View>
           ) : null}

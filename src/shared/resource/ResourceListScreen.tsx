@@ -97,8 +97,8 @@ export function ResourceListScreen({
             ))}
             {view.badges?.length ? (
               <View style={styles.badges}>
-                {view.badges.map((badge) => (
-                  <Badge key={badge.label} label={badge.label} tone={badge.tone} />
+                {view.badges.map((badge, index) => (
+                  <Badge key={`${badge.label}-${index}`} label={badge.label} tone={badge.tone} />
                 ))}
               </View>
             ) : null}

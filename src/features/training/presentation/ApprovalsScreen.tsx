@@ -238,8 +238,12 @@ export function ApprovalsScreen({
                     </Text>
                   ) : null}
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                    {(view.badges ?? []).map((badge) => (
-                      <Badge key={badge.label} label={badge.label} tone={badge.tone} />
+                    {(view.badges ?? []).map((badge, index) => (
+                      <Badge
+                        key={`${badge.label}-${index}`}
+                        label={badge.label}
+                        tone={badge.tone}
+                      />
                     ))}
                   </View>
                 </View>

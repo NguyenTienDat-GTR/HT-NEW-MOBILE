@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, type Ref } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import type { ResourceRow } from '@/core/resource/resource-gateway';
@@ -7,7 +7,7 @@ import { DateField } from '../ui/DateField';
 import { SelectField } from '../ui/SelectField';
 import { SwitchRow } from '../ui/SwitchRow';
 import { Text } from '../ui/Text';
-import { TextField } from '../ui/TextField';
+import { TextField, type TextInputHandle } from '../ui/TextField';
 
 import { todayIso } from './form-logic';
 import type { FormFieldDef, FormMode, FormValues, PermissionSubject } from './types';
@@ -24,6 +24,8 @@ export interface FormFieldViewProps {
   row: ResourceRow | null;
   subject: PermissionSubject | null;
   error?: string;
+  /** Tham chiếu ô nhập chữ (để form focus vào ô lỗi). */
+  inputRef?: Ref<TextInputHandle>;
   onChange: (name: string, value: string | boolean) => void;
 }
 
@@ -58,6 +60,7 @@ function SelectView({
       options={options}
       placeholder={loading ? 'Đang tải…' : (field.placeholder ?? 'Chọn')}
       allowClear={!field.required}
+      hint={field.hint}
       disabled={
         (field.lockedOnEdit && mode === 'edit') || Boolean(field.readOnlyWhen?.(values, mode))
       }
@@ -156,6 +159,19 @@ function FormFieldViewBase(props: FormFieldViewProps) {
           clearable={!field.required}
         />
       );
+    case 'datetime':
+      return (
+        <DateField
+          label={field.label}
+          value={String(value)}
+          onChange={(next) => onChange(field.name, next)}
+          error={error}
+          hint={field.hint}
+          disabled={locked}
+          withTime
+          clearable={!field.required}
+        />
+      );
     case 'switch':
       return (
         <View style={styles.block}>
@@ -173,6 +189,7 @@ function FormFieldViewBase(props: FormFieldViewProps) {
       return (
         <TextField
           label={field.label}
+          inputRef={props.inputRef}
           value={String(value)}
           onChangeText={(next) => onChange(field.name, next)}
           error={error}

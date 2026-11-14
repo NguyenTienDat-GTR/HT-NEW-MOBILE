@@ -35,6 +35,8 @@ export type FieldKind =
   | 'phone'
   | 'multiline'
   | 'date'
+  /** Ngày kèm giờ (giờ Việt Nam): giá trị dạng yyyy-MM-ddTHH:mm. */
+  | 'datetime'
   | 'daymonth'
   | 'select'
   | 'switch'

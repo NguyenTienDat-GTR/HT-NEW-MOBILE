@@ -62,8 +62,8 @@ describe('khóa huấn luyện', () => {
     courseTypeCode: 'T1',
     startDate: '2027-03-10',
     endDate: '2027-03-12',
-    registrationStartAt: '2027-01-01',
-    registrationEndAt: '2027-02-28',
+    registrationStartAt: '2027-01-01T08:00',
+    registrationEndAt: '2027-02-28T17:30',
     passingScore: '5',
     scoreComponents: JSON.stringify([
       { name: 'Thi', maxScore: '10', coefficient: '1', includeInFinal: true },
@@ -82,7 +82,7 @@ describe('khóa huấn luyện', () => {
       validateForm(form, { ...filled, passingScore: '11' }, 'create').passingScore,
     ).toBeDefined();
     expect(
-      validateForm(form, { ...filled, registrationEndAt: '2027-03-11' }, 'create')
+      validateForm(form, { ...filled, registrationEndAt: '2027-03-11T09:00' }, 'create')
         .registrationEndAt,
     ).toBeDefined();
   });
@@ -97,8 +97,8 @@ describe('khóa huấn luyện', () => {
     expect(body.registrationStartAt).toBeUndefined();
     expect(body.hostYear).toBe(2027);
     const open = form.toBody(filled, 'create', null, null) as Record<string, unknown>;
-    expect(open.registrationStartAt).toBe('2027-01-01T00:00:00+07:00');
-    expect(open.registrationEndAt).toBe('2027-02-28T23:59:00+07:00');
+    expect(open.registrationStartAt).toBe('2027-01-01T08:00:00+07:00');
+    expect(open.registrationEndAt).toBe('2027-02-28T17:30:00+07:00');
   });
 
   it('khóa đã có hồ sơ thì khóa các ô loại khóa, năm, số năm hoạt động, điểm đạt', () => {

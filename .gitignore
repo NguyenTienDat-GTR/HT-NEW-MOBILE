@@ -32,6 +32,10 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env*.prod
+
+# IDE
+.idea/
 
 # Firebase / push credentials và test
 google-services.json

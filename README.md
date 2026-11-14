@@ -28,9 +28,11 @@ Mọi màn hình hiện theo quyền của tài khoản (cùng mã quyền `modu
 
 ```bash
 npm install
-cp .env.example .env.local   # chỉnh địa chỉ API nếu cần (không đặt bí mật: EXPO_PUBLIC_* bị nhúng vào app)
+cp .env.example .env.local   # điền địa chỉ máy chủ (bắt buộc, xem bên dưới)
 npm start                    # Expo dev server
 ```
+
+**Cấu hình địa chỉ máy chủ.** Địa chỉ thật không nằm trong repo và app không có địa chỉ mặc định: thiếu biến nào thì app báo lỗi rõ tên biến ngay khi mở. Ba biến trong `.env.example`: `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_WS_URL`, `EXPO_PUBLIC_SITE_ORIGIN`. Chúng bị nhúng vào app nên **không đặt bí mật**. Expo tự đọc `.env.local` khi chạy `npm start`; các tệp `.env*.local` và `.env*.prod` đã được bỏ qua khỏi git. Từ SDK 58, Expo chỉ tự đọc `.env`, `.env.local`, `.env.development` và `.env.production` (kèm bản `.local`), không đọc tệp tên khác như `.env.prod`; muốn dùng giá trị production khi chạy local, chép nội dung sang `.env.local` hoặc `.env.production.local`.
 
 Expo Go chỉ có các module gốc được đóng gói. App dùng thêm `expo-camera`, `expo-notifications`, `expo-secure-store`… nên cần **development build**:
 
@@ -66,9 +68,9 @@ Các bước dưới đây tôi không làm thay được vì cần đăng nhậ
 5. **Google Play**: tạo ứng dụng trên Play Console trước khi `eas submit`; hồ sơ nộp đang đặt đường `internal`.
 6. **Định danh app** `vn.io.clead.app` (Android package và iOS bundle id): đổi được trước lần build đầu, sau khi lên cửa hàng thì không.
 
-Build thử nội bộ (APK): `npx eas-cli@latest build --profile preview --platform android`. Biến `EXPO_PUBLIC_*` của từng profile nằm ở `eas.json`.
+Build thử nội bộ (APK): `npx eas-cli@latest build --profile preview --platform android`. **Biến `EXPO_PUBLIC_*` của bản build EAS đặt trong biến môi trường của EAS** (expo.dev hoặc `eas env:create`), không ghi vào `eas.json` hay repo; build thiếu biến thì app báo lỗi khi mở, nên phải đặt đủ ba biến cho từng môi trường trước khi build.
 
 ## Bảo mật
 
 - Token chỉ lưu bằng `expo-secure-store` (Keychain/Keystore), không dùng AsyncStorage; đăng xuất xóa token và hủy đăng ký thiết bị nhận push.
-- Không đưa bí mật vào repo (`.env*.local`, `google-services.json`, khóa ký). Tên miền và địa chỉ API trong `EXPO_PUBLIC_*` là công khai.
+- Không đưa bí mật vào repo (`.env*.local`, `google-services.json`, khóa ký). Địa chỉ trong `EXPO_PUBLIC_*` bị nhúng vào app (không phải bí mật) nhưng vẫn không ghi vào repo.

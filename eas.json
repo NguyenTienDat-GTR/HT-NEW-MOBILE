@@ -9,31 +9,16 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://clead.io.vn/backend/api",
-        "EXPO_PUBLIC_WS_URL": "wss://clead.io.vn/ws/notifications",
-        "EXPO_PUBLIC_SITE_ORIGIN": "https://clead.io.vn"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
-      },
-      "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://clead.io.vn/backend/api",
-        "EXPO_PUBLIC_WS_URL": "wss://clead.io.vn/ws/notifications",
-        "EXPO_PUBLIC_SITE_ORIGIN": "https://clead.io.vn"
       }
     },
     "production": {
-      "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://clead.io.vn/backend/api",
-        "EXPO_PUBLIC_WS_URL": "wss://clead.io.vn/ws/notifications",
-        "EXPO_PUBLIC_SITE_ORIGIN": "https://clead.io.vn"
-      }
+      "autoIncrement": true
     }
   },
   "submit": {

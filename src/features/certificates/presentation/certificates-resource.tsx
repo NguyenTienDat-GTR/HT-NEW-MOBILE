@@ -1,3 +1,4 @@
+import { parseInitialFilters } from '@/shared/resource/initial-filters';
 import type { ResourceDefinition } from '@/shared/resource/types';
 
 import { CertificateActions } from './CertificateActions';
@@ -46,5 +47,11 @@ export const certificateApprovalsResource: ResourceDefinition = {
   id: 'certificate-approvals',
   title: 'Duyệt chứng nhận',
   filters: CERTIFICATE_FILTERS.filter((filter) => filter.key !== 'issueDate:year'),
-  renderList: ({ def, subject }) => <CertificateApprovalsScreen def={def} subject={subject} />,
+  renderList: ({ def, subject, params }) => (
+    <CertificateApprovalsScreen
+      def={def}
+      subject={subject}
+      initialFilters={parseInitialFilters(params.filters)}
+    />
+  ),
 };

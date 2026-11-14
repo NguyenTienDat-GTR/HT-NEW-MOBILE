@@ -2,25 +2,10 @@ import { Stack, useLocalSearchParams, useRouter, type Href } from 'expo-router';
 
 import { findResourceDefinition } from '@/composition/resource-registry';
 import { useAuthStore } from '@/features/auth/presentation/auth-store';
+import { parseInitialFilters, parseInitialStatus } from '@/shared/resource/initial-filters';
 import { rowId } from '@/shared/resource/use-resource';
 import { ResourceListScreen } from '@/shared/resource/ResourceListScreen';
 import { Banner } from '@/shared/ui/Banner';
-
-/** Bộ lọc áp sẵn từ đường dẫn: `?filters={"khóa":"giá trị"}`; chuỗi hỏng thì bỏ qua. */
-function parseFilters(raw: string | undefined): Record<string, string> | undefined {
-  if (!raw) return undefined;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return undefined;
-    return Object.fromEntries(
-      Object.entries(parsed).filter(
-        (entry): entry is [string, string] => typeof entry[1] === 'string',
-      ),
-    );
-  } catch {
-    return undefined;
-  }
-}
 
 export default function ResourceListRoute() {
   const params = useLocalSearchParams<Record<string, string | undefined>>();
@@ -42,7 +27,8 @@ export default function ResourceListRoute() {
           onOpen={(row) =>
             router.push(`/res/${def.id}/${encodeURIComponent(rowId(def, row))}` as Href)
           }
-          initialFilters={parseFilters(filters)}
+          initialFilters={parseInitialFilters(filters)}
+          initialStatus={parseInitialStatus(params.status)}
           onCreate={() => router.push(`/res/${def.id}/form` as Href)}
         />
       )}

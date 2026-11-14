@@ -59,6 +59,16 @@ describe('hồ sơ huynh trưởng', () => {
     });
   });
 
+  it('ảnh đại diện: chỉ gửi id ảnh khi vừa tải ảnh mới (tạo và sửa)', () => {
+    const withImage = { ...filled, imageAssetId: 'asset-1', imageUrl: '/api/media/x' };
+    const created = form.toBody(withImage, 'create', null, null) as Record<string, unknown>;
+    const edited = form.toBody(withImage, 'edit', { id: '1' }, null) as Record<string, unknown>;
+    expect(created.imageAssetId).toBe('asset-1');
+    expect(edited.imageAssetId).toBe('asset-1');
+    expect(created.imageUrl).toBeUndefined();
+    expect(edited.imageUrl).toBeUndefined();
+  });
+
   it('sửa: chỉ gửi tên thánh, giới tính, SĐT, email; xóa email thì gửi clearFields', () => {
     const row = { id: '1', email: 'a@x.vn' };
     const body = form.toBody(filled, 'edit', row, null) as Record<string, unknown>;

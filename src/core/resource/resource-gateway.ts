@@ -35,6 +35,8 @@ export interface ResourceGateway {
     options?: {
       body?: unknown;
       query?: Record<string, string | number | boolean | readonly string[] | undefined>;
+      /** Header thêm vào (vd. `Idempotency-Key` cho tác vụ xuất chạy nền). */
+      headers?: Record<string, string>;
     },
   ): Promise<T>;
   /** Tải nội dung nhị phân (vd. PDF) bằng một lời gọi có Bearer. */

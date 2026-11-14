@@ -31,9 +31,12 @@ export async function shareDownloadedFile(
   const file = new File(Paths.cache, filename);
   file.create({ overwrite: true });
   await file.write(downloaded.bytes);
+  const mimeType = downloaded.contentType.split(';')[0]?.trim() || 'application/pdf';
   await Sharing.shareAsync(file.uri, {
-    mimeType: downloaded.contentType.split(';')[0]?.trim() || 'application/pdf',
-    UTI: 'com.adobe.pdf',
+    mimeType,
+    UTI: mimeType.includes('spreadsheetml')
+      ? 'org.openxmlformats.spreadsheetml.sheet'
+      : 'com.adobe.pdf',
     dialogTitle,
   });
   return true;

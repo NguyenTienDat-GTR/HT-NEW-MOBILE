@@ -2,6 +2,7 @@ import {
   certificateApprovalsResource,
   certificatesResource,
 } from '@/features/certificates/presentation/certificates-resource';
+import { pastCoursesResource } from '@/features/training/presentation/past-courses-resource';
 import { courseTypesResource } from '@/features/training/presentation/course-types-resource';
 import { coursesResource } from '@/features/training/presentation/courses-resource';
 import {
@@ -56,6 +57,7 @@ registerResources(
   assignmentsResource,
   courseTypesResource,
   coursesResource,
+  pastCoursesResource,
   registrationsResource,
   approvalsResource,
   participantsResource,

@@ -6,6 +6,7 @@ import { View } from 'react-native';
 import { errorMessage } from '@/core/domain/app-error';
 import { formatDate, formatDateTime } from '@/core/domain/date-format';
 import { fmtNumber } from '@/core/domain/number-format';
+import { hasPermissionPrefix } from '@/core/domain/permissions';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
 import { ToggleSheet } from '@/shared/resource/ResourceDetailScreen';
 import { useResourceGateway } from '@/shared/resource/resource-context';
@@ -41,10 +42,14 @@ import {
 import { unitLabel } from '../domain/training-labels';
 import {
   canActOnCourse,
+  canCreatePastCourse,
   canRegisterCourse,
   canSubmitRegistration,
   type TrainingSubject,
 } from '../domain/training-permissions';
+import { canExportCertificates, canExportRegistrations } from '../domain/course-export';
+
+import { CourseExportSheet } from './CourseExportSheets';
 
 type Pending = null | 'finish' | 'lock' | 'unlock' | 'open' | 'close';
 
@@ -94,6 +99,9 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
   const invalidate = useInvalidateResource(def);
   const [pending, setPending] = useState<Pending>(null);
   const [toggleOpen, setToggleOpen] = useState(false);
+  const [exporting, setExporting] = useState<'badges' | 'certificates' | 'registrations' | null>(
+    null,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -123,7 +131,10 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
   const registration = registrationState(course);
   const organizing = organizingState(course);
   const active = flag(course, 'status');
-  const canUpdate = canActOnCourse(user, course, 'update') && !ended && active;
+  const past = flag(course, 'pastCourse');
+  // Khóa quá khứ: sửa bằng form riêng (quyền create_past) và không bị khóa khi đã "kết thúc"; khóa thường như trước.
+  const canEditPast = past && canCreatePastCourse(user) && active;
+  const canUpdate = past ? canEditPast : canActOnCourse(user, course, 'update') && !ended && active;
   const canFinish = canActOnCourse(user, course, 'finish') && !ended && active;
   const canLock = canActOnCourse(user, course, 'lockScore') && active;
   const canToggle = canActOnCourse(user, course, 'toggle');
@@ -133,24 +144,45 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
     canActOnCourse(user, course, 'approve') ||
     canActOnCourse(user, course, 'score');
   const registrationOpen = registration === 'OPEN';
+  // Xuất file (thẻ PDF, chứng nhận PDF, Excel danh sách đăng ký theo mẫu): người xem được hồ sơ của khóa.
+  const canExportList = !past && canSeeParticipants && canExportRegistrations(user);
+  const canExportCert = canExportCertificates(user);
   const encoded = encodeURIComponent(code);
 
-  const steps: { label: string; href: Href }[] = [
-    { label: 'Hồ sơ đăng ký', href: goto('/res/registrations', code) },
-    ...(canActOnCourse(user, course, 'approve')
-      ? [{ label: 'Duyệt đăng ký', href: goto('/res/approvals', code) }]
-      : []),
-    ...(canSeeParticipants
-      ? [
-          { label: 'Danh sách tham dự', href: goto('/res/participants', code) },
-          { label: 'Chia đội', href: `/res/teams?course=${encoded}` as Href },
-          { label: 'Điểm danh và email mời', href: `/res/attendance?course=${encoded}` as Href },
-        ]
-      : []),
-    ...(canActOnCourse(user, course, 'score')
-      ? [{ label: 'Chấm điểm', href: goto('/res/scores', code) }]
-      : []),
-  ];
+  // Như tab "Duyệt chứng nhận" của khóa trên web: người có quyền xem hoặc duyệt chứng nhận.
+  const certificateStep: { label: string; href: Href }[] =
+    hasPermissionPrefix(user, 'training.certificate.approve.') ||
+    hasPermissionPrefix(user, 'training.certificate.read.')
+      ? [{ label: 'Duyệt chứng nhận', href: goto('/res/certificate-approvals', code) }]
+      : [];
+  // Khóa quá khứ chỉ có danh sách tham dự (nhập từ Excel trên web), không có đăng ký, duyệt, đội, điểm danh, chấm điểm.
+  const steps: { label: string; href: Href }[] = past
+    ? [
+        ...(canSeeParticipants
+          ? [{ label: 'Danh sách tham dự', href: goto('/res/participants', code) }]
+          : []),
+        ...certificateStep,
+      ]
+    : [
+        { label: 'Hồ sơ đăng ký', href: goto('/res/registrations', code) },
+        ...(canActOnCourse(user, course, 'approve')
+          ? [{ label: 'Duyệt đăng ký', href: goto('/res/approvals', code) }]
+          : []),
+        ...(canSeeParticipants
+          ? [
+              { label: 'Danh sách tham dự', href: goto('/res/participants', code) },
+              { label: 'Chia đội', href: `/res/teams?course=${encoded}` as Href },
+              {
+                label: 'Điểm danh và email mời',
+                href: `/res/attendance?course=${encoded}` as Href,
+              },
+            ]
+          : []),
+        ...(canActOnCourse(user, course, 'score')
+          ? [{ label: 'Chấm điểm', href: goto('/res/scores', code) }]
+          : []),
+        ...certificateStep,
+      ];
 
   const run = async (action: () => Promise<unknown>, success: string) => {
     setBusy(true);
@@ -224,7 +256,16 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {canUpdate ? (
                 <View style={{ flex: 1 }}>
-                  <Button label="Sửa khóa" variant="outline" size="sm" onPress={onEdit} />
+                  <Button
+                    label={past ? 'Sửa khóa quá khứ' : 'Sửa khóa'}
+                    variant="outline"
+                    size="sm"
+                    onPress={
+                      past
+                        ? () => router.push(`/res/past-courses/form?id=${encoded}` as Href)
+                        : onEdit
+                    }
+                  />
                 </View>
               ) : null}
               {canRegister && canSubmitRegistration(user) ? (
@@ -346,6 +387,26 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
         </InfoGrid>
       </Card>
 
+      {canExportList || canExportCert ? (
+        <AccordionGroup title="Xuất file" defaultOpen={false}>
+          {canExportList ? (
+            <ListRow label="Xuất thẻ tham dự (PDF)" onPress={() => setExporting('badges')} />
+          ) : null}
+          {canExportCert ? (
+            <ListRow
+              label="Xuất chứng nhận đã duyệt (PDF)"
+              onPress={() => setExporting('certificates')}
+            />
+          ) : null}
+          {canExportList ? (
+            <ListRow
+              label="Xuất danh sách đăng ký theo mẫu (Excel)"
+              onPress={() => setExporting('registrations')}
+            />
+          ) : null}
+        </AccordionGroup>
+      ) : null}
+
       {text(course, 'additionalNotes') ? (
         <Card>
           <InfoRow label="Ghi chú" value={text(course, 'additionalNotes')} />
@@ -399,6 +460,13 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           setError(null);
         }}
         onConfirm={() => void confirmPending()}
+      />
+      <CourseExportSheet
+        kind={exporting}
+        courseCode={code}
+        subject={subject}
+        visible={exporting !== null}
+        onClose={() => setExporting(null)}
       />
       <ToggleSheet
         def={def}

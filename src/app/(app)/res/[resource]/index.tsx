@@ -30,6 +30,7 @@ export default function ResourceListRoute() {
           initialFilters={parseInitialFilters(filters)}
           initialStatus={parseInitialStatus(params.status)}
           onCreate={() => router.push(`/res/${def.id}/form` as Href)}
+          onExtraCreate={(path) => router.push(path as Href)}
         />
       )}
     </>

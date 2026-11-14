@@ -19,6 +19,7 @@ export default function CoursesTab() {
       subject={user}
       onOpen={(row) => router.push(`/res/${def.id}/${encodeURIComponent(rowId(def, row))}` as Href)}
       onCreate={() => router.push(`/res/${def.id}/form` as Href)}
+      onExtraCreate={(path) => router.push(path as Href)}
     />
   );
 }

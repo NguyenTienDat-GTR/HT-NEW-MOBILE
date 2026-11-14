@@ -60,7 +60,7 @@ export interface DashboardScreenProps {
   permissions: readonly string[];
   onOpenPath: (path: string) => void;
   /** Đổi href của BE (đường dẫn web) sang đường dẫn mobile; null = màn đích không có/không đủ quyền (không bấm được). */
-  resolveHref: (href: string) => string | null;
+  resolveHref: (key: string, href: string) => string | null;
   /** Mở màn Phân tích chi tiết. */
   onOpenAnalysis: () => void;
 }

@@ -1,4 +1,5 @@
 import { text } from '@/shared/resource/row';
+import { parseInitialFilters } from '@/shared/resource/initial-filters';
 import type { ResourceDefinition } from '@/shared/resource/types';
 
 import { PARTICIPANT_STATUS_OPTIONS, PARTICIPATION_OPTIONS } from '../domain/training-labels';
@@ -103,7 +104,13 @@ export const approvalsResource: ResourceDefinition = {
     ...unitFilters,
   ],
   card: registrationCard,
-  renderList: ({ def, subject }) => <ApprovalsScreen def={def} subject={subject} />,
+  renderList: ({ def, subject, params }) => (
+    <ApprovalsScreen
+      def={def}
+      subject={subject}
+      initialFilters={parseInitialFilters(params.filters)}
+    />
+  ),
   canCreate: () => false,
   canUpdate: () => false,
   canToggle: () => false,

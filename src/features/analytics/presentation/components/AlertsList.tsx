@@ -41,7 +41,7 @@ export function AlertsList({
 }: {
   alerts: readonly Alert[];
   /** Đổi href của BE sang đường dẫn mở được trên mobile, hoặc null nếu không mở được. */
-  openable?: (href: string) => string | null;
+  openable?: (key: string, href: string) => string | null;
   onOpen?: (path: string) => void;
 }) {
   const { colors, iconSize, radius } = useTheme();
@@ -78,7 +78,7 @@ export function AlertsList({
         const meta = ALERT_META[alert.key];
         if (!meta) return null;
         const { bar, icon, Icon } = palette[alert.severity];
-        const path = alert.href && openable ? openable(alert.href) : null;
+        const path = openable ? openable(alert.key, alert.href ?? '') : null;
         const label = `${SEVERITY_LABELS[alert.severity]}. ${meta.title}. ${meta.description(alert.count)}`;
         const Container = path ? Pressable : View;
         return (

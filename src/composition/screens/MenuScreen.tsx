@@ -24,6 +24,7 @@ import {
   LockKeyIcon,
   ShieldCheckIcon,
   SignOutIcon,
+  MagnifyingGlassIcon,
   UserCircleIcon,
 } from '@/shared/ui/icons';
 import { ListRow } from '@/shared/ui/ListRow';
@@ -113,6 +114,12 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
       ))}
 
       <Card style={{ padding: 0, overflow: 'hidden' }}>
+        <ListRow
+          label="Tìm kiếm"
+          hint="Huynh trưởng, đơn vị, khóa huấn luyện, chứng nhận"
+          icon={icon(MagnifyingGlassIcon)}
+          onPress={() => onNavigate('/search')}
+        />
         {canSeeAnalytics ? (
           <ListRow
             label="Phân tích dữ liệu"

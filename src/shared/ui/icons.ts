@@ -34,6 +34,7 @@ export {
   QuestionIcon,
   ListIcon,
   LockKeyIcon,
+  MagnifyingGlassIcon,
   MapPinIcon,
   MedalIcon,
   PencilLineIcon,

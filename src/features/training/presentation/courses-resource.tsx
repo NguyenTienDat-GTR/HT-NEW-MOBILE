@@ -42,6 +42,7 @@ import {
   stringifyCopyState,
 } from '../domain/copy-participants';
 
+import { managementLevelBadge } from '../domain/training-labels';
 import { CopyParticipantsField } from './CopyParticipantsField';
 import { CourseDetailScreen } from './CourseDetailScreen';
 import { ScoreComponentsEditor } from './ScoreComponentsEditor';
@@ -110,7 +111,9 @@ const integerText = (value: string | boolean) => (typeof value === 'string' ? va
 function courseBadges(row: Record<string, unknown>) {
   const registration = registrationState(row);
   const organizing = organizingState(row);
+  const level = managementLevelBadge(row.managementUnitType);
   return [
+    ...(level ? [level] : []),
     ...(flag(row, 'status') ? [] : [{ label: 'Đã vô hiệu hóa', tone: 'warning' as const }]),
     { label: ORGANIZING_LABELS[organizing], tone: ORGANIZING_TONES[organizing] },
     { label: REGISTRATION_LABELS[registration], tone: REGISTRATION_TONES[registration] },

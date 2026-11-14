@@ -2,7 +2,7 @@ import type { StateTone } from './course-state';
 
 export interface LabeledTone {
   label: string;
-  tone: StateTone | 'danger';
+  tone: StateTone | 'danger' | 'violet' | 'sky';
 }
 
 const PARTICIPATION: Record<string, LabeledTone> = {
@@ -44,6 +44,13 @@ export const UNIT_LABELS: Record<string, string> = {
 
 export const unitLabel = (value: unknown): string =>
   typeof value === 'string' ? (UNIT_LABELS[value] ?? '') : '';
+
+/** Nhãn cấp quản lý của khóa / loại khóa: giáo phận màu tím, giáo hạt màu xanh trời (như web); cấp khác thì không có nhãn. */
+export function managementLevelBadge(value: unknown): LabeledTone | null {
+  if (value === 'DIOCESE') return { label: UNIT_LABELS.DIOCESE as string, tone: 'violet' };
+  if (value === 'DEANERY') return { label: UNIT_LABELS.DEANERY as string, tone: 'sky' };
+  return null;
+}
 
 /** Kết quả cuối của hồ sơ trong khóa (đã kết thúc khóa mới có). */
 export function finalResultLabel(value: unknown): LabeledTone | null {

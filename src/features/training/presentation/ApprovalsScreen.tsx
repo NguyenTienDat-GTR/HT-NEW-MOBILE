@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/core/domain/app-error';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
@@ -22,6 +21,7 @@ import { EmptyState } from '@/shared/ui/EmptyState';
 import { FilterChips } from '@/shared/ui/FilterChips';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { SelectField } from '@/shared/ui/SelectField';
+import { useScreenInsets } from '@/shared/ui/screen-insets';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
@@ -60,7 +60,7 @@ export function ApprovalsScreen({
   subject: PermissionSubject | null;
 }) {
   const { colors, spacing, radius } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const gateway = useResourceGateway();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
@@ -163,7 +163,10 @@ export function ApprovalsScreen({
         keyExtractor={(item, index) => rowId(def, item) || String(index)}
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl * 3 }}
+        contentContainerStyle={{
+          padding: spacing.md,
+          paddingBottom: picked.length > 0 ? spacing.xl * 3 : spacing.xl + insets.bottom,
+        }}
         keyboardShouldPersistTaps="handled"
         onEndReachedThreshold={0.4}
         onEndReached={() => {

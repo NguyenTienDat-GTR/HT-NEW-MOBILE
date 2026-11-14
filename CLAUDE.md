@@ -31,6 +31,8 @@ src/app          route Expo Router, chỉ là lớp mỏng gọi màn hình củ
 
 Các màn CRUD (tổ chức, huynh trưởng, ban điều hành…) chạy bằng `ResourceDefinition` (`src/shared/resource/types.ts`): thêm màn = viết một định nghĩa trong `features/<tên>/presentation`, đăng ký ở `src/composition/resource-registry.ts` và thêm một dòng ở `src/composition/menu-entries.ts`; các màn chung (`ResourceListScreen`, `ResourceDetailScreen`, `ResourceFormScreen`) không phải sửa. Màn cần giao diện riêng dùng `renderList` / `renderDetail` / `renderForm`; ô nhập riêng của tính năng dùng `kind: 'custom'` với `render`. Quy tắc quyền hiển thị nút nằm ở `domain/*-permissions.ts`, theo đúng web.
 
+Vùng an toàn: `Screen`, danh sách và nút dính đáy lấy khoảng chừa từ `useScreenInsets()` (`shared/ui/screen-insets.tsx`), không gọi `useSafeAreaInsets` trực tiếp. Stack đã chừa phía trên (thanh tiêu đề), thanh tab đã chừa phía dưới; phần còn lại màn tự chừa để nút home / thanh điều hướng của Android không che nút hay chặn cuộn. Danh sách dài cuộn vô hạn: `FlatList.onEndReached`, hoặc `Screen`/`BottomSheet` với `onEndReached` + `loadingMore` (hook `useEndReached`); không dùng nút "Tải thêm".
+
 Thao tác riêng trên một bản ghi (duyệt, thu hồi, chia sẻ PDF…) đặt ở `renderDetailExtra` để dùng lại màn chi tiết chung. Tải nội dung nhị phân (PDF) dùng `gateway.download` (có Bearer và tự làm mới phiên), rồi `shared/files/share-file.ts` ghi vào bộ nhớ đệm và mở hộp chia sẻ của hệ điều hành.
 
 ## Giao diện

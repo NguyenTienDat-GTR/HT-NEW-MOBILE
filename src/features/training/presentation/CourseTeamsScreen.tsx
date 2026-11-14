@@ -140,6 +140,10 @@ export function CourseTeamsScreen({
     <Screen
       onRefresh={() => void refresh()}
       refreshing={overview.isRefetching}
+      onEndReached={() => {
+        if (people.hasNextPage && !people.isFetchingNextPage) void people.fetchNextPage();
+      }}
+      loadingMore={people.isFetchingNextPage}
       footer={
         manage ? (
           <>
@@ -237,14 +241,6 @@ export function CourseTeamsScreen({
           </View>
         </Card>
       ))}
-      {people.hasNextPage ? (
-        <Button
-          label="Tải thêm"
-          variant="outline"
-          loading={people.isFetchingNextPage}
-          onPress={() => void people.fetchNextPage()}
-        />
-      ) : null}
 
       <DivideSheet
         visible={divideOpen}

@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { errorMessage } from '@/core/domain/app-error';
 import { fmtNumber } from '@/core/domain/number-format';
@@ -18,6 +17,7 @@ import { FilterChips } from '../ui/FilterChips';
 import { FunnelSimpleIcon, ListIcon } from '../ui/icons';
 import { LoadingState } from '../ui/LoadingState';
 import { SelectField } from '../ui/SelectField';
+import { useScreenInsets } from '../ui/screen-insets';
 import { Text } from '../ui/Text';
 import { TextField } from '../ui/TextField';
 
@@ -53,7 +53,7 @@ export function ResourceListScreen({
   initialFilters,
 }: ResourceListScreenProps) {
   const { colors, spacing } = useTheme();
-  const insets = useSafeAreaInsets();
+  const insets = useScreenInsets();
   const [search, setSearch] = useState('');
   const [statusChoice, setStatusChoice] = useState<StatusChoice>('all');
   const [filters, setFilters] = useState<Record<string, string>>(initialFilters ?? {});
@@ -151,7 +151,10 @@ export function ResourceListScreen({
         renderItem={renderItem}
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
+        contentContainerStyle={{
+          padding: spacing.md,
+          paddingBottom: spacing.xl + (canCreate ? 0 : insets.bottom),
+        }}
         keyboardShouldPersistTaps="handled"
         onEndReachedThreshold={0.4}
         onEndReached={() => {

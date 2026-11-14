@@ -13,6 +13,7 @@ import { EmptyState } from '@/shared/ui/EmptyState';
 import { KeyIcon } from '@/shared/ui/icons';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
+import { useScreenInsets } from '@/shared/ui/screen-insets';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
@@ -28,6 +29,7 @@ function summary(permission: MyPermission): string {
 /** Quyền của tôi: danh sách thẻ (tên quyền, phân hệ · thao tác · phạm vi, nguồn); chi tiết đầy đủ mở trong sheet. */
 export function MyPermissionsScreen() {
   const { colors, spacing } = useTheme();
+  const insets = useScreenInsets();
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search.trim());
   const query = useMyPermissions(debounced);
@@ -87,7 +89,7 @@ export function MyPermissionsScreen() {
         renderItem={renderItem}
         ListHeaderComponent={header}
         ItemSeparatorComponent={() => <View style={{ height: spacing.xs }} />}
-        contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
+        contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         onEndReachedThreshold={0.4}
         onEndReached={() => {

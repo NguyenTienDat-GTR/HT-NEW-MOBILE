@@ -5,7 +5,6 @@ import { errorMessage } from '@/core/domain/app-error';
 import { fmtNumber } from '@/core/domain/number-format';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Banner } from '@/shared/ui/Banner';
-import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
 import { CollapsibleSection } from '@/shared/ui/CollapsibleSection';
 import { InfoRow } from '@/shared/ui/InfoRow';
@@ -33,7 +32,7 @@ function pick(row: Record<string, RecordCell>, columns: readonly string[]): stri
 
 /**
  * Danh sách hồ sơ phía sau một ô biểu đồ. Mỗi hồ sơ là một thẻ gọn (tên + 2 dòng phụ); chạm "Xem đủ thông tin"
- * để mở mọi cột còn lại. Tải từng trang 15 dòng bằng nút "Xem thêm" (không bảng cuộn ngang).
+ * để mở mọi cột còn lại. Cuộn vô hạn, mỗi trang 15 dòng (không bảng cuộn ngang).
  */
 export function RecordsSheet({ filters, target, onClose }: RecordsSheetProps) {
   const query = useAnalyticsRecords(filters, target);
@@ -45,7 +44,15 @@ export function RecordsSheet({ filters, target, onClose }: RecordsSheetProps) {
   const card = CARD_COLUMNS[dataset];
 
   return (
-    <BottomSheet visible={target !== null} title={target?.title ?? 'Danh sách'} onClose={onClose}>
+    <BottomSheet
+      visible={target !== null}
+      title={target?.title ?? 'Danh sách'}
+      onClose={onClose}
+      onEndReached={() => {
+        if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+      }}
+      loadingMore={query.isFetchingNextPage}
+    >
       {query.isPending ? <LoadingState /> : null}
       {query.isError ? <Banner tone="danger" message={errorMessage(query.error)} /> : null}
       {!query.isPending && !query.isError ? (
@@ -87,15 +94,6 @@ export function RecordsSheet({ filters, target, onClose }: RecordsSheetProps) {
         <Text variant="secondary" tone="muted">
           Không có hồ sơ nào trong bộ lọc hiện tại.
         </Text>
-      ) : null}
-
-      {query.hasNextPage ? (
-        <Button
-          label="Xem thêm"
-          variant="outline"
-          loading={query.isFetchingNextPage}
-          onPress={() => void query.fetchNextPage()}
-        />
       ) : null}
     </BottomSheet>
   );

@@ -8,6 +8,7 @@ import { useAuthStore } from '@/features/auth/presentation/auth-store';
 import { useLogout } from '@/features/auth/presentation/use-session';
 import { displayName, primaryRoleName } from '@/features/account/domain/labels';
 import { useTheme } from '@/shared/theme/theme-provider';
+import { AccordionGroup } from '@/shared/ui/AccordionGroup';
 import { Avatar } from '@/shared/ui/Avatar';
 import { Badge } from '@/shared/ui/Badge';
 import { Card } from '@/shared/ui/Card';
@@ -96,23 +97,23 @@ export function MenuScreen({ onNavigate }: MenuScreenProps) {
         </View>
       </Card>
 
+      {/* Như thanh bên của web: mỗi nhóm gập được, chạm tiêu đề để ẩn/hiện các mục bên trong. */}
       {sections.map((section) => (
-        <View key={section.group} style={{ gap: spacing.xs }}>
-          <Text variant="heading" accessibilityRole="header">
-            {section.label}
-          </Text>
-          <Card style={{ padding: 0, overflow: 'hidden' }}>
-            {section.entries.map((entry) => (
-              <ListRow
-                key={entry.resource}
-                label={entry.label}
-                hint={entry.hint}
-                icon={icon(groupIcon[section.group])}
-                onPress={() => onNavigate(`/res/${entry.resource}`)}
-              />
-            ))}
-          </Card>
-        </View>
+        <AccordionGroup
+          key={section.group}
+          title={section.label}
+          icon={icon(groupIcon[section.group])}
+          count={section.entries.length}
+        >
+          {section.entries.map((entry) => (
+            <ListRow
+              key={entry.resource}
+              label={entry.label}
+              hint={entry.hint}
+              onPress={() => onNavigate(`/res/${entry.resource}`)}
+            />
+          ))}
+        </AccordionGroup>
       ))}
 
       {canScan ? (

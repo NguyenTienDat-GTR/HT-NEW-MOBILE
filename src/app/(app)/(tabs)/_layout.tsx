@@ -4,6 +4,7 @@ import { unreadBadgeLabel } from '@/features/notifications/domain/notification-r
 import { useUnreadCount } from '@/features/notifications/presentation/use-notifications';
 import { useTheme } from '@/shared/theme/theme-provider';
 import { fontFamily } from '@/shared/theme/tokens';
+import { ScreenInsets } from '@/shared/ui/screen-insets';
 import { BellIcon, HouseIcon, ListIcon } from '@/shared/ui/icons';
 
 type IconComponent = typeof HouseIcon;
@@ -29,39 +30,42 @@ export default function TabsLayout() {
   const badge = unreadBadgeLabel(unread.data);
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: { backgroundColor: colors.surface1, borderTopColor: colors.border },
-        tabBarLabelStyle: { fontFamily: fontFamily.medium, fontSize: 12 },
-        tabBarBadgeStyle: { backgroundColor: colors.danger, color: colors.onSolid },
-      }}
-    >
-      <Tabs.Screen
-        name="home"
-        options={{
-          title: 'Tổng quan',
-          tabBarIcon: ({ color, focused }) => tabIcon(HouseIcon, color, focused),
+    // Thanh tab dưới đã chừa phía dưới; màn trong tab chỉ chừa phía trên (không có thanh tiêu đề).
+    <ScreenInsets top bottom={false}>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.muted,
+          tabBarStyle: { backgroundColor: colors.surface1, borderTopColor: colors.border },
+          tabBarLabelStyle: { fontFamily: fontFamily.medium, fontSize: 12 },
+          tabBarBadgeStyle: { backgroundColor: colors.danger, color: colors.onSolid },
         }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          title: 'Thông báo',
-          tabBarBadge: badge ?? undefined,
-          tabBarAccessibilityLabel: badge ? `Thông báo, ${badge} chưa đọc` : 'Thông báo',
-          tabBarIcon: ({ color, focused }) => tabIcon(BellIcon, color, focused),
-        }}
-      />
-      <Tabs.Screen
-        name="menu"
-        options={{
-          title: 'Menu',
-          tabBarIcon: ({ color, focused }) => tabIcon(ListIcon, color, focused),
-        }}
-      />
-    </Tabs>
+      >
+        <Tabs.Screen
+          name="home"
+          options={{
+            title: 'Tổng quan',
+            tabBarIcon: ({ color, focused }) => tabIcon(HouseIcon, color, focused),
+          }}
+        />
+        <Tabs.Screen
+          name="notifications"
+          options={{
+            title: 'Thông báo',
+            tabBarBadge: badge ?? undefined,
+            tabBarAccessibilityLabel: badge ? `Thông báo, ${badge} chưa đọc` : 'Thông báo',
+            tabBarIcon: ({ color, focused }) => tabIcon(BellIcon, color, focused),
+          }}
+        />
+        <Tabs.Screen
+          name="menu"
+          options={{
+            title: 'Menu',
+            tabBarIcon: ({ color, focused }) => tabIcon(ListIcon, color, focused),
+          }}
+        />
+      </Tabs>
+    </ScreenInsets>
   );
 }

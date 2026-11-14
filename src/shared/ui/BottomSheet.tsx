@@ -1,6 +1,7 @@
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useEndReached } from '../hooks/use-end-reached';
 import { useReduceMotion } from '../hooks/use-reduce-motion';
 import { useTheme } from '../theme/theme-provider';
 
@@ -14,13 +15,26 @@ export interface BottomSheetProps {
   children: React.ReactNode;
   /** Thanh nút dưới cùng (nằm ngoài vùng cuộn, trong vùng an toàn). */
   footer?: React.ReactNode;
+  /** Cuộn vô hạn trong sheet: gọi khi cuộn gần cuối; hàm tự kiểm tra còn trang tiếp và không đang tải. */
+  onEndReached?: () => void;
+  /** Đang tải trang kế tiếp: hiện vòng quay ở cuối. */
+  loadingMore?: boolean;
 }
 
 /**
  * Sheet từ đáy màn hình dựa trên Modal gốc (nút Back của Android đóng sheet).
  * Chạm nền hoặc nút ✕ (48×48) để đóng.
  */
-export function BottomSheet({ visible, title, onClose, children, footer }: BottomSheetProps) {
+export function BottomSheet({
+  visible,
+  title,
+  onClose,
+  children,
+  footer,
+  onEndReached,
+  loadingMore = false,
+}: BottomSheetProps) {
+  const endProps = useEndReached(onEndReached);
   const { colors, radius, spacing, iconSize } = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
@@ -77,8 +91,12 @@ export function BottomSheet({ visible, title, onClose, children, footer }: Botto
           <ScrollView
             contentContainerStyle={{ padding: spacing.md, gap: spacing.sm }}
             keyboardShouldPersistTaps="handled"
+            {...endProps}
           >
             {children}
+            {loadingMore ? (
+              <ActivityIndicator color={colors.primary} accessibilityLabel="Đang tải thêm" />
+            ) : null}
           </ScrollView>
           {footer ? (
             <View style={{ paddingHorizontal: spacing.md, gap: spacing.xs }}>{footer}</View>

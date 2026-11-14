@@ -10,6 +10,7 @@ import {
   usePushRegistration,
   useUnreadCount,
 } from '@/features/notifications/presentation/use-notifications';
+import { ScreenInsets } from '@/shared/ui/screen-insets';
 import { useRealtime } from '@/shared/realtime/realtime-context';
 import { useTheme } from '@/shared/theme/theme-provider';
 import { fontFamily } from '@/shared/theme/tokens';
@@ -36,25 +37,28 @@ export default function AppLayout() {
   return (
     <>
       <AppEffects />
-      <Stack
-        screenOptions={{
-          headerShown: true,
-          headerStyle: { backgroundColor: colors.surface1 },
-          headerTintColor: colors.primary,
-          headerTitleStyle: { fontFamily: fontFamily.semibold, color: colors.foreground },
-          headerShadowVisible: false,
-          headerBackTitle: '',
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="analytics" options={{ title: 'Phân tích dữ liệu' }} />
-        <Stack.Screen name="scan" options={{ title: 'Quét mã QR' }} />
-        <Stack.Screen name="profile" options={{ title: 'Hồ sơ cá nhân' }} />
-        <Stack.Screen name="my-permissions" options={{ title: 'Quyền của tôi' }} />
-        <Stack.Screen name="change-email" options={{ title: 'Đổi email' }} />
-        <Stack.Screen name="account-password" options={{ title: 'Đổi mật khẩu' }} />
-      </Stack>
+      {/* Thanh tiêu đề đã chừa phía trên; còn phải chừa phía dưới cho nút home / thanh điều hướng của Android. */}
+      <ScreenInsets top={false} bottom>
+        <Stack
+          screenOptions={{
+            headerShown: true,
+            headerStyle: { backgroundColor: colors.surface1 },
+            headerTintColor: colors.primary,
+            headerTitleStyle: { fontFamily: fontFamily.semibold, color: colors.foreground },
+            headerShadowVisible: false,
+            headerBackTitle: '',
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="analytics" options={{ title: 'Phân tích dữ liệu' }} />
+          <Stack.Screen name="scan" options={{ title: 'Quét mã QR' }} />
+          <Stack.Screen name="profile" options={{ title: 'Hồ sơ cá nhân' }} />
+          <Stack.Screen name="my-permissions" options={{ title: 'Quyền của tôi' }} />
+          <Stack.Screen name="change-email" options={{ title: 'Đổi email' }} />
+          <Stack.Screen name="account-password" options={{ title: 'Đổi mật khẩu' }} />
+        </Stack>
+      </ScreenInsets>
     </>
   );
 }

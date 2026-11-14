@@ -336,6 +336,10 @@ function CandidateSheet({
       visible={mode !== null}
       title={mode === 'EXCEPTION' ? 'Chọn huynh trưởng ngoại lệ' : 'Chọn huynh trưởng đủ điều kiện'}
       onClose={onClose}
+      onEndReached={() => {
+        if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+      }}
+      loadingMore={query.isFetchingNextPage}
       footer={
         <>
           <Button
@@ -378,14 +382,6 @@ function CandidateSheet({
         <Text variant="secondary" tone="muted">
           Không có huynh trưởng phù hợp.
         </Text>
-      ) : null}
-      {query.hasNextPage ? (
-        <Button
-          label="Tải thêm"
-          variant="outline"
-          loading={query.isFetchingNextPage}
-          onPress={() => void query.fetchNextPage()}
-        />
       ) : null}
     </BottomSheet>
   );

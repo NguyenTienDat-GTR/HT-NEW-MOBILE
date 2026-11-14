@@ -116,3 +116,25 @@ export function buildScoreBody(
     scoreNote: scoreNote.trim() || undefined,
   };
 }
+
+/**
+ * Như web (`canCreateExceptionCertificate`): hồ sơ đã chấm điểm nhưng không đạt, khóa có cấp độ đạt được và chưa có chứng
+ * nhận đang xử lý thì được tạo chứng nhận ngoại lệ (chờ duyệt ở tab Duyệt chứng nhận).
+ */
+export function canCreateExceptionCertificate(row: Readonly<Record<string, unknown>>): boolean {
+  const level = row.courseResultingLevel;
+  const hasLevel = typeof level === 'string' && level !== '' && level !== 'NONE';
+  const status = row.certificateApprovalStatus;
+  const free =
+    status === undefined || status === null || status === 'NOT_REQUIRED' || status === 'REJECTED';
+  return (
+    hasLevel &&
+    row.approvalStatus === 'APPROVED' &&
+    row.result === 'UNCOMPLETED' &&
+    row.totalScore !== null &&
+    row.totalScore !== undefined &&
+    free &&
+    row.courseFinished !== true &&
+    row.coursePast !== true
+  );
+}

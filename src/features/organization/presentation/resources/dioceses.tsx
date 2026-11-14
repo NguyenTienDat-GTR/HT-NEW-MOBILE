@@ -2,6 +2,7 @@ import { joinParts, flag, text, count } from '@/shared/resource/row';
 import { fmtNumber } from '@/core/domain/number-format';
 import type { ResourceDefinition } from '@/shared/resource/types';
 
+import { UnitExtras } from '../UnitExtras';
 import {
   canCreateDiocese,
   canToggleDiocese,
@@ -88,4 +89,5 @@ export const diocesesResource: ResourceDefinition = {
   canCreate: (subject) => canCreateDiocese(subject),
   canUpdate: (subject) => canUpdateDiocese(subject),
   canToggle: (subject) => canToggleDiocese(subject),
+  renderDetailExtra: ({ row }) => <UnitExtras kind="dioceses" row={row} />,
 };

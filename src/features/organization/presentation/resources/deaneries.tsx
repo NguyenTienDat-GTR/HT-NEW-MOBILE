@@ -3,6 +3,7 @@ import { loadOptions } from '@/shared/resource/options';
 import { count, flag, joinParts, text } from '@/shared/resource/row';
 import type { ResourceDefinition } from '@/shared/resource/types';
 
+import { UnitExtras } from '../UnitExtras';
 import {
   canCreateDeanery,
   canToggleDeanery,
@@ -118,4 +119,5 @@ export const deaneriesResource: ResourceDefinition = {
   canCreate: (subject) => canCreateDeanery(subject),
   canUpdate: (subject, row) => canUpdateDeanery(subject, text(row, 'id')),
   canToggle: (subject) => canToggleDeanery(subject),
+  renderDetailExtra: ({ row }) => <UnitExtras kind="deaneries" row={row} />,
 };

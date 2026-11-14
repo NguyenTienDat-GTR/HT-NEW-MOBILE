@@ -10,6 +10,7 @@ import {
   canUpdateParish,
 } from '../../domain/organization-permissions';
 import { ParishActions } from '../ParishActions';
+import { UnitExtras } from '../UnitExtras';
 
 import {
   auditSection,
@@ -189,6 +190,9 @@ export const parishesResource: ResourceDefinition = {
   canUpdate: (subject) => canUpdateParish(subject),
   canToggle: (subject) => canToggleParish(subject),
   renderDetailExtra: ({ row, subject }) => (
-    <ParishActions def={parishesResource} row={row} subject={subject} />
+    <>
+      <ParishActions def={parishesResource} row={row} subject={subject} />
+      <UnitExtras kind="parishes" row={row} />
+    </>
   ),
 };

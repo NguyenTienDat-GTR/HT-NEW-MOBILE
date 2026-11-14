@@ -21,6 +21,7 @@ export function toMyProfile(dto: MyProfileDto): MyProfile {
     email: dto.email ?? null,
     hasLeader: dto.hasLeader ?? leader != null,
     canEditBirthDate: dto.canEditBirthDate === true,
+    imageUrl: dto.imageThumbUrl ?? dto.imageUrl ?? null,
     leader: leader
       ? {
           id: leader.id,

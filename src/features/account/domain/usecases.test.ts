@@ -51,6 +51,7 @@ describe('labels', () => {
           email: null,
           hasLeader: true,
           canEditBirthDate: false,
+          imageUrl: null,
           rankHistory: [],
           certificates: [],
           leader: {

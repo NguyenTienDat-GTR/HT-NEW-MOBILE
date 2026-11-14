@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 
+import { readEnv } from '@/core/config/env';
+import { resolveMediaUrl } from '@/core/config/media-url';
 import { errorMessage } from '@/core/domain/app-error';
 import { formatDate } from '@/core/domain/date-format';
 import { useTheme } from '@/shared/theme/theme-provider';
@@ -21,6 +24,7 @@ import {
   leaderLevelName,
   primaryRoleName,
 } from '../../domain/labels';
+import { AvatarSheet } from '../components/AvatarSheet';
 import { useMyProfile } from '../use-account-queries';
 
 export interface ProfileScreenProps {
@@ -48,12 +52,18 @@ export function ProfileScreen({
   const profile = query.data;
   const leader = profile?.leader ?? null;
   const name = displayName(profile, username);
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  // Như web: tài khoản gắn huynh trưởng dùng ảnh của hồ sơ huynh trưởng; tài khoản không gắn thì có ảnh riêng.
+  const avatarUri = resolveMediaUrl(
+    readEnv().apiBaseUrl,
+    leader ? leader.imageUrl : profile?.imageUrl,
+  );
 
   return (
     <Screen>
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-          <Avatar name={name} size={64} />
+          <Avatar name={name} size={64} uri={avatarUri} />
           <View style={{ flex: 1, gap: 4 }}>
             <Text variant="heading" numberOfLines={2}>
               {name}
@@ -65,6 +75,21 @@ export function ProfileScreen({
           </View>
         </View>
       </Card>
+
+      {profile && !leader ? (
+        <>
+          <Button
+            label={profile.imageUrl ? 'Đổi ảnh đại diện' : 'Thêm ảnh đại diện'}
+            variant="outline"
+            onPress={() => setAvatarOpen(true)}
+          />
+          <AvatarSheet
+            visible={avatarOpen}
+            currentUri={avatarUri}
+            onClose={() => setAvatarOpen(false)}
+          />
+        </>
+      ) : null}
 
       {query.isPending ? <LoadingState /> : null}
       {query.isError ? <Banner tone="danger" message={errorMessage(query.error)} /> : null}

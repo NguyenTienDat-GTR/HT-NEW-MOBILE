@@ -10,7 +10,7 @@ import type {
   PasswordOtpChallenge,
 } from './entities';
 import type { ProfileChanges } from './profile-edit';
-import type { AccountRepository } from './repository';
+import type { AccountRepository, AvatarFile } from './repository';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -66,6 +66,15 @@ export class ChangePasswordWithToken {
       throw new AppError('validation', 'Mật khẩu nhập lại không khớp');
     }
     await this.repository.changePassword(changeToken, newPassword, confirmPassword);
+  }
+}
+
+/** Đổi ảnh đại diện của tài khoản không gắn huynh trưởng (như web: chỉ thay, không xóa). */
+export class ChangeMyAvatar {
+  constructor(private readonly repository: AccountRepository) {}
+
+  execute(file: AvatarFile): Promise<void> {
+    return this.repository.changeAvatar(file);
   }
 }
 

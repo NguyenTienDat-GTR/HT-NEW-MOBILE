@@ -10,7 +10,16 @@ import type {
 
 import type { ProfileChanges } from './profile-edit';
 
+/** Tệp ảnh đã chọn và cắt sẵn trên máy (đường dẫn cục bộ). */
+export interface AvatarFile {
+  uri: string;
+  name: string;
+  type: string;
+}
+
 export interface AccountRepository {
+  /** Tải ảnh lên (/media, loại ACCOUNT_AVATAR) rồi đặt làm ảnh đại diện (PUT /auth/me/avatar). */
+  changeAvatar(file: AvatarFile): Promise<void>;
   getProfile(): Promise<MyProfile>;
   /** Tự sửa hồ sơ cá nhân (PUT /auth/me/profile); đồng ý xử lý dữ liệu đã được xác nhận ở màn hình. */
   updateMyProfile(changes: ProfileChanges): Promise<void>;

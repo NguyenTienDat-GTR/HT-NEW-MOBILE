@@ -9,6 +9,23 @@ export class AccountRemoteDataSource {
     return this.http.request({ method: 'GET', path: '/auth/me/profile' });
   }
 
+  /** Tải ảnh lên kho ảnh của BE (multipart `file` + `category`). */
+  uploadAvatar(file: { uri: string; name: string; type: string }): Promise<{ assetId: string }> {
+    const body = new FormData();
+    // React Native nhận tệp cục bộ dạng { uri, name, type }.
+    body.append('file', file as unknown as Blob);
+    body.append('category', 'ACCOUNT_AVATAR');
+    return this.http.request({ method: 'POST', path: '/media', body });
+  }
+
+  setAvatar(imageAssetId: string): Promise<unknown> {
+    return this.http.request({
+      method: 'PUT',
+      path: '/auth/me/avatar',
+      body: { imageAssetId, privacyConsent: true },
+    });
+  }
+
   updateProfile(body: Record<string, unknown>): Promise<unknown> {
     // BE bắt buộc cờ đồng ý xử lý dữ liệu khi sửa hồ sơ; người dùng đã tích đồng ý ở màn sửa hồ sơ.
     return this.http.request({

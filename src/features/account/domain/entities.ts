@@ -42,6 +42,8 @@ export interface MyProfile {
   hasLeader: boolean;
   /** Tài khoản có quyền sửa ngày sinh trong hồ sơ của chính mình (BE tính); thiếu = không có quyền. */
   canEditBirthDate: boolean;
+  /** Ảnh đại diện của tài khoản không gắn huynh trưởng (đường dẫn đã ký). */
+  imageUrl: string | null;
   leader: MyLeaderProfile | null;
   rankHistory: RankHistoryEntry[];
   certificates: MyCertificate[];

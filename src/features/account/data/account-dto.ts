@@ -39,6 +39,9 @@ export interface MyProfileDto {
   email?: string | null;
   hasLeader?: boolean | null;
   canEditBirthDate?: boolean | null;
+  /** Ảnh đại diện của tài khoản không gắn huynh trưởng. */
+  imageUrl?: string | null;
+  imageThumbUrl?: string | null;
   leader?: MyLeaderDto | null;
   rankHistory?: RankHistoryDto[] | null;
   certificates?: CertificateDto[] | null;

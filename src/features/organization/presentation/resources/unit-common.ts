@@ -72,7 +72,6 @@ export function contactSection(row: ResourceRow): DetailSection {
   return {
     title: 'Liên hệ',
     fields: [
-      { label: 'Cha tuyên úy', value: text(row, 'chaplain') },
       { label: 'Số điện thoại', value: text(row, 'phoneNumber') },
       { label: 'Email', value: text(row, 'email') },
     ],

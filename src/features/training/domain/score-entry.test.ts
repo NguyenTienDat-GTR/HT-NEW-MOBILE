@@ -6,6 +6,7 @@ import {
   validateFilledScores,
   validateScores,
   type ScoreComponent,
+  canCreateExceptionCertificate,
 } from './score-entry';
 
 const components: ScoreComponent[] = [
@@ -73,6 +74,30 @@ describe('chấm điểm từng cột và điều kiện nhập điểm', () => 
     );
     expect(scoringBlockedReason({ startDate: '2999-01-01', endDate: '2999-12-31' }, {})).toMatch(
       /đang diễn ra/,
+    );
+  });
+});
+
+describe('canCreateExceptionCertificate', () => {
+  const base = {
+    courseResultingLevel: 'LEVEL_1',
+    approvalStatus: 'APPROVED',
+    result: 'UNCOMPLETED',
+    totalScore: 4,
+  };
+  it('cho tạo khi hồ sơ không đạt, khóa có cấp độ và chưa có chứng nhận', () => {
+    expect(canCreateExceptionCertificate(base)).toBe(true);
+    expect(canCreateExceptionCertificate({ ...base, certificateApprovalStatus: 'REJECTED' })).toBe(
+      true,
+    );
+  });
+  it('chặn khi đã đạt, chưa chấm, khóa đã kết thúc hoặc chứng nhận đang xử lý', () => {
+    expect(canCreateExceptionCertificate({ ...base, result: 'COMPLETED' })).toBe(false);
+    expect(canCreateExceptionCertificate({ ...base, totalScore: null })).toBe(false);
+    expect(canCreateExceptionCertificate({ ...base, courseFinished: true })).toBe(false);
+    expect(canCreateExceptionCertificate({ ...base, courseResultingLevel: 'NONE' })).toBe(false);
+    expect(canCreateExceptionCertificate({ ...base, certificateApprovalStatus: 'PENDING' })).toBe(
+      false,
     );
   });
 });

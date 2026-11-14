@@ -8,7 +8,7 @@ import type {
   PasswordOtpChallenge,
 } from '../domain/entities';
 import type { ProfileChanges } from '../domain/profile-edit';
-import type { AccountRepository } from '../domain/repository';
+import type { AccountRepository, AvatarFile } from '../domain/repository';
 
 import { toMyProfile, toPasswordOtp, toPermissionPage } from './account-mapper';
 import type { AccountRemoteDataSource } from './account-remote-data-source';
@@ -18,6 +18,11 @@ export class AccountRepositoryImpl implements AccountRepository {
 
   async getProfile(): Promise<MyProfile> {
     return toMyProfile(await this.remote.profile());
+  }
+
+  async changeAvatar(file: AvatarFile): Promise<void> {
+    const uploaded = await this.remote.uploadAvatar(file);
+    await this.remote.setAvatar(uploaded.assetId);
   }
 
   async updateMyProfile(changes: ProfileChanges): Promise<void> {

@@ -12,6 +12,7 @@ import {
 } from '../domain/training-permissions';
 
 import { ApprovalsScreen } from './ApprovalsScreen';
+import { RegistrationNoteEditor } from './RegistrationNoteEditor';
 import { RegistrationSubmitScreen } from './RegistrationSubmitScreen';
 import { ScoreEntryScreen } from './ScoreEntryScreen';
 import {
@@ -65,6 +66,7 @@ export const registrationsResource: ResourceDefinition = {
     ...unitFilters,
   ],
   card: registrationCard,
+  renderDetailExtra: ({ row, subject }) => <RegistrationNoteEditor row={row} subject={subject} />,
   renderForm: ({ params, subject, onSaved }) => (
     <RegistrationSubmitScreen subject={subject} onSaved={onSaved} presetCourse={params.course} />
   ),
@@ -108,6 +110,7 @@ export const approvalsResource: ResourceDefinition = {
     ...unitFilters,
   ],
   card: registrationCard,
+  renderDetailExtra: ({ row, subject }) => <RegistrationNoteEditor row={row} subject={subject} />,
   renderList: ({ def, subject, params }) => (
     <ApprovalsScreen
       def={def}

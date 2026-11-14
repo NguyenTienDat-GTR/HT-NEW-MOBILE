@@ -1,3 +1,5 @@
+import { Image } from 'expo-image';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useTheme } from '../theme/theme-provider';
@@ -14,9 +16,28 @@ export function initialsOf(name: string): string {
   return ((prev[0] ?? '') + (last[0] ?? '')).toUpperCase();
 }
 
-/** Ảnh đại diện dạng chữ cái đầu. (Ảnh thật cần header Bearer, bổ sung ở đợt sau.) */
-export function Avatar({ name, size = 56 }: { name: string; size?: number }) {
+/** Ảnh đại diện: ảnh thật (URL đã ký, không cần Bearer) nếu có và tải được, không thì chữ cái đầu của tên. */
+export function Avatar({
+  name,
+  size = 56,
+  uri,
+}: {
+  name: string;
+  size?: number;
+  uri?: string | null;
+}) {
   const { colors } = useTheme();
+  const [failed, setFailed] = useState<string | null>(null);
+  if (uri && failed !== uri)
+    return (
+      <Image
+        accessibilityIgnoresInvertColors
+        source={{ uri }}
+        contentFit="cover"
+        onError={() => setFailed(uri)}
+        style={{ width: size, height: size, borderRadius: size / 2 }}
+      />
+    );
   return (
     <View
       accessibilityElementsHidden

@@ -12,6 +12,7 @@ import { isCourseEnded } from '../domain/course-state';
 import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
+import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { Screen } from '@/shared/ui/Screen';
@@ -21,6 +22,7 @@ import { useToast } from '@/shared/ui/Toast';
 
 import {
   buildScoreBody,
+  canCreateExceptionCertificate,
   hasAnyScore,
   previewTotal,
   scoringBlockedReason,
@@ -125,6 +127,7 @@ function ScoreForm({
   const [scoreNote, setScoreNote] = useState(text(row, 'scoreNote'));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [exceptionOpen, setExceptionOpen] = useState(false);
   const [message, setMessage] = useState<{ tone: 'info' | 'danger'; text: string } | null>(null);
 
   const total = previewTotal(components, values);
@@ -136,6 +139,25 @@ function ScoreForm({
   const courseEnded = course ? isCourseEnded(course) || course.finishedAt != null : false;
   const notesEditable = allowed && !courseEnded && course?.status !== false;
   const noteChanged = scoreNote.trim() !== text(row, 'scoreNote').trim();
+
+  const createException = async () => {
+    setSaving(true);
+    try {
+      await gateway.call(
+        'POST',
+        `/training/participations/${encodeURIComponent(text(row, 'id'))}/exception-certificate`,
+        { body: {} },
+      );
+      toast.success('Đã tạo chứng nhận ngoại lệ, chứng nhận chờ duyệt ở tab Duyệt chứng nhận');
+      setExceptionOpen(false);
+      await onSaved();
+    } catch (exception) {
+      toast.error(errorMessage(exception));
+      setExceptionOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const submit = async () => {
     setMessage(null);
@@ -260,6 +282,22 @@ function ScoreForm({
         multiline
         maxLength={1000}
         editable={notesEditable}
+      />
+      {allowed && canCreateExceptionCertificate(row) ? (
+        <Button
+          label="Tạo chứng nhận ngoại lệ"
+          variant="outline"
+          onPress={() => setExceptionOpen(true)}
+        />
+      ) : null}
+      <ConfirmSheet
+        visible={exceptionOpen}
+        title="Tạo chứng nhận ngoại lệ"
+        message={`Tạo chứng nhận ngoại lệ cho ${leaderName(row)}? Hồ sơ không đạt nhưng chứng nhận sẽ chờ người duyệt quyết định (bắt buộc nhập lý do khi duyệt).`}
+        confirmLabel="Tạo chứng nhận"
+        loading={saving}
+        onConfirm={() => void createException()}
+        onCancel={() => setExceptionOpen(false)}
       />
       <TextField
         label="Ghi chú của người chấm"

@@ -25,6 +25,7 @@ import {
   ChangePasswordWithToken,
   GetMyProfile,
   UpdateMyProfile,
+  ChangeMyAvatar,
   ListMyPermissions,
   GetMyPermissionFilterOptions,
   RequestPasswordChangeOtp,
@@ -168,6 +169,7 @@ export function createAppContainer(env: AppEnv = readEnv()): AppContainer {
     account: {
       getMyProfile: new GetMyProfile(accountRepository),
       updateMyProfile: new UpdateMyProfile(accountRepository),
+      changeMyAvatar: new ChangeMyAvatar(accountRepository),
       changeMyEmail: new ChangeMyEmail(accountRepository),
       requestPasswordChangeOtp: new RequestPasswordChangeOtp(accountRepository),
       verifyPasswordChangeOtp: new VerifyPasswordChangeOtp(accountRepository),

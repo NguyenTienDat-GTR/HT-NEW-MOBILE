@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 import type {
+  ChangeMyAvatar,
   ChangeMyEmail,
   ChangePasswordWithToken,
   GetMyProfile,
@@ -15,6 +16,7 @@ import type {
 export interface AccountDependencies {
   getMyProfile: GetMyProfile;
   updateMyProfile: UpdateMyProfile;
+  changeMyAvatar: ChangeMyAvatar;
   changeMyEmail: ChangeMyEmail;
   requestPasswordChangeOtp: RequestPasswordChangeOtp;
   verifyPasswordChangeOtp: VerifyPasswordChangeOtp;

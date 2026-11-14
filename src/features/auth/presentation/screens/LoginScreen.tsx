@@ -26,19 +26,9 @@ export function LoginScreen({ onForgotPassword }: LoginScreenProps) {
   const { control, formState } = vm.form;
 
   return (
-    <Screen
-      footer={
-        <>
-          <Button label="Đăng nhập" onPress={vm.submit} loading={vm.submitting} />
-          <Button
-            label="Chính sách bảo vệ dữ liệu cá nhân"
-            variant="ghost"
-            size="sm"
-            onPress={() => void Linking.openURL(`${vm.siteOrigin}/chinh-sach-bao-mat`)}
-          />
-        </>
-      }
-    >
+    // Không dùng thanh nút dính đáy: thanh đó bị bàn phím đẩy lên che ô nhập. Các nút nằm cuối nội dung cuộn, bàn phím mở
+    // thì cuộn tới ô đang gõ, nút không nổi lên trên bàn phím.
+    <Screen>
       <BrandHeader />
       <View style={{ gap: 4 }}>
         <Text variant="title">Đăng nhập</Text>
@@ -109,12 +99,19 @@ export function LoginScreen({ onForgotPassword }: LoginScreenProps) {
 
       {vm.formError ? <Banner tone="danger" message={vm.formError} /> : null}
 
+      <Button label="Đăng nhập" onPress={vm.submit} loading={vm.submitting} />
       <Button
         label="Quên mật khẩu?"
         variant="ghost"
         size="sm"
         fullWidth={false}
         onPress={onForgotPassword}
+      />
+      <Button
+        label="Chính sách bảo vệ dữ liệu cá nhân"
+        variant="ghost"
+        size="sm"
+        onPress={() => void Linking.openURL(`${vm.siteOrigin}/chinh-sach-bao-mat`)}
       />
     </Screen>
   );

@@ -1,6 +1,7 @@
 import {
   notificationDetail,
   notificationGroupOf,
+  appPathOf,
   notificationPath,
   unreadBadgeLabel,
 } from './notification-rules';
@@ -74,5 +75,21 @@ describe('unreadBadgeLabel', () => {
     expect(unreadBadgeLabel(undefined)).toBeNull();
     expect(unreadBadgeLabel(7)).toBe('7');
     expect(unreadBadgeLabel(100)).toBe('99+');
+  });
+});
+
+describe('appPathOf', () => {
+  it('đổi đường dẫn web sang màn của app', () => {
+    expect(appPathOf('/certificates')).toBe('/res/certificates');
+    expect(appPathOf('/training/courses/K%201')).toBe('/res/courses/K%201');
+    expect(appPathOf('/training/courses')).toBe('/res/courses');
+    expect(appPathOf('/training/cross-deanery?tab=invitations')).toBe(
+      '/res/cross-deanery?tab=invitations',
+    );
+    expect(appPathOf('/system/role-permissions')).toBe('/res/role-permissions');
+    expect(appPathOf('/leaders/profiles')).toBe('/res/leaders');
+    expect(appPathOf('/organization/parishes?detail=p1')).toBe('/res/parishes/p1');
+    expect(appPathOf('/organization/deaneries')).toBe('/res/deaneries');
+    expect(appPathOf('/my-permissions')).toBe('/my-permissions');
   });
 });

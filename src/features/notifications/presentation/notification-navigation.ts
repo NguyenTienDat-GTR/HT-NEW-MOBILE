@@ -1,18 +1,13 @@
 import type { NotificationItem } from '../domain/entities';
-import { notificationPath } from '../domain/notification-rules';
+import { NOTIFICATIONS_PATH, appPathOf, notificationPath } from '../domain/notification-rules';
 
 /**
- * Các màn hình ĐÃ có trên mobile. Thông báo trỏ tới màn chưa có thì chỉ hiện chi tiết, không có nút mở.
- * Mỗi đợt làm thêm màn hình thì thêm tiền tố vào đây (mở rộng, không sửa logic).
+ * Đường dẫn mở được trên app cho một thông báo: màn tương ứng của web (đã đổi sang đường dẫn của app); thông báo không
+ * có màn riêng (đích là hộp thư) thì null, chỉ hiện chi tiết. BE vẫn kiểm tra quyền khi vào màn, như web.
  */
-const AVAILABLE_PATH_PREFIXES: readonly string[] = ['/my-permissions'];
-
-/** Đường dẫn mở được cho thông báo, hoặc null nếu màn đích chưa có trên mobile. */
 export function openablePath(
   item: Pick<NotificationItem, 'eventType' | 'courseCode' | 'senderUnitType' | 'senderUnitId'>,
 ): string | null {
   const path = notificationPath(item);
-  return AVAILABLE_PATH_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
-    ? path
-    : null;
+  return path === NOTIFICATIONS_PATH ? null : appPathOf(path);
 }

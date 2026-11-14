@@ -48,6 +48,8 @@ export const crossDeaneryResource: ResourceDefinition = {
   title: 'Gửi liên giáo hạt',
   singular: 'Yêu cầu',
   endpoint: '/training/cross-deanery/requests',
-  renderList: ({ subject }) =>
-    canReadCrossDeanery(subject) ? <CrossDeaneryScreen subject={subject} /> : null,
+  renderList: ({ subject, params }) =>
+    canReadCrossDeanery(subject) ? (
+      <CrossDeaneryScreen subject={subject} initialTab={params.tab} />
+    ) : null,
 };

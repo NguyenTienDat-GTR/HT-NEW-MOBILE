@@ -62,7 +62,7 @@ Xem [CLAUDE.md](CLAUDE.md) (Clean Architecture theo tính năng, màn CRUD chạ
 Các bước dưới đây tôi không làm thay được vì cần đăng nhập và thông tin riêng:
 
 1. **Expo/EAS**: `npx eas-cli@latest login`, rồi `npx eas-cli@latest init` để gắn dự án (ghi `extra.eas.projectId` vào `app.json`, commit lại).
-2. **Push Android**: tạo dự án Firebase (miễn phí), tải `google-services.json`, nạp khóa FCM V1 vào EAS (`eas credentials`). Đặt tệp qua biến tệp của EAS rồi khai báo `android.googleServicesFile` trong `app.json`; không commit tệp vào repo.
+2. **Push Android**: tạo dự án Firebase (miễn phí), tải `google-services.json`, nạp khóa FCM V1 vào EAS (`eas credentials`). Tệp `google-services.json` không commit vào repo: trên EAS đưa qua biến tệp `GOOGLE_SERVICES_JSON` (`eas env:create --type file`), `app.config.js` tự gắn vào `android.googleServicesFile`; ở máy local đặt tệp ở thư mục gốc.
 3. **Push iOS và build iOS**: cần Apple Developer (99 USD/năm).
 4. **Biểu tượng thông báo Android**: nên thêm biểu tượng đơn sắc nền trong suốt (cấu hình `icon` của plugin `expo-notifications`); hiện dùng biểu tượng app.
 5. **Google Play**: tạo ứng dụng trên Play Console trước khi `eas submit`; hồ sơ nộp đang đặt đường `internal`.

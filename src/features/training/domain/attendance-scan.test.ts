@@ -34,7 +34,7 @@ describe('mã QR điểm danh', () => {
       kind: 'attendance',
       token: 'HTATT2.K1.P1.sig',
     });
-    expect(classifyScan('https://clead.io.vn/certificates/CN-001')).toEqual({
+    expect(classifyScan('https://example.vn/certificates/CN-001')).toEqual({
       kind: 'certificate',
       code: 'CN-001',
     });

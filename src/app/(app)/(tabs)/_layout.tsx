@@ -76,7 +76,8 @@ export default function TabsLayout() {
           name="scan"
           options={{
             title: 'Quét mã QR',
-            href: showScan ? undefined : null,
+            // Ẩn theo quyền bằng `hidden` (không dùng `href`: expo-router cấm dùng `href` cùng `tabBarButton`).
+            hidden: !showScan,
             // Nút nổi ở giữa; chọn thì mở màn quét và bật camera.
             tabBarButton: (props) => <ScanTabButton {...props} />,
           }}

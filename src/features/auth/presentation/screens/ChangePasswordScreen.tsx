@@ -44,18 +44,8 @@ export function ChangePasswordScreen() {
   });
 
   return (
-    <Screen
-      footer={
-        <>
-          <Button
-            label="Đổi mật khẩu"
-            onPress={() => void submit()}
-            loading={formState.isSubmitting}
-          />
-          <Button label="Đăng xuất" variant="ghost" size="sm" onPress={() => void logout()} />
-        </>
-      }
-    >
+    // Không dùng thanh nút dính đáy: thanh đó bị bàn phím đẩy lên che ô nhập. Nút nằm cuối nội dung cuộn.
+    <Screen>
       <Text variant="title">Đổi mật khẩu</Text>
       <Banner
         tone="warning"
@@ -117,6 +107,9 @@ export function ChangePasswordScreen() {
       />
 
       {formError ? <Banner tone="danger" message={formError} /> : null}
+
+      <Button label="Đổi mật khẩu" onPress={() => void submit()} loading={formState.isSubmitting} />
+      <Button label="Đăng xuất" variant="ghost" size="sm" onPress={() => void logout()} />
     </Screen>
   );
 }

@@ -10,12 +10,14 @@ import { Button } from '@/shared/ui/Button';
 import { DateField } from '@/shared/ui/DateField';
 import { SelectField } from '@/shared/ui/SelectField';
 import { Text } from '@/shared/ui/Text';
+import { FilterChips } from '@/shared/ui/FilterChips';
 import { TextField } from '@/shared/ui/TextField';
 
 import {
   buildApproveBody,
   buildBulkApproveBody,
   buildBulkRejectBody,
+  missingReasonCount,
   buildRejectBody,
   decisionNeeds,
   DEFAULT_SIGNER,
@@ -34,6 +36,10 @@ export interface DecisionResult {
 }
 
 const encode = encodeURIComponent;
+const REASON_SCOPES = [
+  { value: 'shared', label: 'Lý do chung' },
+  { value: 'individual', label: 'Lý do riêng từng hồ sơ' },
+] as const;
 const SINGLE_OK: DecisionResult = { successCount: 1, failedCount: 0, failures: [] };
 
 /**
@@ -55,6 +61,8 @@ export function CertificateDecisionSheet({
   const [note, setNote] = useState('');
   const [signer, setSigner] = useState<SignerDraft>(DEFAULT_SIGNER);
   const [approvalDate, setApprovalDate] = useState('');
+  const [scope, setScope] = useState<'shared' | 'individual'>('shared');
+  const [reasons, setReasons] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seen, setSeen] = useState<typeof action>(null);
@@ -63,22 +71,35 @@ export function CertificateDecisionSheet({
     setNote('');
     setSigner(DEFAULT_SIGNER);
     setApprovalDate('');
+    setScope('shared');
+    setReasons({});
     setError(null);
   }
 
   const rejecting = action === 'reject';
   const needs = decisionNeeds(rows);
   const input = { signer, note, approvalDate, needs };
-  const problem = rejecting ? validateReject(note) : validateApprove(input);
   const ids = rows.map((row) => text(row, 'certificateCode'));
   const many = rows.length > 1;
+  // Từ chối nhiều chứng nhận: lý do chung hoặc lý do riêng từng hồ sơ (như web).
+  const individual = rejecting && many && scope === 'individual';
+  const missing = individual ? missingReasonCount(ids, reasons) : 0;
+  const problem = rejecting
+    ? individual
+      ? missing > 0
+        ? `Còn ${missing} hồ sơ chưa nhập lý do.`
+        : null
+      : validateReject(note)
+    : validateApprove(input);
 
   const submit = async () => {
     setBusy(true);
     setError(null);
     try {
       if (many) {
-        const body = rejecting ? buildBulkRejectBody(ids, note) : buildBulkApproveBody(ids, input);
+        const body = rejecting
+          ? buildBulkRejectBody(ids, note, individual ? reasons : undefined)
+          : buildBulkApproveBody(ids, input);
         const result = await gateway.call<DecisionResult>('POST', '/certificates/bulk-approval', {
           body,
         });
@@ -169,22 +190,42 @@ export function CertificateDecisionSheet({
           ) : null}
         </>
       ) : null}
-      <TextField
-        label={
-          rejecting
-            ? many
-              ? 'Lý do từ chối (áp dụng cho tất cả, bắt buộc)'
-              : 'Lý do từ chối (bắt buộc)'
-            : needs.approveReason
-              ? 'Lý do duyệt ngoại lệ (bắt buộc)'
-              : 'Ghi chú duyệt (không bắt buộc)'
-        }
-        value={note}
-        onChangeText={setNote}
-        multiline
-        maxLength={1000}
-      />
-      {problem && (rejecting ? note.length > 0 : true) ? (
+      {rejecting && many ? (
+        <FilterChips options={REASON_SCOPES} value={scope} onChange={(value) => setScope(value)} />
+      ) : null}
+      {individual ? (
+        rows.map((row, index) => {
+          const code = text(row, 'certificateCode');
+          return (
+            <TextField
+              key={code}
+              label={`${index + 1}. ${text(row, 'leaderFullName') || code}`}
+              value={reasons[code] ?? ''}
+              onChangeText={(value) => setReasons((current) => ({ ...current, [code]: value }))}
+              placeholder="Lý do từ chối hồ sơ này (bắt buộc)"
+              multiline
+              maxLength={1000}
+            />
+          );
+        })
+      ) : (
+        <TextField
+          label={
+            rejecting
+              ? many
+                ? 'Lý do từ chối (áp dụng cho tất cả, bắt buộc)'
+                : 'Lý do từ chối (bắt buộc)'
+              : needs.approveReason
+                ? 'Lý do duyệt ngoại lệ (bắt buộc)'
+                : 'Ghi chú duyệt (không bắt buộc)'
+          }
+          value={note}
+          onChangeText={setNote}
+          multiline
+          maxLength={1000}
+        />
+      )}
+      {problem && (rejecting ? note.length > 0 || individual : true) ? (
         <Text variant="secondary" tone="muted">
           {problem}
         </Text>

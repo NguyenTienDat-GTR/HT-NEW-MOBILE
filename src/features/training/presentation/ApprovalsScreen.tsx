@@ -40,6 +40,11 @@ const STATUS_OPTIONS = [
   { value: 'REJECTED', label: 'Từ chối' },
 ] as const;
 
+const REASON_SCOPES = [
+  { value: 'shared', label: 'Lý do chung' },
+  { value: 'individual', label: 'Lý do riêng từng hồ sơ' },
+] as const;
+
 interface BulkResult {
   successCount: number;
   failedCount: number;
@@ -349,6 +354,8 @@ function DecisionSheet({
   const gateway = useResourceGateway();
   const [note, setNote] = useState('');
   const [levels, setLevels] = useState<Record<string, string>>({});
+  const [scope, setScope] = useState<'shared' | 'individual'>('shared');
+  const [reasons, setReasons] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seen, setSeen] = useState<typeof action>(null);
@@ -356,6 +363,8 @@ function DecisionSheet({
     setSeen(action);
     setNote('');
     setLevels({});
+    setScope('shared');
+    setReasons({});
     setError(null);
   }
 
@@ -369,7 +378,12 @@ function DecisionSheet({
     action === 'approve' ? rows.filter((row) => isException(row) && isPending(row)) : [];
   const missingLevel = needLevel.some((row) => !levels[text(row, 'id')]);
   const rejecting = action === 'reject';
-  const noteMissing = rejecting && note.trim() === '';
+  // Từ chối nhiều hồ sơ: lý do chung hoặc lý do riêng từng hồ sơ (như web).
+  const individual = rejecting && rows.length > 1 && scope === 'individual';
+  const missingReasons = individual
+    ? rows.filter((row) => !(reasons[text(row, 'id')] ?? '').trim()).length
+    : 0;
+  const noteMissing = rejecting && (individual ? missingReasons > 0 : note.trim() === '');
 
   const submit = async () => {
     setBusy(true);
@@ -382,7 +396,12 @@ function DecisionSheet({
         body: {
           ids: rows.map((row) => text(row, 'id')),
           approved: !rejecting,
-          review: note.trim() || undefined,
+          review: individual ? undefined : note.trim() || undefined,
+          reviews: individual
+            ? Object.fromEntries(
+                rows.map((row) => [text(row, 'id'), (reasons[text(row, 'id')] ?? '').trim()]),
+              )
+            : undefined,
           achievedLevels: Object.keys(achieved).length ? achieved : undefined,
         },
       });
@@ -412,13 +431,44 @@ function DecisionSheet({
         </>
       }
     >
-      <TextField
-        label={rejecting ? 'Lý do từ chối (bắt buộc)' : 'Nhận xét (không bắt buộc)'}
-        value={note}
-        onChangeText={setNote}
-        multiline
-        maxLength={1000}
-      />
+      {rejecting && rows.length > 1 ? (
+        <FilterChips options={REASON_SCOPES} value={scope} onChange={(value) => setScope(value)} />
+      ) : null}
+      {individual ? (
+        rows.map((row, index) => (
+          <TextField
+            key={text(row, 'id')}
+            label={`${index + 1}. ${text(row, 'leaderFullName')}`}
+            value={reasons[text(row, 'id')] ?? ''}
+            onChangeText={(value) =>
+              setReasons((current) => ({ ...current, [text(row, 'id')]: value }))
+            }
+            placeholder="Lý do từ chối hồ sơ này (bắt buộc)"
+            multiline
+            maxLength={1000}
+          />
+        ))
+      ) : (
+        <TextField
+          label={
+            rejecting
+              ? rows.length > 1
+                ? 'Lý do chung cho tất cả hồ sơ (bắt buộc)'
+                : 'Lý do từ chối (bắt buộc)'
+              : 'Nhận xét (không bắt buộc)'
+          }
+          value={note}
+          onChangeText={setNote}
+          multiline
+          maxLength={1000}
+        />
+      )}
+      {individual && missingReasons > 0 ? (
+        <Text
+          variant="secondary"
+          tone="danger"
+        >{`Còn ${missingReasons} hồ sơ chưa nhập lý do`}</Text>
+      ) : null}
       {needLevel.length > 0 ? (
         <Text variant="secondary" tone="muted">
           Hồ sơ ngoại lệ cần chọn cấp độ đạt được sau khi hoàn thành khóa.

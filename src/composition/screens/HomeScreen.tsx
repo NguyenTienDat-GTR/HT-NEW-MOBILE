@@ -2,6 +2,7 @@ import { useAuthStore } from '@/features/auth/presentation/auth-store';
 import { useLogout } from '@/features/auth/presentation/use-session';
 import { DashboardScreen } from '@/features/analytics/presentation/screens/DashboardScreen';
 import { hasPermissionPrefix } from '@/core/domain/permissions';
+import { RecentNotifications } from '@/features/notifications/presentation/components/RecentNotifications';
 import { dashboardHref } from '../dashboard-links';
 import { BrandHeader } from '@/shared/ui/BrandHeader';
 import { Banner } from '@/shared/ui/Banner';
@@ -38,6 +39,7 @@ export function HomeScreen({ onOpenPath, onOpenAnalysis }: HomeScreenProps) {
         resolveHref={(key, href) => dashboardHref(key, href, user)}
         onOpenPath={onOpenPath}
         onOpenAnalysis={onOpenAnalysis}
+        extra={<RecentNotifications onOpenAll={() => onOpenPath('/notifications')} />}
       />
     );
   }

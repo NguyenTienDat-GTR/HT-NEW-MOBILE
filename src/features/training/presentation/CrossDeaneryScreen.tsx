@@ -46,7 +46,14 @@ const KEY = ['cross-deanery'] as const;
  * Gửi liên giáo hạt: giáo xứ gửi huynh trưởng sang khóa của giáo hạt khác (cùng giáo phận); giáo hạt nhà đồng ý cho
  * giáo xứ của mình gửi (tab Khóa mời) rồi giáo hạt tổ chức duyệt từng yêu cầu (tab Yêu cầu).
  */
-export function CrossDeaneryScreen({ subject }: { subject: PermissionSubject | null }) {
+export function CrossDeaneryScreen({
+  subject,
+  initialTab,
+}: {
+  subject: PermissionSubject | null;
+  /** Tab mở sẵn (vd. từ thông báo "khóa mở liên giáo hạt" mở thẳng tab Khóa mời). */
+  initialTab?: string;
+}) {
   const canSend = canSubmitCrossDeanery(subject);
   const canDecide = canApproveCrossDeanery(subject);
   const tabs: { value: Tab; label: string }[] = [
@@ -54,7 +61,9 @@ export function CrossDeaneryScreen({ subject }: { subject: PermissionSubject | n
     ...(canSend ? [{ value: 'send' as const, label: 'Gửi mới' }] : []),
     ...(canDecide ? [{ value: 'invitations' as const, label: 'Khóa mời' }] : []),
   ];
-  const [tab, setTab] = useState<Tab>('requests');
+  const [tab, setTab] = useState<Tab>(
+    tabs.some((item) => item.value === initialTab) ? (initialTab as Tab) : 'requests',
+  );
 
   return (
     <Screen>

@@ -119,6 +119,9 @@ export function managedUnitTypes(
 
 // Khóa
 export const canCreateCourse = (u: Maybe) => hasPermissionPrefix(u, 'training.course.create.');
+/** Khóa quá khứ: quyền riêng do super-admin cấp (web: training.course.create_past.*). */
+export const canCreatePastCourse = (u: Maybe) =>
+  hasPermissionPrefix(u, 'training.course.create_past.');
 
 /** Hồ sơ còn chờ duyệt và do chính tài khoản này gửi: được thu hồi/sửa ghi chú. */
 export function isOwnPendingSubmission(

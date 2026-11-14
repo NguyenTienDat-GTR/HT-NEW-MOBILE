@@ -67,40 +67,8 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
   const stepIndex = FORGOT_STEPS.indexOf(state.step);
 
   return (
-    <Screen
-      footer={
-        <>
-          {state.step === 'username' ? (
-            <Button label="Gửi mã OTP" onPress={submitUsername} loading={flow.pending} />
-          ) : null}
-          {state.step === 'otp' ? (
-            <>
-              <Button label="Xác nhận mã" onPress={submitOtp} loading={flow.pending} />
-              <Button
-                label={
-                  flow.secondsToResend > 0
-                    ? `Gửi lại mã sau ${flow.secondsToResend}s`
-                    : 'Gửi lại mã'
-                }
-                variant="outline"
-                size="sm"
-                disabled={flow.secondsToResend > 0 || flow.pending}
-                onPress={() => void flow.resendOtp()}
-              />
-            </>
-          ) : null}
-          {state.step === 'password' ? (
-            <Button label="Đặt lại mật khẩu" onPress={submitPassword} loading={flow.pending} />
-          ) : null}
-          <Button
-            label={state.step === 'username' ? 'Quay lại đăng nhập' : 'Làm lại từ đầu'}
-            variant="ghost"
-            size="sm"
-            onPress={state.step === 'username' ? onBackToLogin : flow.backToUsername}
-          />
-        </>
-      }
-    >
+    // Không dùng thanh nút dính đáy: thanh đó bị bàn phím đẩy lên che ô nhập. Nút nằm cuối nội dung cuộn.
+    <Screen>
       <Text variant="title">Quên mật khẩu</Text>
       <StepIndicator labels={STEP_LABELS} current={stepIndex} />
 
@@ -173,6 +141,33 @@ export function ForgotPasswordScreen({ onBackToLogin }: ForgotPasswordScreenProp
       ) : null}
 
       {flow.error ? <Banner tone="danger" message={flow.error} /> : null}
+
+      {state.step === 'username' ? (
+        <Button label="Gửi mã OTP" onPress={submitUsername} loading={flow.pending} />
+      ) : null}
+      {state.step === 'otp' ? (
+        <>
+          <Button label="Xác nhận mã" onPress={submitOtp} loading={flow.pending} />
+          <Button
+            label={
+              flow.secondsToResend > 0 ? `Gửi lại mã sau ${flow.secondsToResend}s` : 'Gửi lại mã'
+            }
+            variant="outline"
+            size="sm"
+            disabled={flow.secondsToResend > 0 || flow.pending}
+            onPress={() => void flow.resendOtp()}
+          />
+        </>
+      ) : null}
+      {state.step === 'password' ? (
+        <Button label="Đặt lại mật khẩu" onPress={submitPassword} loading={flow.pending} />
+      ) : null}
+      <Button
+        label={state.step === 'username' ? 'Quay lại đăng nhập' : 'Làm lại từ đầu'}
+        variant="ghost"
+        size="sm"
+        onPress={state.step === 'username' ? onBackToLogin : flow.backToUsername}
+      />
     </Screen>
   );
 }

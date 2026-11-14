@@ -2,6 +2,7 @@ import {
   buildApproveBody,
   buildBulkApproveBody,
   buildBulkRejectBody,
+  missingReasonCount,
   buildRejectBody,
   decisionNeeds,
   DEFAULT_SIGNER,
@@ -113,5 +114,20 @@ describe('duyệt chứng nhận', () => {
 
   it('todayIso theo giờ máy, đủ hai chữ số', () => {
     expect(todayIso(new Date(2027, 0, 5, 23, 59))).toBe('2027-01-05');
+  });
+});
+
+describe('lý do từ chối riêng từng hồ sơ', () => {
+  it('đếm mã chưa có lý do', () => {
+    expect(missingReasonCount(['A', 'B'], { A: ' x ', B: ' ' })).toBe(1);
+    expect(missingReasonCount(['A'], { A: 'x' })).toBe(0);
+  });
+
+  it('thân từ chối dùng lý do riêng, không có lý do chung', () => {
+    expect(buildBulkRejectBody(['A', 'B'], '', { A: ' a ', B: 'b' })).toEqual({
+      ids: ['A', 'B'],
+      approved: false,
+      reasons: { A: 'a', B: 'b' },
+    });
   });
 });

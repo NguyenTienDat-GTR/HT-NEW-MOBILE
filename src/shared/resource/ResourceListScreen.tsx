@@ -37,6 +37,8 @@ export interface ResourceListScreenProps {
   subject: PermissionSubject | null;
   onOpen: (row: ResourceRow) => void;
   onCreate: () => void;
+  /** Mở màn của nút tạo thứ hai (`def.extraCreate`). */
+  onExtraCreate?: (path: string) => void;
   /** Bộ lọc áp sẵn khi mở (vd. từ chi tiết khóa sang danh sách đăng ký của khóa đó). */
   initialFilters?: Record<string, string>;
   /** Trạng thái hoạt động áp sẵn khi mở (vd. từ tổng quan: chỉ đơn vị ngưng hoạt động). */
@@ -52,6 +54,7 @@ export function ResourceListScreen({
   subject,
   onOpen,
   onCreate,
+  onExtraCreate,
   initialFilters,
   initialStatus,
 }: ResourceListScreenProps) {
@@ -71,7 +74,9 @@ export function ResourceListScreen({
   );
   const total = query.data?.pages[0]?.totalElements ?? 0;
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
-  const canCreate = def.canCreate(subject) && Boolean(def.form);
+  const canCreateMain = def.canCreate(subject) && Boolean(def.form);
+  const extra = def.extraCreate && def.extraCreate.can(subject) ? def.extraCreate : null;
+  const canCreate = canCreateMain || Boolean(extra && onExtraCreate);
 
   const renderItem = useCallback(
     ({ item }: { item: ResourceRow }) => {
@@ -206,10 +211,19 @@ export function ResourceListScreen({
             },
           ]}
         >
-          <Button
-            label={def.createLabel ?? `Thêm ${def.singular.toLowerCase()}`}
-            onPress={onCreate}
-          />
+          {canCreateMain ? (
+            <Button
+              label={def.createLabel ?? `Thêm ${def.singular.toLowerCase()}`}
+              onPress={onCreate}
+            />
+          ) : null}
+          {extra && onExtraCreate ? (
+            <Button
+              label={extra.label}
+              variant={canCreateMain ? 'outline' : 'primary'}
+              onPress={() => onExtraCreate(extra.path)}
+            />
+          ) : null}
         </View>
       ) : null}
 

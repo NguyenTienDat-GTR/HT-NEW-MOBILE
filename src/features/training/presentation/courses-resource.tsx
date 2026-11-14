@@ -30,6 +30,7 @@ import {
 import {
   canActOnCourse,
   canCreateCourse,
+  canCreatePastCourse,
   managedUnitTypes,
   type TrainingSubject,
 } from '../domain/training-permissions';
@@ -514,6 +515,11 @@ export const coursesResource: ResourceDefinition = {
         `/training/courses/${encodeURIComponent(text(row, 'courseCode'))}/toggle-status`,
         { body: { confirmationText: input.confirmText, targetStatus: !flag(row, 'status') } },
       ),
+  },
+  extraCreate: {
+    label: 'Tạo khóa quá khứ',
+    path: '/res/past-courses/form',
+    can: (subject) => canCreatePastCourse(subject),
   },
   canCreate: (subject) => canCreateCourse(subject),
   canUpdate: (subject, row) => canActOnCourse(subject, row, 'update') && !isCourseEnded(row),

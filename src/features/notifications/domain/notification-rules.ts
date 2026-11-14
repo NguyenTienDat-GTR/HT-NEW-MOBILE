@@ -92,6 +92,40 @@ export function notificationPath(
   return NOTIFICATIONS_PATH;
 }
 
+/** Đường dẫn của web (đầu vào) -> màn tương ứng trên app; tiền tố nào không có thì dùng nguyên. */
+const WEB_TO_APP: readonly (readonly [prefix: string, app: string])[] = [
+  ['/certificates', '/res/certificates'],
+  ['/training/cross-deanery', '/res/cross-deanery'],
+  ['/training/courses', '/res/courses'],
+  ['/system/roles', '/res/roles'],
+  ['/system/permissions', '/res/permissions'],
+  ['/system/account-roles', '/res/account-roles'],
+  ['/system/role-permissions', '/res/role-permissions'],
+  ['/system/account-permissions', '/res/account-permissions'],
+  ['/leaders/profiles', '/res/leaders'],
+  ['/organization/dioceses', '/res/dioceses'],
+  ['/organization/deaneries', '/res/deaneries'],
+  ['/organization/parishes', '/res/parishes'],
+];
+
+/**
+ * Đổi đường dẫn web của thông báo sang đường dẫn màn hình trên app. `?detail=<mã>` của web (mở ngăn chi tiết đơn vị)
+ * thành màn chi tiết `/res/<tài nguyên>/<mã>`; `?tab=` giữ nguyên để màn đích chọn tab.
+ */
+export function appPathOf(webPath: string): string {
+  const [pathname = '', query = ''] = webPath.split('?');
+  const found = WEB_TO_APP.find(
+    ([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+  if (!found) return webPath;
+  const [prefix, app] = found;
+  const rest = pathname.slice(prefix.length);
+  const params = new URLSearchParams(query);
+  const detail = params.get('detail');
+  if (detail) return `${app}/${encodeURIComponent(detail)}`;
+  return `${app}${rest}${query ? `?${query}` : ''}`;
+}
+
 export interface NotificationDetailItem {
   label: string;
   detail?: string;

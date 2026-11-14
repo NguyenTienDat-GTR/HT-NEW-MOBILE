@@ -63,6 +63,8 @@ export interface DashboardScreenProps {
   resolveHref: (key: string, href: string) => string | null;
   /** Mở màn Phân tích chi tiết. */
   onOpenAnalysis: () => void;
+  /** Khối do nơi ghép màn hình cấp (vd. "Thông báo mới" của tính năng thông báo); chỉ hiện khi không phải quản trị hệ thống. */
+  extra?: React.ReactNode;
 }
 
 /**
@@ -74,6 +76,7 @@ export function DashboardScreen({
   onOpenPath,
   resolveHref,
   onOpenAnalysis,
+  extra,
 }: DashboardScreenProps) {
   const { colors } = useTheme();
   const [filters, setFilters] = useState<AnalyticsFilterState>(DEFAULT_FILTERS);
@@ -357,6 +360,8 @@ export function DashboardScreen({
               )}
             </>
           )}
+
+          {!systemWide && extra ? extra : null}
 
           {!systemWide ? (
             <Button label="Xem phân tích chi tiết" variant="outline" onPress={onOpenAnalysis} />

@@ -216,6 +216,13 @@ export interface ResourceDefinition {
   };
   form?: FormDefinition;
   toggle?: ToggleDefinition;
+  /** Nút tạo thứ hai ở danh sách (vd. "Tạo khóa quá khứ"), mở màn khác; hiện theo quyền. */
+  extraCreate?: {
+    label: string;
+    /** Đường dẫn màn tạo (vd. /res/past-courses/form). */
+    path: string;
+    can: (subject: PermissionSubject | null) => boolean;
+  };
   canCreate: (subject: PermissionSubject | null) => boolean;
   canUpdate: (subject: PermissionSubject | null, row: ResourceRow) => boolean;
   canToggle: (subject: PermissionSubject | null, row: ResourceRow) => boolean;

@@ -53,6 +53,12 @@
     "experiments": {
       "typedRoutes": true
     },
-    "description": "Ứng dụng di động quản lý huynh trưởng C-LEAD."
+    "description": "Ứng dụng di động quản lý huynh trưởng C-LEAD.",
+    "extra": {
+      "eas": {
+        "projectId": "9b9b8858-596a-4b9f-b974-4fcc35319386"
+      }
+    },
+    "owner": "dat107001dev"
   }
 }

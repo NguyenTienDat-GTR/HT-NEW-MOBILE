@@ -40,6 +40,11 @@ export interface ColorTokens {
     infoFg: string;
     neutralBg: string;
     neutralFg: string;
+    /** Nhãn cấp quản lý: giáo phận (tím) và giáo hạt (xanh trời), như web. */
+    violetBg: string;
+    violetFg: string;
+    skyBg: string;
+    skyFg: string;
   };
   status: { active: string; inactive: string; leave: string; suspended: string };
   level: {
@@ -99,6 +104,10 @@ export const lightColors: ColorTokens = {
     infoFg: '#1d4ed8',
     neutralBg: '#f1f5f9',
     neutralFg: '#334155',
+    violetBg: '#ede9fe',
+    violetFg: '#5b21b6',
+    skyBg: '#e0f2fe',
+    skyFg: '#075985',
   },
   status: { active: '#059669', inactive: '#64748b', leave: '#d97706', suspended: '#ba1a1a' },
   level: {

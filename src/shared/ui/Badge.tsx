@@ -4,7 +4,7 @@ import { useTheme } from '../theme/theme-provider';
 
 import { Text } from './Text';
 
-export type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
+export type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'violet' | 'sky';
 
 /** Nhãn trạng thái. Luôn có chữ (không chỉ màu). Nền/chữ lấy từ token badge của FE. */
 export function Badge({ label, tone = 'neutral' }: { label: string; tone?: BadgeTone }) {
@@ -15,6 +15,8 @@ export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Badge
     warning: [badge.warningBg, badge.warningFg],
     danger: [badge.dangerBg, badge.dangerFg],
     info: [badge.infoBg, badge.infoFg],
+    violet: [badge.violetBg, badge.violetFg],
+    sky: [badge.skyBg, badge.skyFg],
   };
   const [background, foreground] = palette[tone];
   return (

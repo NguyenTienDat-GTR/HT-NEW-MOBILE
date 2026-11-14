@@ -12,7 +12,9 @@ import {
   managedUnitTypes,
   type TrainingSubject,
 } from '../domain/training-permissions';
-import { unitLabel } from '../domain/training-labels';
+import { managementLevelBadge, unitLabel } from '../domain/training-labels';
+
+const badgeOf = <T>(badge: T | null): T[] => (badge ? [badge] : []);
 
 const UNIT_OPTIONS = [
   { value: 'DIOCESE', label: 'Giáo phận' },
@@ -61,7 +63,10 @@ export const courseTypesResource: ResourceDefinition = {
     lines: [
       text(row, 'prerequisiteTypeName') ? `Tiên quyết: ${text(row, 'prerequisiteTypeName')}` : '',
     ],
-    badges: [statusBadge(flag(row, 'status'))],
+    badges: [
+      ...badgeOf(managementLevelBadge(row.managementUnitType)),
+      statusBadge(flag(row, 'status')),
+    ],
   }),
   detailTitle: (row) => text(row, 'typeName'),
   detailBadges: (row) => [

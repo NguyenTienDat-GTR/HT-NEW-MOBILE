@@ -1,0 +1,33 @@
+name: EAS Update (preview)
+
+# Mỗi lần có code mới trên main, đẩy bản JS mới lên kênh "preview": app bản preview tự tải về và dùng ở lần mở kế tiếp.
+# Chỉ cập nhật phần JS/ảnh. Đổi thư viện native thì runtimeVersion (fingerprint) đổi, cần build lại bản preview.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: eas-update-preview
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Đẩy bản cập nhật lên kênh preview
+        run: eas update --branch preview --environment preview --message "${{ github.sha }}" --non-interactive

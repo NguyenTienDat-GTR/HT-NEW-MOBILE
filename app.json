@@ -66,6 +66,14 @@
         "projectId": "9b9b8858-596a-4b9f-b974-4fcc35319386"
       }
     },
-    "owner": "dat107001dev"
+    "owner": "dat107001dev",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/9b9b8858-596a-4b9f-b974-4fcc35319386",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    }
   }
 }

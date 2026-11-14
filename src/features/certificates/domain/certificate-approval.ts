@@ -79,8 +79,32 @@ export function buildApproveBody(input: ApproveInput) {
 
 export const buildRejectBody = (note: string) => ({ reason: note.trim() });
 
-/** Thân từ chối hàng loạt: lý do chung được chép cho từng mã như web. */
-export function buildBulkRejectBody(ids: readonly string[], note: string) {
+/**
+ * Số mã chưa có lý do riêng (chế độ "Lý do riêng từng hồ sơ"); 0 nghĩa là đủ.
+ */
+export function missingReasonCount(
+  ids: readonly string[],
+  reasons: Readonly<Record<string, string>>,
+): number {
+  return ids.filter((id) => !(reasons[id] ?? '').trim()).length;
+}
+
+/**
+ * Thân từ chối hàng loạt: lý do chung được chép cho từng mã; hoặc lý do riêng từng hồ sơ nếu truyền `individual` (như
+ * hai chế độ của hộp thoại duyệt trên web).
+ */
+export function buildBulkRejectBody(
+  ids: readonly string[],
+  note: string,
+  individual?: Readonly<Record<string, string>>,
+) {
+  if (individual) {
+    return {
+      ids,
+      approved: false,
+      reasons: Object.fromEntries(ids.map((id) => [id, (individual[id] ?? '').trim()])),
+    };
+  }
   const reason = note.trim();
   return {
     ids,

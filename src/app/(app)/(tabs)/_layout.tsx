@@ -8,8 +8,7 @@ import { useUnreadCount } from '@/features/notifications/presentation/use-notifi
 import { useTheme } from '@/shared/theme/theme-provider';
 import { fontFamily } from '@/shared/theme/tokens';
 import { ScreenInsets } from '@/shared/ui/screen-insets';
-import { BellIcon, GraduationCapIcon, HouseIcon, ListIcon } from '@/shared/ui/icons';
-import { ScanTabButton } from '@/shared/ui/ScanTabButton';
+import { BellIcon, GraduationCapIcon, HouseIcon, ListIcon, QrCodeIcon } from '@/shared/ui/icons';
 
 type IconComponent = typeof HouseIcon;
 
@@ -76,10 +75,11 @@ export default function TabsLayout() {
           name="scan"
           options={{
             title: 'Quét mã QR',
-            // Ẩn theo quyền bằng `hidden` (không dùng `href`: expo-router cấm dùng `href` cùng `tabBarButton`).
+            tabBarLabel: 'Quét QR',
+            tabBarAccessibilityLabel: 'Quét mã QR',
+            // Ẩn theo quyền; chọn tab thì mở màn quét và bật camera.
             hidden: !showScan,
-            // Nút nổi ở giữa; chọn thì mở màn quét và bật camera.
-            tabBarButton: (props) => <ScanTabButton {...props} />,
+            tabBarIcon: ({ color, focused }) => tabIcon(QrCodeIcon, color, focused),
           }}
         />
         <Tabs.Screen

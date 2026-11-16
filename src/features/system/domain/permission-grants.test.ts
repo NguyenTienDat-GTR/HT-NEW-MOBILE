@@ -194,6 +194,8 @@ describe('phân quyền vai trò theo đơn vị', () => {
     expect(unitScopeEnabled('deanery', 'ADMIN_DEANERY')).toBe(false);
     expect(unitScopeEnabled('none', 'ADMIN_PARISH')).toBe(false);
     expect(unitScopeEnabled('diocese', '')).toBe(false);
+    expect(unitScopeEnabled('super', 'SUPER_ADMIN')).toBe(false);
+    expect(unitScopeEnabled('super', 'ADMIN_DIOCESE')).toBe(true);
   });
 
   it('giới hạn quyền được chọn theo phạm vi của người thao tác', () => {

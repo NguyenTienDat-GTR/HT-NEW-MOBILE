@@ -63,7 +63,8 @@ export const unitActorOf = (u: Maybe): UnitActor =>
 /** Vai trò admin cấp dưới mà admin giáo phận / giáo hạt được chỉnh quyền riêng theo đơn vị. */
 export function unitScopeEnabled(actor: UnitActor, roleCode: string): boolean {
   if (roleCode === '') return false;
-  if (actor === 'super') return true;
+  // SUPER_ADMIN không thuộc giáo phận nào nên không có ngoại lệ theo giáo phận.
+  if (actor === 'super') return roleCode !== 'SUPER_ADMIN';
   if (actor === 'diocese') return roleCode === 'ADMIN_DEANERY' || roleCode === 'ADMIN_PARISH';
   if (actor === 'deanery') return roleCode === 'ADMIN_PARISH';
   return false;

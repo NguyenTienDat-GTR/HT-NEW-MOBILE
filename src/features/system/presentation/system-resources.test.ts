@@ -191,3 +191,14 @@ describe('phân quyền', () => {
     ).toBe(false);
   });
 });
+
+describe('bộ lọc phân quyền vai trò', () => {
+  it('có bộ lọc tình trạng quyền còn / hết hiệu lực gửi khóa validity', () => {
+    const filter = rolePermissionsResource.filters?.find((item) => item.key === 'validity');
+    expect(filter?.label).toBe('Tình trạng quyền');
+    expect(filter?.options).toEqual([
+      { value: 'ACTIVE', label: 'Còn hiệu lực' },
+      { value: 'INACTIVE', label: 'Hết hiệu lực' },
+    ]);
+  });
+});

@@ -126,6 +126,15 @@ export const rolePermissionsResource: ResourceDefinition = {
       },
     } satisfies ListFilterDef,
     {
+      key: 'validity',
+      label: 'Tình trạng quyền',
+      // Còn hiệu lực, hoặc hết hiệu lực (đã thu hồi, hết hạn hoặc quyền bị vô hiệu hóa); BE tính tình trạng.
+      options: [
+        { value: 'ACTIVE', label: 'Còn hiệu lực' },
+        { value: 'INACTIVE', label: 'Hết hiệu lực' },
+      ],
+    } satisfies ListFilterDef,
+    {
       key: 'dioceseId',
       label: 'Giáo phận áp dụng',
       visible: (subject) => unitActorOf(subject) === 'super',

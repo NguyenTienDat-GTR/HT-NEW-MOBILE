@@ -74,3 +74,5 @@ Build thử nội bộ (APK): `npx eas-cli@latest build --profile preview --plat
 
 - Token chỉ lưu bằng `expo-secure-store` (Keychain/Keystore), không dùng AsyncStorage; đăng xuất xóa token và hủy đăng ký thiết bị nhận push.
 - Không đưa bí mật vào repo (`.env*.local`, `google-services.json`, khóa ký). Địa chỉ trong `EXPO_PUBLIC_*` bị nhúng vào app (không phải bí mật) nhưng vẫn không ghi vào repo.
+
+**Cập nhật OTA tự động (`.github/workflows/eas-update.yml`)**: mỗi lần push vào `main`, workflow đẩy bản JS mới lên kênh `preview`. Runtime Android (fingerprint) phụ thuộc nội dung `google-services.json`, nên workflow dựng lại tệp này từ **secret GitHub `GOOGLE_SERVICES_JSON_BASE64`** (nội dung tệp mã hóa base64 một dòng) để runtime khớp bản build; thiếu secret thì workflow chỉ cảnh báo và bản Android sẽ không tới được máy. Đặt/cập nhật secret từ thư mục `MOBILE`: `base64 -w0 google-services.json | gh secret set GOOGLE_SERVICES_JSON_BASE64 --repo NguyenTienDat-GTR/HT-NEW-MOBILE`. Đổi tệp `google-services.json` (hoặc thư viện native) thì cần build lại bản preview.

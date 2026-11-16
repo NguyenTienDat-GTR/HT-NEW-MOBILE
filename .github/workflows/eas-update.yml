@@ -29,5 +29,18 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      # runtimeVersion (fingerprint) của Android phụ thuộc cả nội dung google-services.json. Máy CI không có tệp này (không nằm trong repo)
+      # nên runtime lệch bản build Android và máy không nhận được bản cập nhật. Dựng lại tệp từ secret GOOGLE_SERVICES_JSON_BASE64
+      # (base64 -w0 google-services.json) để runtime khớp đúng từng byte.
+      - name: Dựng google-services.json cho runtime Android
+        env:
+          GOOGLE_SERVICES_JSON_BASE64: ${{ secrets.GOOGLE_SERVICES_JSON_BASE64 }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON_BASE64" ]; then
+            echo "::warning::Thiếu secret GOOGLE_SERVICES_JSON_BASE64: bản cập nhật Android sẽ lệch runtime với bản build và máy Android không nhận được. Xem README (mục Phát hành)."
+          else
+            printf '%s' "$GOOGLE_SERVICES_JSON_BASE64" | base64 -d > google-services.json
+          fi
+
       - name: Đẩy bản cập nhật lên kênh preview
         run: eas update --branch preview --environment preview --message "${{ github.sha }}" --non-interactive

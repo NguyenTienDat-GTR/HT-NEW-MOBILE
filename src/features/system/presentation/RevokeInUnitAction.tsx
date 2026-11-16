@@ -12,17 +12,16 @@ import { Banner } from '@/shared/ui/Banner';
 import { BottomSheet } from '@/shared/ui/BottomSheet';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
-import { SelectField } from '@/shared/ui/SelectField';
+import { MultiSelectField } from '@/shared/ui/MultiSelectField';
 import { Text } from '@/shared/ui/Text';
 import { useToast } from '@/shared/ui/Toast';
 
 import {
-  compactUnitIds,
+  compactUnitIdLists,
   isFinalGrant,
   unitActorOf,
   unitPermissionAllowed,
   unitScopeEnabled,
-  type UnitIds,
 } from '../domain/permission-grants';
 import type { SystemSubject } from '../domain/system-permissions';
 
@@ -66,9 +65,9 @@ function UnitRevokeCard({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ tone: 'info' | 'danger'; text: string } | null>(null);
-  const [dioceseId, setDioceseId] = useState('');
-  const [deaneryId, setDeaneryId] = useState('');
-  const [parishId, setParishId] = useState('');
+  const [dioceseIds, setDioceseIds] = useState<string[]>([]);
+  const [deaneryIds, setDeaneryIds] = useState<string[]>([]);
+  const [parishIds, setParishIds] = useState<string[]>([]);
 
   const dioceses = useQuery({
     queryKey: ['unit-revoke', 'dioceses'],
@@ -82,29 +81,29 @@ function UnitRevokeCard({
   });
   const showParish =
     roleCode === 'ADMIN_PARISH' &&
-    (actor === 'deanery' || (actor === 'diocese' && deaneryId !== ''));
+    (actor === 'deanery' || (actor === 'diocese' && deaneryIds.length > 0));
   const parishes = useQuery({
-    queryKey: ['unit-revoke', 'parishes', deaneryId],
+    queryKey: ['unit-revoke', 'parishes', deaneryIds],
     enabled: open && showParish,
     queryFn: () =>
       loadOptions(
         gateway,
         '/parishes',
         { value: 'id', label: 'name' },
-        { filters: deaneryId ? { 'deanery.id': deaneryId } : {} },
+        { filters: deaneryIds.length ? { 'deanery.id': deaneryIds } : {} },
       ),
   });
 
   // Superadmin bắt buộc chọn giáo phận (nếu không sẽ thành thu hồi mặc định chung ở màn khác).
-  const canSubmit = actor !== 'super' || dioceseId !== '';
+  const canSubmit = actor !== 'super' || dioceseIds.length > 0;
   const permission = text(row, 'permissionName') || permissionCode;
   const where =
-    parishId !== ''
-      ? 'giáo xứ đã chọn'
-      : deaneryId !== ''
-        ? 'giáo hạt đã chọn'
+    parishIds.length > 0
+      ? 'các giáo xứ đã chọn'
+      : deaneryIds.length > 0
+        ? 'các giáo hạt đã chọn'
         : actor === 'super'
-          ? 'giáo phận đã chọn'
+          ? 'các giáo phận đã chọn'
           : actor === 'diocese'
             ? 'cả giáo phận của bạn'
             : 'cả giáo hạt của bạn';
@@ -112,10 +111,10 @@ function UnitRevokeCard({
   const submit = async () => {
     setBusy(true);
     setMessage(null);
-    const units: UnitIds = compactUnitIds({
-      dioceseId: actor === 'super' ? dioceseId : '',
-      deaneryId: actor === 'diocese' ? deaneryId : '',
-      parishId,
+    const units = compactUnitIdLists({
+      dioceseIds: actor === 'super' ? dioceseIds : [],
+      deaneryIds: actor === 'diocese' ? deaneryIds : [],
+      parishIds,
     });
     try {
       await gateway.call('POST', '/system/role-permissions/revoke', {
@@ -161,35 +160,34 @@ function UnitRevokeCard({
       >
         <Text variant="secondary">{`Quyền "${permission}" của vai trò sẽ bị thu hồi tại ${where}. Để lấy lại, phân quyền lại ở đúng nơi đó.`}</Text>
         {actor === 'super' ? (
-          <SelectField
+          <MultiSelectField
             label="Giáo phận"
-            value={dioceseId}
+            value={dioceseIds}
             options={dioceses.data ?? []}
-            allowClear={false}
-            placeholder={dioceses.isPending ? 'Đang tải…' : 'Chọn giáo phận'}
-            onChange={setDioceseId}
+            placeholder={dioceses.isPending ? 'Đang tải…' : 'Chọn một hoặc nhiều giáo phận'}
+            onChange={setDioceseIds}
             required
           />
         ) : null}
         {actor === 'diocese' ? (
-          <SelectField
+          <MultiSelectField
             label="Giáo hạt"
-            value={deaneryId}
+            value={deaneryIds}
             options={deaneries.data ?? []}
             placeholder="Cả giáo phận của bạn"
             onChange={(next) => {
-              setDeaneryId(next);
-              setParishId('');
+              setDeaneryIds(next);
+              setParishIds([]);
             }}
           />
         ) : null}
         {showParish ? (
-          <SelectField
+          <MultiSelectField
             label="Giáo xứ"
-            value={parishId}
+            value={parishIds}
             options={parishes.data ?? []}
             placeholder={actor === 'deanery' ? 'Cả giáo hạt của bạn' : 'Cả giáo hạt đã chọn'}
-            onChange={setParishId}
+            onChange={setParishIds}
           />
         ) : null}
       </BottomSheet>

@@ -10,6 +10,8 @@ import { CollapsibleSection } from '@/shared/ui/CollapsibleSection';
 import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 
+import { parseMulti } from '@/shared/resource/form-logic';
+
 import {
   filterPermissions,
   groupPermissions,
@@ -31,7 +33,10 @@ export type PickerSource = {
   label: string;
   emptyText: string;
   needTargetText: string;
-  /** Tên tham số API -> tên trường của form chứa giá trị (vd. dioceseId -> unitDioceseId); giá trị rỗng thì không gửi. */
+  /**
+   * Tên tham số API -> tên trường của form chứa giá trị (vd. dioceseIds -> unitDioceseIds); giá trị rỗng thì không gửi.
+   * Ô chọn nhiều lưu mảng JSON, được gửi dạng id cách nhau bằng dấu phẩy.
+   */
   extraParams?: Readonly<Record<string, string>>;
 };
 
@@ -49,7 +54,8 @@ export function PermissionPicker({
   const target = String(values[source.field] ?? '');
   const extra: Record<string, string> = {};
   for (const [param, field] of Object.entries(source.extraParams ?? {})) {
-    const extraValue = String(values[field] ?? '').trim();
+    const raw = String(values[field] ?? '').trim();
+    const extraValue = raw.startsWith('[') ? parseMulti(raw).join(',') : raw;
     if (extraValue) extra[param] = extraValue;
   }
   const extraKey = JSON.stringify(extra);

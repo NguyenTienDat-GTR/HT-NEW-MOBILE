@@ -232,3 +232,20 @@ describe('phân quyền vai trò theo đơn vị', () => {
     ).toBe(true);
   });
 });
+
+describe('chọn nhiều nơi áp dụng', () => {
+  it('thân gửi mang danh sách đơn vị đã bỏ trống và trùng', () => {
+    expect(
+      buildRoleGrantBody({
+        roleCode: 'ADMIN_PARISH',
+        permissionCodes: ['a'],
+        expiresAt: '',
+        deaneryIds: ['g1', ' g2 ', 'g1', ''],
+        parishIds: [],
+      }),
+    ).toMatchObject({ roleCode: 'ADMIN_PARISH', deaneryIds: ['g1', 'g2'] });
+    expect(
+      buildRoleGrantBody({ roleCode: 'R', permissionCodes: ['a'], expiresAt: '', dioceseIds: [] }),
+    ).not.toHaveProperty('dioceseIds');
+  });
+});

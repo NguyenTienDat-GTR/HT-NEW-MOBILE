@@ -10,6 +10,8 @@ import type {
   SelectOption,
 } from '@/shared/resource/types';
 
+import { parseMulti } from '@/shared/resource/form-logic';
+
 import { vnDate } from '../domain/account-role-body';
 import {
   buildAccountGrantBody,
@@ -97,7 +99,7 @@ const ROLE_PICKER: PickerSource = {
   label: 'Quyền chưa gán',
   emptyText: 'Vai trò này đã có đủ các quyền bạn được phân.',
   needTargetText: 'Chọn vai trò trước để chỉ hiện các quyền chưa gán cho vai trò đó.',
-  extraParams: { dioceseId: 'unitDioceseId', deaneryId: 'unitDeaneryId', parishId: 'unitParishId' },
+  extraParams: { dioceseIds: 'unitDioceseIds', deaneryIds: 'unitDeaneryIds', parishIds: 'unitParishIds' },
 };
 
 const actorOfValues = (values: Record<string, string | boolean>): UnitActor =>
@@ -233,7 +235,7 @@ export const rolePermissionsResource: ResourceDefinition = {
         kind: 'select',
         required: true,
         visible: onlyCreate,
-        resets: ['permissions', 'unitDioceseId', 'unitDeaneryId', 'unitParishId'],
+        resets: ['permissions', 'unitDioceseIds', 'unitDeaneryIds', 'unitParishIds'],
         options: {
           // BE đã lọc vai trò cấp cao hơn và ngoài phân cấp của người phân quyền.
           load: async ({ gateway }) => {
@@ -250,11 +252,11 @@ export const rolePermissionsResource: ResourceDefinition = {
         },
       },
       {
-        name: 'unitDioceseId',
+        name: 'unitDioceseIds',
         label: 'Giáo phận áp dụng',
-        kind: 'select',
+        kind: 'multiselect',
         placeholder: 'Tất cả giáo phận (mặc định chung)',
-        hint: 'Để trống: thay đổi áp dụng cho mọi giáo phận. Chọn một giáo phận: chỉ giáo phận đó bị ảnh hưởng.',
+        hint: 'Để trống: thay đổi áp dụng cho mọi giáo phận. Chọn một hoặc nhiều giáo phận: chỉ các giáo phận đó bị ảnh hưởng.',
         excludeFromBody: true,
         resets: ['permissions'],
         visible: (values, mode) =>
@@ -264,13 +266,13 @@ export const rolePermissionsResource: ResourceDefinition = {
         },
       },
       {
-        name: 'unitDeaneryId',
+        name: 'unitDeaneryIds',
         label: 'Giáo hạt áp dụng',
-        kind: 'select',
+        kind: 'multiselect',
         placeholder: 'Cả giáo phận của bạn',
-        hint: 'Để trống: áp dụng cho cả giáo phận của bạn. Chọn một giáo hạt: chỉ giáo hạt đó bị ảnh hưởng.',
+        hint: 'Để trống: áp dụng cho cả giáo phận của bạn. Chọn một hoặc nhiều giáo hạt: chỉ các giáo hạt đó bị ảnh hưởng.',
         excludeFromBody: true,
-        resets: ['permissions', 'unitParishId'],
+        resets: ['permissions', 'unitParishIds'],
         visible: (values, mode) =>
           mode === 'create' && actorOfValues(values) === 'diocese' && unitEnabled(values),
         options: {
@@ -278,11 +280,11 @@ export const rolePermissionsResource: ResourceDefinition = {
         },
       },
       {
-        name: 'unitParishId',
+        name: 'unitParishIds',
         label: 'Giáo xứ áp dụng',
-        kind: 'select',
+        kind: 'multiselect',
         placeholder: 'Cả giáo hạt',
-        hint: 'Để trống: áp dụng cho cả giáo hạt. Chọn một giáo xứ: chỉ giáo xứ đó bị ảnh hưởng.',
+        hint: 'Để trống: áp dụng cho cả giáo hạt. Chọn một hoặc nhiều giáo xứ: chỉ các giáo xứ đó bị ảnh hưởng.',
         excludeFromBody: true,
         resets: ['permissions'],
         visible: (values, mode) => {
@@ -292,18 +294,18 @@ export const rolePermissionsResource: ResourceDefinition = {
           return (
             actor === 'diocese' &&
             values.roleCode === 'ADMIN_PARISH' &&
-            String(values.unitDeaneryId ?? '') !== ''
+            parseMulti(values.unitDeaneryIds).length > 0
           );
         },
         options: {
-          dependsOn: ['unitDeaneryId'],
+          dependsOn: ['unitDeaneryIds'],
           load: ({ gateway, values }) => {
-            const deanery = String(values.unitDeaneryId ?? '');
+            const deaneries = parseMulti(values.unitDeaneryIds);
             return loadOptions(
               gateway,
               '/parishes',
               { value: 'id', label: 'name' },
-              { filters: deanery ? { 'deanery.id': deanery } : {} },
+              { filters: deaneries.length ? { 'deanery.id': deaneries } : {} },
             );
           },
         },
@@ -336,9 +338,9 @@ export const rolePermissionsResource: ResourceDefinition = {
     initialValues: (row, subject) => ({
       unitActor: unitActorOf(subject),
       roleCode: '',
-      unitDioceseId: '',
-      unitDeaneryId: '',
-      unitParishId: '',
+      unitDioceseIds: '',
+      unitDeaneryIds: '',
+      unitParishIds: '',
       permissions: '',
       roleView: row ? text(row, 'roleName') : '',
       permissionView: row ? text(row, 'permissionName') : '',
@@ -350,9 +352,9 @@ export const rolePermissionsResource: ResourceDefinition = {
             roleCode: String(values.roleCode ?? ''),
             permissionCodes: parseSelection(String(values.permissions ?? '')),
             expiresAt: String(values.expiresAt ?? ''),
-            dioceseId: unitEnabled(values) ? String(values.unitDioceseId ?? '') : '',
-            deaneryId: unitEnabled(values) ? String(values.unitDeaneryId ?? '') : '',
-            parishId: unitEnabled(values) ? String(values.unitParishId ?? '') : '',
+            dioceseIds: unitEnabled(values) ? parseMulti(values.unitDioceseIds) : [],
+            deaneryIds: unitEnabled(values) ? parseMulti(values.unitDeaneryIds) : [],
+            parishIds: unitEnabled(values) ? parseMulti(values.unitParishIds) : [],
           })
         : buildRoleGrantUpdateBody(String(values.expiresAt ?? '')),
     submit: ({ gateway, mode, row, body }) =>

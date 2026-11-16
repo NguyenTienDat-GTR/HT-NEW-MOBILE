@@ -83,6 +83,23 @@ export interface UnitIds {
   parishId?: string;
 }
 
+/** Nhiều nơi áp dụng cùng lúc (ô chọn nhiều): mỗi cấp là một danh sách id. */
+export interface UnitIdLists {
+  dioceseIds?: readonly string[];
+  deaneryIds?: readonly string[];
+  parishIds?: readonly string[];
+}
+
+/** Chỉ giữ các danh sách id không rỗng (bỏ giá trị rỗng và trùng). */
+export function compactUnitIdLists(input: UnitIdLists): { dioceseIds?: string[]; deaneryIds?: string[]; parishIds?: string[] } {
+  const clean = (ids?: readonly string[]) => Array.from(new Set((ids ?? []).map((id) => id.trim()).filter(Boolean)));
+  const out: { dioceseIds?: string[]; deaneryIds?: string[]; parishIds?: string[] } = {};
+  if (clean(input.dioceseIds).length) out.dioceseIds = clean(input.dioceseIds);
+  if (clean(input.deaneryIds).length) out.deaneryIds = clean(input.deaneryIds);
+  if (clean(input.parishIds).length) out.parishIds = clean(input.parishIds);
+  return out;
+}
+
 /** Chỉ giữ các id đơn vị không rỗng (để bỏ trống = áp dụng cho cả đơn vị của người thao tác / mặc định chung). */
 export function compactUnitIds(input: UnitIds): UnitIds {
   const out: UnitIds = {};
@@ -237,12 +254,14 @@ export const buildRoleGrantBody = (
     roleCode: string;
     permissionCodes: readonly string[];
     expiresAt: string;
-  } & UnitIds,
+  } & UnitIds &
+    UnitIdLists,
 ) => ({
   roleCode: input.roleCode.trim(),
   permissionCodes: [...input.permissionCodes],
   expiresAt: endOfDayIso(input.expiresAt),
   ...compactUnitIds(input),
+  ...compactUnitIdLists(input),
 });
 
 /** POST /system/account-permissions/bulk (lý do bắt buộc). */

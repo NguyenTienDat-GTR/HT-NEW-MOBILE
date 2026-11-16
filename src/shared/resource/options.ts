@@ -10,7 +10,7 @@ export async function loadOptions(
   gateway: ResourceGateway,
   endpoint: string,
   map: { value: string; label: string | ((row: ResourceRow) => string) },
-  extra: { filters?: Record<string, string>; status?: boolean } = {},
+  extra: { filters?: Record<string, string | readonly string[]>; status?: boolean } = {},
 ): Promise<SelectOption[]> {
   const page = await gateway.list(endpoint, {
     page: 0,

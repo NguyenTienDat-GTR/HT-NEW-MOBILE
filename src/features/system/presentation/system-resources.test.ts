@@ -138,6 +138,12 @@ describe('phân quyền', () => {
   const accountPerm = accountPermissionsResource.form!;
   const picked = stringifySelection(['a', 'b']);
 
+  it('vai trò: mọi ô của form đều nằm trong một phần (ô không thuộc phần nào sẽ không hiện)', () => {
+    const inSections = new Set(rolePerm.sections.flatMap((section) => section.fields));
+    const orphans = rolePerm.fields.map((field) => field.name).filter((name) => !inSections.has(name));
+    expect(orphans).toEqual([]);
+  });
+
   it('vai trò: tạo gửi nhiều quyền một lần, sửa chỉ gửi hạn', () => {
     expect(
       rolePerm.toBody(

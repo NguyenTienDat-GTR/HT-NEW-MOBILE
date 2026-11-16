@@ -202,3 +202,17 @@ describe('bộ lọc phân quyền vai trò', () => {
     ]);
   });
 });
+
+describe('bộ lọc trạng thái', () => {
+  it('Quyền hạn có bộ lọc đang hoạt động / tạm ngưng', () => {
+    expect(permissionsResource.statusFilter).toBe(true);
+  });
+
+  it('Phân quyền tài khoản có bộ lọc tình trạng quyền gửi khóa validity', () => {
+    const filter = accountPermissionsResource.filters?.find((item) => item.key === 'validity');
+    expect(filter?.options).toEqual([
+      { value: 'ACTIVE', label: 'Còn hiệu lực' },
+      { value: 'INACTIVE', label: 'Hết hiệu lực' },
+    ]);
+  });
+});

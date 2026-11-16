@@ -20,6 +20,7 @@ export const permissionsResource: ResourceDefinition = {
   singular: 'Quyền',
   endpoint: '/system/permissions',
   idField: 'permissionCode',
+  statusFilter: true,
   searchFields: [
     'permissionCode',
     'permissionName',

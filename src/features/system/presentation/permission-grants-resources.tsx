@@ -407,6 +407,14 @@ export const accountPermissionsResource: ResourceDefinition = {
         },
       },
     } satisfies ListFilterDef,
+    {
+      key: 'validity',
+      label: 'Tình trạng quyền',
+      options: [
+        { value: 'ACTIVE', label: 'Còn hiệu lực' },
+        { value: 'INACTIVE', label: 'Hết hiệu lực' },
+      ],
+    } satisfies ListFilterDef,
     ...taxonomyFilters('permission.'),
   ],
   card: (row) => ({

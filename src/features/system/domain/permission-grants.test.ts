@@ -7,13 +7,18 @@ import {
   canEditRolePermissionRow,
   canRevokeAccountPermissionRow,
   canRevokeRolePermissionRow,
+  entryTypeLabel,
   filterPermissions,
   groupPermissions,
   parseSelection,
   revocationReasonText,
+  rowUnitIds,
   stringifySelection,
   toggleCode,
   toggleGroup,
+  unitActorOf,
+  unitPermissionAllowed,
+  unitScopeEnabled,
   validityLabel,
   type PermissionItem,
 } from './permission-grants';
@@ -172,5 +177,77 @@ describe('thân gửi', () => {
       reason: 'x',
       expiresAt: undefined,
     });
+  });
+});
+
+describe('phân quyền vai trò theo đơn vị', () => {
+  const subject = (roles: string[]) => ({ roles, permissions: [] });
+
+  it('xác định cấp người thao tác và vai trò được chỉnh riêng theo đơn vị', () => {
+    expect(unitActorOf(subject(['SUPER_ADMIN']))).toBe('super');
+    expect(unitActorOf(subject(['ADMIN_DIOCESE']))).toBe('diocese');
+    expect(unitActorOf(subject(['ADMIN_DEANERY']))).toBe('deanery');
+    expect(unitActorOf(subject(['ADMIN_PARISH']))).toBe('none');
+    expect(unitScopeEnabled('diocese', 'ADMIN_DEANERY')).toBe(true);
+    expect(unitScopeEnabled('diocese', 'ADMIN_DIOCESE')).toBe(false);
+    expect(unitScopeEnabled('deanery', 'ADMIN_PARISH')).toBe(true);
+    expect(unitScopeEnabled('deanery', 'ADMIN_DEANERY')).toBe(false);
+    expect(unitScopeEnabled('none', 'ADMIN_PARISH')).toBe(false);
+    expect(unitScopeEnabled('diocese', '')).toBe(false);
+    expect(unitScopeEnabled('super', 'SUPER_ADMIN')).toBe(false);
+    expect(unitScopeEnabled('super', 'ADMIN_DIOCESE')).toBe(true);
+  });
+
+  it('giới hạn quyền được chọn theo phạm vi của người thao tác', () => {
+    expect(unitPermissionAllowed('diocese', 'a.b.read.parish')).toBe(true);
+    expect(unitPermissionAllowed('diocese', 'a.b.read.diocese')).toBe(false);
+    expect(unitPermissionAllowed('deanery', 'a.b.read.deanery')).toBe(false);
+    expect(unitPermissionAllowed('deanery', 'a.b.read.parish')).toBe(true);
+    expect(unitPermissionAllowed('super', 'a.b.read.all')).toBe(true);
+  });
+
+  it('thân gửi chỉ kèm đơn vị không rỗng và thu hồi dòng cấp riêng gửi đúng đơn vị của dòng', () => {
+    expect(
+      buildRoleGrantBody({
+        roleCode: 'ADMIN_PARISH',
+        permissionCodes: ['a'],
+        expiresAt: '',
+        deaneryId: 'g1',
+        parishId: '',
+      }),
+    ).toMatchObject({ roleCode: 'ADMIN_PARISH', deaneryId: 'g1' });
+    expect(
+      buildRoleGrantBody({ roleCode: 'R', permissionCodes: ['a'], expiresAt: '', dioceseId: '' }),
+    ).not.toHaveProperty('dioceseId');
+    expect(rowUnitIds({ entryType: 'DEFAULT', dioceseId: 'd' })).toEqual({});
+    expect(rowUnitIds({ entryType: 'UNIT_GRANT', scopeLevel: 'DEANERY', deaneryId: 'g1' })).toEqual({
+      deaneryId: 'g1',
+    });
+    expect(entryTypeLabel('UNIT_EXCLUDE')).toBe('Thu hồi riêng cho đơn vị');
+  });
+
+  it('cho sửa hạn quyền cấp riêng của vai trò hệ thống', () => {
+    const admin = { roles: ['ADMIN_DIOCESE'], permissions: ['system.role_permission.assign.diocese'] };
+    expect(canEditRolePermissionRow(admin, { roleCode: 'ADMIN_PARISH', validity: 'ACTIVE' })).toBe(false);
+    expect(
+      canEditRolePermissionRow(admin, { roleCode: 'ADMIN_PARISH', validity: 'ACTIVE', entryType: 'UNIT_GRANT' }),
+    ).toBe(true);
+  });
+});
+
+describe('chọn nhiều nơi áp dụng', () => {
+  it('thân gửi mang danh sách đơn vị đã bỏ trống và trùng', () => {
+    expect(
+      buildRoleGrantBody({
+        roleCode: 'ADMIN_PARISH',
+        permissionCodes: ['a'],
+        expiresAt: '',
+        deaneryIds: ['g1', ' g2 ', 'g1', ''],
+        parishIds: [],
+      }),
+    ).toMatchObject({ roleCode: 'ADMIN_PARISH', deaneryIds: ['g1', 'g2'] });
+    expect(
+      buildRoleGrantBody({ roleCode: 'R', permissionCodes: ['a'], expiresAt: '', dioceseIds: [] }),
+    ).not.toHaveProperty('dioceseIds');
   });
 });

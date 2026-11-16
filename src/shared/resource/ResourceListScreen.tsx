@@ -74,6 +74,7 @@ export function ResourceListScreen({
   );
   const total = query.data?.pages[0]?.totalElements ?? 0;
   const activeFilterCount = Object.values(filters).filter(Boolean).length;
+  const visibleFilters = (def.filters ?? []).filter((filter) => !filter.visible || filter.visible(subject));
   const canCreateMain = def.canCreate(subject) && Boolean(def.form);
   const extra = def.extraCreate && def.extraCreate.can(subject) ? def.extraCreate : null;
   const canCreate = canCreateMain || Boolean(extra && onExtraCreate);
@@ -137,7 +138,7 @@ export function ResourceListScreen({
         >
           {query.isPending ? '' : `${fmtNumber(total)} kết quả`}
         </Text>
-        {def.filters?.length ? (
+        {visibleFilters.length ? (
           <Button
             label={activeFilterCount > 0 ? `Bộ lọc (${activeFilterCount})` : 'Bộ lọc'}
             variant="outline"
@@ -229,6 +230,7 @@ export function ResourceListScreen({
 
       <FilterSheet
         def={def}
+        filterDefs={visibleFilters}
         visible={sheetOpen}
         filters={filters}
         onClose={() => setSheetOpen(false)}
@@ -269,12 +271,14 @@ function FilterSelect({
 
 function FilterSheet({
   def,
+  filterDefs,
   visible,
   filters,
   onClose,
   onApply,
 }: {
   def: ResourceDefinition;
+  filterDefs: readonly ListFilterDef[];
   visible: boolean;
   filters: Record<string, string>;
   onClose: () => void;
@@ -291,7 +295,7 @@ function FilterSheet({
     setDraft((current) => {
       const next = { ...current, [key]: value };
       // Bộ lọc phụ thuộc vào bộ lọc vừa đổi thì bị xóa (đổi giáo hạt thì bỏ giáo xứ).
-      for (const filter of def.filters ?? [])
+      for (const filter of filterDefs)
         if (filter.dependsOn?.includes(key)) next[filter.key] = '';
       return next;
     });
@@ -308,7 +312,7 @@ function FilterSheet({
         </>
       }
     >
-      {(def.filters ?? []).map((filter) => (
+      {filterDefs.map((filter) => (
         <FilterSelect key={filter.key} def={def} filter={filter} values={draft} onChange={change} />
       ))}
     </BottomSheet>

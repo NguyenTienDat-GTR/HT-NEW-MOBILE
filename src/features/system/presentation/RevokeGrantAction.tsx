@@ -14,6 +14,8 @@ import { ConfirmSheet } from '@/shared/ui/ConfirmSheet';
 import { Text } from '@/shared/ui/Text';
 import { useToast } from '@/shared/ui/Toast';
 
+import { rowUnitIds } from '../domain/permission-grants';
+
 /**
  * Thu hồi một quyền đã phân (cho vai trò hoặc tài khoản). Thu hồi là vĩnh viễn: quyền đã thu hồi không bật lại được,
  * chỉ phân quyền mới. `visible` do luật hiện nút của domain quyết định.
@@ -47,6 +49,7 @@ export function RevokeGrantAction({
         body: {
           [target.param]: text(row, target.param),
           permissionCodes: [text(row, 'permissionCode')],
+          ...(target.param === 'roleCode' ? rowUnitIds(row) : {}),
         },
       });
       setMessage({ tone: 'info', text: 'Đã thu hồi quyền.' });
@@ -75,7 +78,13 @@ export function RevokeGrantAction({
       <ConfirmSheet
         visible={asking}
         title="Thu hồi quyền"
-        message={`Quyền "${permission}" của ${target.subject} sẽ bị thu hồi. Thu hồi là vĩnh viễn: muốn có lại quyền này phải phân quyền mới.`}
+        message={
+          target.param === 'roleCode' && row.entryType === 'UNIT_GRANT'
+            ? `Quyền "${permission}" cấp riêng cho ${target.subject} chỉ tại ${text(row, 'scopeName')} sẽ bị thu hồi; các nơi khác không bị ảnh hưởng. Muốn có lại quyền này phải phân quyền mới.`
+            : target.param === 'roleCode'
+              ? `Quyền "${permission}" của ${target.subject} sẽ bị thu hồi ở TẤT CẢ giáo phận (bộ quyền mặc định chung). Muốn chỉ thu hồi ở một nơi, dùng "Thu hồi tại một đơn vị". Thu hồi là vĩnh viễn: muốn có lại quyền này phải phân quyền mới.`
+              : `Quyền "${permission}" của ${target.subject} sẽ bị thu hồi. Thu hồi là vĩnh viễn: muốn có lại quyền này phải phân quyền mới.`
+        }
         confirmLabel="Thu hồi quyền"
         destructive
         loading={busy}

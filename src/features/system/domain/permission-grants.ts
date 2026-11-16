@@ -1,5 +1,6 @@
 import {
   hasPermissionPrefix,
+  hasRole,
   isSuperAdmin,
   type PermissionSubject,
 } from '@/core/domain/permissions';
@@ -36,9 +37,81 @@ const isSystemRoleRow = (row: Row) =>
   row.roleIsSystem === true ||
   (typeof row.roleCode === 'string' && SYSTEM_ROLE_CODES.has(row.roleCode));
 
-/** Sửa hạn quyền của vai trò: vai trò hệ thống chỉ quản trị hệ thống sửa. */
+/**
+ * Sửa hạn quyền của vai trò: vai trò hệ thống chỉ quản trị hệ thống sửa; quyền cấp riêng cho một đơn vị (UNIT_GRANT)
+ * do cấp quản lý đơn vị đó chỉnh, BE quyết định quyền cuối cùng.
+ */
 export const canEditRolePermissionRow = (u: Maybe, row: Row) =>
-  canAssignRolePermissions(u) && !isFinalGrant(row) && (isSuperAdmin(u) || !isSystemRoleRow(row));
+  canAssignRolePermissions(u) &&
+  !isFinalGrant(row) &&
+  (isSuperAdmin(u) || row.entryType === 'UNIT_GRANT' || !isSystemRoleRow(row));
+
+// ---- Phân quyền vai trò theo đơn vị (giáo phận / giáo hạt / giáo xứ) ----
+
+/** Cấp của người thao tác khi phân quyền riêng theo đơn vị. */
+export type UnitActor = 'super' | 'diocese' | 'deanery' | 'none';
+
+export const unitActorOf = (u: Maybe): UnitActor =>
+  isSuperAdmin(u)
+    ? 'super'
+    : hasRole(u, 'ADMIN_DIOCESE')
+      ? 'diocese'
+      : hasRole(u, 'ADMIN_DEANERY')
+        ? 'deanery'
+        : 'none';
+
+/** Vai trò admin cấp dưới mà admin giáo phận / giáo hạt được chỉnh quyền riêng theo đơn vị. */
+export function unitScopeEnabled(actor: UnitActor, roleCode: string): boolean {
+  if (roleCode === '') return false;
+  if (actor === 'super') return true;
+  if (actor === 'diocese') return roleCode === 'ADMIN_DEANERY' || roleCode === 'ADMIN_PARISH';
+  if (actor === 'deanery') return roleCode === 'ADMIN_PARISH';
+  return false;
+}
+
+/** Quyền có nằm trong giới hạn phạm vi của người thao tác không (đuôi mã quyền là phạm vi). */
+export function unitPermissionAllowed(actor: UnitActor, permissionCode: string): boolean {
+  if (actor === 'super') return true;
+  if (actor === 'diocese') return permissionCode.endsWith('.deanery') || permissionCode.endsWith('.parish');
+  if (actor === 'deanery') return permissionCode.endsWith('.parish');
+  return false;
+}
+
+export interface UnitIds {
+  dioceseId?: string;
+  deaneryId?: string;
+  parishId?: string;
+}
+
+/** Chỉ giữ các id đơn vị không rỗng (để bỏ trống = áp dụng cho cả đơn vị của người thao tác / mặc định chung). */
+export function compactUnitIds(input: UnitIds): UnitIds {
+  const out: UnitIds = {};
+  if (input.dioceseId?.trim()) out.dioceseId = input.dioceseId.trim();
+  if (input.deaneryId?.trim()) out.deaneryId = input.deaneryId.trim();
+  if (input.parishId?.trim()) out.parishId = input.parishId.trim();
+  return out;
+}
+
+/** Thu hồi quyền cấp riêng (UNIT_GRANT) phải gửi đúng đơn vị của dòng; dòng mặc định không gửi đơn vị. */
+export function rowUnitIds(row: Row): UnitIds {
+  if (row.entryType !== 'UNIT_GRANT') return {};
+  if (row.scopeLevel === 'DIOCESE' && typeof row.dioceseId === 'string')
+    return { dioceseId: row.dioceseId };
+  if (row.scopeLevel === 'DEANERY' && typeof row.deaneryId === 'string')
+    return { deaneryId: row.deaneryId };
+  if (row.scopeLevel === 'PARISH' && typeof row.parishId === 'string')
+    return { parishId: row.parishId };
+  return {};
+}
+
+const ENTRY_TYPES: Record<string, string> = {
+  DEFAULT: 'Mặc định chung',
+  UNIT_GRANT: 'Cấp riêng cho đơn vị',
+  UNIT_EXCLUDE: 'Thu hồi riêng cho đơn vị',
+};
+
+export const entryTypeLabel = (value: unknown): string =>
+  typeof value === 'string' ? (ENTRY_TYPES[value] ?? '') : '';
 
 /** BE tính `revocable` theo phân cấp (quyền do hệ thống cấp, vai trò của chính mình hoặc cấp cao hơn thì không thu hồi được). */
 export const canRevokeRolePermissionRow = (u: Maybe, row: Row) =>
@@ -159,14 +232,17 @@ export function toggleGroup(selected: readonly string[], codes: readonly string[
 // ---- Thân gửi ----
 
 /** POST /system/role-permissions/bulk */
-export const buildRoleGrantBody = (input: {
-  roleCode: string;
-  permissionCodes: readonly string[];
-  expiresAt: string;
-}) => ({
+export const buildRoleGrantBody = (
+  input: {
+    roleCode: string;
+    permissionCodes: readonly string[];
+    expiresAt: string;
+  } & UnitIds,
+) => ({
   roleCode: input.roleCode.trim(),
   permissionCodes: [...input.permissionCodes],
   expiresAt: endOfDayIso(input.expiresAt),
+  ...compactUnitIds(input),
 });
 
 /** POST /system/account-permissions/bulk (lý do bắt buộc). */

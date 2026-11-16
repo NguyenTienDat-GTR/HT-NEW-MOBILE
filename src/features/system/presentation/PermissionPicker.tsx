@@ -31,6 +31,8 @@ export type PickerSource = {
   label: string;
   emptyText: string;
   needTargetText: string;
+  /** Tên tham số API -> tên trường của form chứa giá trị (vd. dioceseId -> unitDioceseId); giá trị rỗng thì không gửi. */
+  extraParams?: Readonly<Record<string, string>>;
 };
 
 /**
@@ -45,12 +47,20 @@ export function PermissionPicker({
 }: CustomFieldProps & { source: PickerSource }) {
   const gateway = useResourceGateway();
   const target = String(values[source.field] ?? '');
+  const extra: Record<string, string> = {};
+  for (const [param, field] of Object.entries(source.extraParams ?? {})) {
+    const extraValue = String(values[field] ?? '').trim();
+    if (extraValue) extra[param] = extraValue;
+  }
+  const extraKey = JSON.stringify(extra);
   const [term, setTerm] = useState('');
   const list = useQuery({
-    queryKey: ['permission-picker', source.path, target],
+    queryKey: ['permission-picker', source.path, target, extraKey],
     enabled: target !== '',
     queryFn: () =>
-      gateway.call<PermissionItem[]>('GET', source.path, { query: { [source.param]: target } }),
+      gateway.call<PermissionItem[]>('GET', source.path, {
+        query: { [source.param]: target, ...extra },
+      }),
   });
   const selected = parseSelection(value);
   const items = useMemo(() => list.data ?? [], [list.data]);

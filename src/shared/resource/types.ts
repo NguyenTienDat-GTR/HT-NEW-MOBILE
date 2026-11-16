@@ -151,6 +151,8 @@ export interface ListFilterDef {
   options: OptionsSource;
   /** Khi một bộ lọc khác đổi, xóa bộ lọc này. */
   dependsOn?: readonly string[];
+  /** Chỉ hiện bộ lọc với người dùng thỏa điều kiện (mặc định luôn hiện). */
+  visible?: (subject: PermissionSubject | null) => boolean;
 }
 
 export interface ToggleImpactLine {

@@ -224,7 +224,7 @@ export const rolePermissionsResource: ResourceDefinition = {
     titleEdit: 'Chỉnh sửa quyền của vai trò',
     sections: [
       { title: 'Vai trò', fields: ['roleCode', 'roleView', 'permissionView'] },
-      { title: 'Nơi áp dụng', fields: ['unitDioceseId', 'unitDeaneryId', 'unitParishId'] },
+      { title: 'Nơi áp dụng', fields: ['unitDioceseIds', 'unitDeaneryIds', 'unitParishIds'] },
       { title: 'Quyền', fields: ['permissions'] },
       { title: 'Thời hạn', fields: ['expiresAt'] },
     ],

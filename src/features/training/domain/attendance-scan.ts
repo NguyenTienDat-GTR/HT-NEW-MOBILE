@@ -69,6 +69,12 @@ export interface ScanPerson {
   deaneryName: string | null;
   teamName: string | null;
   checkedInAt: string | null;
+  /** Khóa thu lệ phí: số tiền mỗi người và thời điểm người này đã đóng (null = chưa đóng). */
+  feeEnabled?: boolean;
+  feeAmount?: number | null;
+  feePaidAt?: string | null;
+  /** Chỉ phía app: thời điểm lấy kết quả này, để biết bản lạc quan của lệ phí còn hiệu lực hay đã cũ. */
+  fetchedAt?: number;
 }
 
 /** Luồng quét: quét -> tra cứu -> xác nhận -> điểm danh -> quét tiếp. */

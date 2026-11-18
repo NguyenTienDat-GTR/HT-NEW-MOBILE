@@ -25,9 +25,12 @@ import { Text } from '@/shared/ui/Text';
 import { TextField } from '@/shared/ui/TextField';
 import { useToast } from '@/shared/ui/Toast';
 
+import { isCourseEnded } from '../domain/course-state';
+import { formatVnd } from '../domain/course-fee';
 import { buildInvitationBody, invitationSummary, type InvitationJob } from '../domain/invitation';
 import { canActOnCourse, type TrainingSubject } from '../domain/training-permissions';
-import { leaderName } from './participation-common';
+import { FeeCheckRow } from './FeeCheckRow';
+import { useFeePayments } from './use-fee-payments';
 
 interface Summary {
   attendanceEnabled: boolean;
@@ -39,6 +42,10 @@ interface Summary {
   invitationPending: number;
   invitationFailed: number;
   withoutEmail: number;
+  /** Lệ phí (khóa có thu lệ phí), tính trên danh sách tham dự hiện tại. */
+  feeEnabled?: boolean;
+  feeAmount?: number | null;
+  feePaidCount?: number;
 }
 
 type CheckChoice = 'all' | 'yes' | 'no';
@@ -48,6 +55,18 @@ const CHECK_OPTIONS = [
   { value: 'yes', label: 'Đã điểm danh' },
   { value: 'no', label: 'Chưa điểm danh' },
 ] as const;
+
+type FeeChoice = 'all' | 'no' | 'yes';
+
+const FEE_OPTIONS = [
+  { value: 'all', label: 'Mọi lệ phí' },
+  { value: 'no', label: 'Chưa đóng tiền' },
+  { value: 'yes', label: 'Đã đóng tiền' },
+] as const;
+
+/** Tên hiển thị của một dòng điểm danh (BE trả holyName / fullName, khác dòng hồ sơ có leaderHolyName / leaderFullName). */
+const personName = (row: ResourceRow) =>
+  [text(row, 'holyName'), text(row, 'fullName')].filter(Boolean).join(' ');
 
 const POLL_MS = 1500;
 const POLL_MAX = 400;
@@ -71,6 +90,7 @@ export function CourseAttendanceScreen({
   const enc = encodeURIComponent(code);
   const [search, setSearch] = useState('');
   const [check, setCheck] = useState<CheckChoice>('all');
+  const [feeFilter, setFeeFilter] = useState<FeeChoice>('all');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +107,7 @@ export function CourseAttendanceScreen({
     enabled: code !== '',
   });
   const people = useInfiniteQuery({
-    queryKey: ['course-attendance', code, 'list', debounced, check],
+    queryKey: ['course-attendance', code, 'list', debounced, check, feeFilter],
     initialPageParam: 0,
     enabled: code !== '',
     queryFn: ({ pageParam }) =>
@@ -100,11 +120,15 @@ export function CourseAttendanceScreen({
             size: 20,
             search: debounced || undefined,
             checkedIn: check === 'all' ? undefined : check === 'yes',
+            feePaid: feeFilter === 'all' ? undefined : feeFilter === 'yes',
           },
         },
       ),
     getNextPageParam: (last) => (last.last === false ? (last.number ?? 0) + 1 : undefined),
   });
+
+  // Đóng lệ phí: tích là tự lưu qua hàng đợi (xem domain/fee-payment-queue), thành công không báo, lỗi thì trả về như cũ.
+  const feeQueue = useFeePayments();
 
   if (!code)
     return (
@@ -119,6 +143,19 @@ export function CourseAttendanceScreen({
     canActOnCourse(user, course.data, 'approve') && course.data?.courseFinished !== true;
   const rows = (people.data?.pages ?? []).flatMap((page) => page.content ?? []);
   const data = summary.data;
+
+  // Lệ phí: khóa thu phí thì có dải tổng hợp, bộ lọc và ô Đã đóng tiền. Ghi nhận dùng quyền quét điểm danh, mở đến khi khóa kết thúc.
+  const feeEnabled = course.data?.feeEnabled === true;
+  const feeAmount = data?.feeAmount ?? (typeof course.data?.feeAmount === 'number' ? course.data.feeAmount : 0);
+  const canMarkFee =
+    canScan && course.data !== undefined && course.data.status !== false && !isCourseEnded(course.data);
+  const listAt = people.dataUpdatedAt;
+  const summaryAt = summary.dataUpdatedAt;
+  const feeParticipants = data?.totalParticipants ?? 0;
+  const feePaidCount = Math.min(
+    Math.max((data?.feePaidCount ?? 0) + feeQueue.delta(summaryAt), 0),
+    feeParticipants,
+  );
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ['course-attendance', code] });
 
@@ -135,7 +172,7 @@ export function CourseAttendanceScreen({
         },
       );
       await refresh();
-      const who = leaderName(row);
+      const who = personName(row);
       toast.success(row.checkedInAt ? `Đã bỏ điểm danh ${who}` : `Đã điểm danh ${who}`);
     } catch (exception) {
       setError(errorMessage(exception));
@@ -201,6 +238,14 @@ export function CourseAttendanceScreen({
         </Card>
       ) : null}
 
+      {feeEnabled && data ? (
+        <FeeSummaryCard
+          amount={feeAmount}
+          participantCount={feeParticipants}
+          paidCount={feePaidCount}
+        />
+      ) : null}
+
       <TextField
         label="Tìm kiếm"
         value={search}
@@ -209,15 +254,14 @@ export function CourseAttendanceScreen({
         autoCapitalize="none"
       />
       <FilterChips options={CHECK_OPTIONS} value={check} onChange={setCheck} />
+      {feeEnabled ? <FilterChips options={FEE_OPTIONS} value={feeFilter} onChange={setFeeFilter} /> : null}
       {people.isPending ? <LoadingState /> : null}
       {rows.map((row) => {
         const checkedIn = Boolean(row.checkedInAt);
         return (
           <Card key={text(row, 'id')}>
             <View style={{ gap: 4 }}>
-              <Text variant="bodyStrong">
-                {[text(row, 'holyName'), text(row, 'fullName')].filter(Boolean).join(' ')}
-              </Text>
+              <Text variant="bodyStrong">{personName(row)}</Text>
               <Text variant="secondary" tone="textSecondary">
                 {[text(row, 'parishName'), text(row, 'deaneryName')].filter(Boolean).join(' · ')}
               </Text>
@@ -233,6 +277,20 @@ export function CourseAttendanceScreen({
                   }
                   tone={checkedIn ? 'success' : 'neutral'}
                 />
+                {feeEnabled && !canMarkFee ? (
+                  <Badge
+                    label={
+                      feeQueue.paidOf(text(row, 'id'), Boolean(row.feePaidAt), listAt)
+                        ? 'Đã đóng tiền'
+                        : 'Chưa đóng tiền'
+                    }
+                    tone={
+                      feeQueue.paidOf(text(row, 'id'), Boolean(row.feePaidAt), listAt)
+                        ? 'success'
+                        : 'neutral'
+                    }
+                  />
+                ) : null}
                 {text(row, 'emailProblem') ? (
                   <Badge label={text(row, 'emailProblem')} tone="warning" />
                 ) : text(row, 'invitationSentAt') ? (
@@ -244,14 +302,38 @@ export function CourseAttendanceScreen({
                   {text(row, 'invitationError')}
                 </Text>
               ) : null}
-              {canScan && data?.attendanceEnabled ? (
-                <Button
-                  label={checkedIn ? 'Hủy điểm danh' : 'Điểm danh'}
-                  variant={checkedIn ? 'outline' : 'primary'}
-                  size="sm"
-                  loading={busyId === text(row, 'id')}
-                  onPress={() => void toggleCheckIn(row)}
-                />
+              {(canScan && data?.attendanceEnabled) || (feeEnabled && canMarkFee) ? (
+                // Hàng thao tác: điểm danh và Đã đóng tiền nằm cạnh nhau, mỗi nút một nửa bề ngang, chạm một tay.
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  {canScan && data?.attendanceEnabled ? (
+                    <View style={{ flex: 1 }}>
+                      <Button
+                        label={checkedIn ? 'Hủy điểm danh' : 'Điểm danh'}
+                        variant={checkedIn ? 'outline' : 'primary'}
+                        size="sm"
+                        loading={busyId === text(row, 'id')}
+                        onPress={() => void toggleCheckIn(row)}
+                      />
+                    </View>
+                  ) : null}
+                  {feeEnabled && canMarkFee ? (
+                    <View style={{ flex: 1 }}>
+                      <FeeCheckRow
+                        person={personName(row)}
+                        checked={feeQueue.paidOf(text(row, 'id'), Boolean(row.feePaidAt), listAt)}
+                        busy={feeQueue.busy(text(row, 'id'))}
+                        onChange={(paid) =>
+                          feeQueue.toggle(
+                            text(row, 'id'),
+                            paid,
+                            { paid: Boolean(row.feePaidAt), snapshotAt: listAt },
+                            { label: personName(row), context: code },
+                          )
+                        }
+                      />
+                    </View>
+                  ) : null}
+                </View>
               ) : null}
             </View>
           </Card>
@@ -271,6 +353,47 @@ export function CourseAttendanceScreen({
         onDone={() => void refresh()}
       />
     </Screen>
+  );
+}
+
+/**
+ * Dải tổng hợp lệ phí gọn: tổng tiền, đã đóng, còn thiếu và số người chưa đóng, xếp 2 × 2. Số liệu tính trên danh sách tham
+ * dự hiện tại và đã cộng phần thay đổi chưa lưu xong, nên đổi ngay khi chạm ô đóng tiền.
+ */
+function FeeSummaryCard({
+  amount,
+  participantCount,
+  paidCount,
+}: {
+  amount: number;
+  participantCount: number;
+  paidCount: number;
+}) {
+  const total = amount * participantCount;
+  const paidTotal = amount * paidCount;
+  const remaining = total - paidTotal;
+  const unpaid = Math.max(participantCount - paidCount, 0);
+  const cells: { label: string; value: string; tone?: 'success' | 'warning' }[] = [
+    { label: 'Tổng tiền', value: formatVnd(total) },
+    { label: 'Đã đóng', value: formatVnd(paidTotal), tone: 'success' },
+    { label: 'Còn thiếu', value: formatVnd(remaining), tone: remaining > 0 ? 'warning' : undefined },
+    { label: 'Chưa đóng', value: `${fmtNumber(unpaid)} người` },
+  ];
+  return (
+    <Card>
+      <View accessibilityLabel="Tổng hợp lệ phí" style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 10 }}>
+        {cells.map((cell) => (
+          <View key={cell.label} style={{ width: '50%', paddingRight: 8 }}>
+            <Text variant="label" tone="muted">
+              {cell.label}
+            </Text>
+            <Text variant="bodyStrong" tone={cell.tone ?? 'foreground'}>
+              {cell.value}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </Card>
   );
 }
 

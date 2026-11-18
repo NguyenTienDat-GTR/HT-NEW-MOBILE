@@ -3,7 +3,7 @@ import { CameraView, scanFromURLAsync, useCameraPermissions } from 'expo-camera'
 import { useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useReducer, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { errorMessage, isAppError } from '@/core/domain/app-error';
 import { formatDateTime } from '@/core/domain/date-format';
@@ -13,6 +13,7 @@ import { useTheme } from '@/shared/theme/theme-provider';
 import { Banner } from '@/shared/ui/Banner';
 import { Button } from '@/shared/ui/Button';
 import { Card } from '@/shared/ui/Card';
+import { CheckCircleIcon, CoinsIcon } from '@/shared/ui/icons';
 import { InfoRow } from '@/shared/ui/InfoRow';
 import { Screen } from '@/shared/ui/Screen';
 import { Text } from '@/shared/ui/Text';
@@ -33,6 +34,9 @@ import {
   type ScanGate,
   type ScanPerson,
 } from '../domain/attendance-scan';
+import { formatVnd } from '../domain/course-fee';
+import type { FeePaymentQueue } from '../domain/fee-payment-queue';
+import { useFeePayments } from './use-fee-payments';
 
 export interface AttendanceScanScreenProps {
   /** Có mã khóa = chỉ điểm danh cho khóa đó; không có = khóa nằm trong chính mã QR. */
@@ -67,6 +71,8 @@ export function AttendanceScanScreen({
   const [manual, setManual] = useState('');
   const [focused, setFocused] = useState(false);
   const universal = !courseCode;
+  // Đóng lệ phí ghi nhận ngay ở màn quét (khóa có thu lệ phí): dùng chung hàng đợi tự lưu với danh sách điểm danh.
+  const fees = useFeePayments({ keepOptimistic: true });
 
   // Camera chỉ chạy khi màn đang hiện (tab được chọn / chưa có màn nào đè lên), tắt khi rời đi để không giữ camera.
   useFocusEffect(
@@ -107,7 +113,7 @@ export function AttendanceScanScreen({
         const person = await gateway.call<ScanPerson>('POST', path(courseCode, 'lookup'), {
           body: { token: payload.token },
         });
-        dispatch({ type: 'looked-up', person });
+        dispatch({ type: 'looked-up', person: { ...person, fetchedAt: Date.now() } });
       } catch (exception) {
         dispatch({ type: 'failed', message: errorMessage(exception) });
       }
@@ -173,7 +179,7 @@ export function AttendanceScanScreen({
       const person = await gateway.call<ScanPerson>('POST', path(courseCode, 'scan'), {
         body: { token: state.token },
       });
-      dispatch({ type: 'confirmed', person });
+      dispatch({ type: 'confirmed', person: { ...person, fetchedAt: Date.now() } });
       toast.success(
         `Đã điểm danh ${[person.holyName, person.fullName].filter(Boolean).join(' ')}`.trim(),
       );
@@ -298,6 +304,7 @@ export function AttendanceScanScreen({
               </Text>
             ) : null}
             {universal ? <InfoRow label="Khóa huấn luyện" value={person.courseName} /> : null}
+            <ScanFee person={person} queue={fees} />
             {state.step === 'already' ? (
               <Banner
                 tone="warning"
@@ -356,5 +363,77 @@ export function AttendanceScanScreen({
     </Screen>
   );
 }
+
+/**
+ * Lệ phí của người vừa quét (chỉ khóa có thu lệ phí): số tiền và nút "Đã đóng tiền" chạm là tự lưu, chạm lại để bỏ. Lỗi lưu
+ * được báo bằng thông báo lỗi và nút trở về như cũ (xem domain/fee-payment-queue). Nút đủ lớn để chạm một tay.
+ */
+export function ScanFee({ person, queue }: { person: ScanPerson; queue: FeePaymentQueue }) {
+  const { colors, radius, touch, iconSize } = useTheme();
+  if (!person.feeEnabled || !person.courseCode) return null;
+  const context = person.courseCode;
+  const serverPaid = Boolean(person.feePaidAt);
+  const snapshotAt = person.fetchedAt ?? 0;
+  const paid = queue.paidOf(person.participationId, serverPaid, snapshotAt);
+  const busy = queue.busy(person.participationId);
+  const label = [person.holyName, person.fullName].filter(Boolean).join(' ');
+  return (
+    <View style={styles.feeRow}>
+      <View style={styles.feeAmount}>
+        <Text variant="label" tone="muted">
+          Lệ phí
+        </Text>
+        <Text variant="heading">
+          {typeof person.feeAmount === 'number' ? formatVnd(person.feeAmount) : '—'}
+        </Text>
+      </View>
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: paid, busy }}
+        accessibilityLabel={`Đã đóng tiền: ${label}`}
+        onPress={() =>
+          queue.toggle(
+            person.participationId,
+            !paid,
+            { paid: serverPaid, snapshotAt },
+            { label, context },
+          )
+        }
+        style={({ pressed }) => [
+          styles.feeButton,
+          {
+            minHeight: touch.button,
+            borderRadius: radius.button,
+            borderColor: paid ? colors.success : colors.input,
+            backgroundColor: paid ? colors.success : pressed ? colors.surface2 : colors.surface1,
+            opacity: busy ? 0.8 : 1,
+          },
+        ]}
+      >
+        {paid ? (
+          <CheckCircleIcon size={iconSize.md} color={colors.onSolid} weight="fill" />
+        ) : (
+          <CoinsIcon size={iconSize.md} color={colors.foreground} />
+        )}
+        <Text variant="bodyStrong" style={{ color: paid ? colors.onSolid : colors.foreground }}>
+          Đã đóng tiền
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  feeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  feeAmount: { flexShrink: 1, gap: 2 },
+  feeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+  },
+});
 
 const absoluteFill = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 } as const;

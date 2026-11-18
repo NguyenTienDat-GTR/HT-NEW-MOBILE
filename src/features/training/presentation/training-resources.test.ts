@@ -111,6 +111,73 @@ describe('khóa huấn luyện', () => {
     );
   });
 
+  describe('lệ phí', () => {
+    const feeOn = { ...filled, feeEnabled: true, feeAmount: '150000' };
+
+    it('mặc định không thu lệ phí: hợp lệ và chỉ gửi cờ tắt, không gửi số tiền', () => {
+      expect(form.initialValues(null, null)).toMatchObject({ feeEnabled: false, feeAmount: '' });
+      expect(validateForm(form, filled, 'create')).toEqual({});
+      const body = form.toBody(filled, 'create', null, null) as Record<string, unknown>;
+      expect(body.feeEnabled).toBe(false);
+      expect('feeAmount' in body).toBe(false);
+    });
+
+    it('bật thu lệ phí thì gửi cờ và số tiền (số nguyên đồng)', () => {
+      expect(validateForm(form, feeOn, 'create')).toEqual({});
+      expect(form.toBody(feeOn, 'create', null, null)).toMatchObject({
+        feeEnabled: true,
+        feeAmount: 150000,
+      });
+    });
+
+    it('bật thu lệ phí mà thiếu hoặc sai số tiền thì báo lỗi ở ô lệ phí', () => {
+      const errorOf = (feeAmount: string) =>
+        validateForm(form, { ...feeOn, feeAmount }, 'create').feeAmount;
+      expect(errorOf('')).toBeDefined();
+      expect(errorOf('0')).toBe('Lệ phí mỗi người phải lớn hơn 0 đồng');
+      expect(errorOf('1000000000')).toBe('Lệ phí mỗi người không được vượt quá 999.999.999 đồng');
+      expect(errorOf('999999999')).toBeUndefined();
+    });
+
+    it('tắt thu lệ phí thì bỏ qua số tiền còn sót và ô lệ phí ẩn', () => {
+      const stale = { ...filled, feeEnabled: false, feeAmount: '0' };
+      expect(validateForm(form, stale, 'create').feeAmount).toBeUndefined();
+      const body = form.toBody(stale, 'edit', null, null) as Record<string, unknown>;
+      expect(body.feeEnabled).toBe(false);
+      expect('feeAmount' in body).toBe(false);
+      const amount = form.fields.find((f) => f.name === 'feeAmount')!;
+      expect(amount.visible?.({ feeEnabled: true }, 'create')).toBe(true);
+      expect(amount.visible?.({ feeEnabled: false }, 'create')).toBe(false);
+    });
+
+    it('sửa khóa: nạp lệ phí từ dữ liệu; khóa đã có hồ sơ được duyệt thì khóa hai ô và hiện lý do', () => {
+      const row = { feeEnabled: true, feeAmount: 150000, feeLocked: true };
+      expect(form.initialValues(row, null)).toMatchObject({
+        feeEnabled: true,
+        feeAmount: '150000',
+        feeLocked: true,
+      });
+      const locked = form.fields.filter((f) => f.readOnlyWhen?.({ feeLocked: true }, 'edit'));
+      expect(locked.map((f) => f.name).sort()).toEqual(['feeAmount', 'feeEnabled']);
+      expect(form.fields.some((f) => f.readOnlyWhen?.({ feeLocked: true }, 'create'))).toBe(false);
+      const note = form.fields.find((f) => f.name === 'feeLockedNote')!;
+      expect(note.visible?.({ feeLocked: true }, 'edit')).toBe(true);
+      expect(note.visible?.({ feeLocked: false }, 'edit')).toBe(false);
+      expect(note.visible?.({ feeLocked: true }, 'create')).toBe(false);
+      // Gửi lại đúng giá trị cũ khi khóa vẫn hợp lệ với BE.
+      expect(form.toBody({ ...filled, ...form.initialValues(row, null) }, 'edit', row, null)).toMatchObject({
+        feeEnabled: true,
+        feeAmount: 150000,
+      });
+    });
+
+    it('mục Lệ phí nằm trước mục điểm danh', () => {
+      const titles = form.sections.map((section) => section.title);
+      expect(titles.indexOf('Lệ phí')).toBeGreaterThan(-1);
+      expect(titles.indexOf('Lệ phí')).toBe(titles.indexOf('Điểm danh và thẻ tham dự') - 1);
+    });
+  });
+
   it('khóa đã kết thúc thì không sửa được', () => {
     const admin = user(['training.course.update.deanery']);
     const open = { managementUnitType: 'DEANERY', deaneryId: 'dn1', endDate: '2999-01-01' };

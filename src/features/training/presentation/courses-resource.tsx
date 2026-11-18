@@ -6,7 +6,9 @@ import { optional, parseMulti, stringifyMulti, trimmed } from '@/shared/resource
 import { loadOptions } from '@/shared/resource/options';
 import { count, flag, joinParts, text } from '@/shared/resource/row';
 import type { ResourceDefinition } from '@/shared/resource/types';
+import { Banner } from '@/shared/ui/Banner';
 
+import { feeAmountError, feeBody } from '../domain/course-fee';
 import {
   isCourseEnded,
   ORGANIZING_LABELS,
@@ -45,6 +47,7 @@ import {
 import { managementLevelBadge } from '../domain/training-labels';
 import { CopyParticipantsField } from './CopyParticipantsField';
 import { CourseDetailScreen } from './CourseDetailScreen';
+import { MoneyField } from './MoneyField';
 import { ScoreComponentsEditor } from './ScoreComponentsEditor';
 
 const REGISTRATION_OPTIONS = [
@@ -185,6 +188,7 @@ export const coursesResource: ResourceDefinition = {
         title: 'Duyệt và hiển thị',
         fields: ['autoApproveEligible', 'scoreVisible'],
       },
+      { title: 'Lệ phí', fields: ['feeEnabled', 'feeLockedNote', 'feeAmount'] },
       {
         title: 'Điểm danh và thẻ tham dự',
         fields: ['attendanceEnabled', 'autoSendInvitation'],
@@ -346,6 +350,43 @@ export const coursesResource: ResourceDefinition = {
         hint: 'Bật để giáo xứ và huynh trưởng cũng thấy điểm. Cấp sở hữu khóa và cấp cao hơn luôn xem được.',
       },
       {
+        name: 'feeEnabled',
+        label: 'Thu lệ phí',
+        kind: 'switch',
+        readOnlyWhen: (values, mode) => mode === 'edit' && values.feeLocked === true,
+        hint: 'Bật để ghi nhận ai đã đóng lệ phí ở màn điểm danh và khi quét mã QR. Chỉ đổi được khi khóa chưa có hồ sơ nào được duyệt đăng ký.',
+      },
+      {
+        // Lý do khóa lệ phí hiện sẵn (không giấu sau dấu ?) để người dùng hiểu vì sao không sửa được.
+        name: 'feeLockedNote',
+        label: 'Lệ phí đã khóa',
+        kind: 'custom',
+        visible: (values, mode) => mode === 'edit' && values.feeLocked === true,
+        render: () => (
+          <Banner
+            tone="info"
+            message="Khóa đã có hồ sơ được duyệt đăng ký nên không thể sửa lệ phí."
+          />
+        ),
+      },
+      {
+        name: 'feeAmount',
+        label: 'Lệ phí mỗi người',
+        kind: 'custom',
+        required: true,
+        visible: (values) => values.feeEnabled === true,
+        readOnlyWhen: (values, mode) => mode === 'edit' && values.feeLocked === true,
+        validate: (value, values) => feeAmountError(value, values),
+        render: (props) => (
+          <MoneyField
+            {...props}
+            label="Lệ phí mỗi người"
+            required
+            hint="Số tiền mỗi huynh trưởng trong danh sách tham dự phải đóng (đồng): lớn hơn 0 và tối đa 999.999.999."
+          />
+        ),
+      },
+      {
         name: 'attendanceEnabled',
         label: 'Bật điểm danh bằng mã QR',
         kind: 'switch',
@@ -440,6 +481,11 @@ export const coursesResource: ResourceDefinition = {
       ),
       autoApproveEligible: row ? flag(row, 'autoApproveEligible') : false,
       scoreVisible: row ? flag(row, 'scoreVisible') : false,
+      feeEnabled: row ? flag(row, 'feeEnabled') : false,
+      feeAmount: row && typeof row.feeAmount === 'number' ? String(row.feeAmount) : '',
+      // Chỉ để khóa các ô lệ phí khi khóa đã có hồ sơ được duyệt (BE trả feeLocked); không gửi BE.
+      feeLocked: row ? flag(row, 'feeLocked') : false,
+      feeLockedNote: '',
       attendanceEnabled: row ? flag(row, 'attendanceEnabled') : false,
       autoSendInvitation: row ? flag(row, 'autoSendInvitation') : false,
       additionalNotes: row ? text(row, 'additionalNotes') : '',
@@ -475,6 +521,8 @@ export const coursesResource: ResourceDefinition = {
         attendanceEnabled: values.attendanceEnabled === true,
         autoSendInvitation: values.autoSendInvitation === true,
         additionalNotes: optional(values, 'additionalNotes'),
+        // Lệ phí: bật thì gửi cả số tiền, tắt thì chỉ gửi cờ tắt (BE bỏ số tiền).
+        ...feeBody(values),
       };
       if (mode === 'edit') delete body.courseCode;
       // Người nhận danh sách đăng ký: gửi cả danh sách rỗng để bỏ chọn toàn bộ (như web).

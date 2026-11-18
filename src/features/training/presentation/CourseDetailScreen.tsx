@@ -39,6 +39,7 @@ import {
   REGISTRATION_TONES,
   registrationState,
 } from '../domain/course-state';
+import { formatVnd } from '../domain/course-fee';
 import { unitLabel } from '../domain/training-labels';
 import {
   canActOnCourse,
@@ -313,6 +314,14 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
             value={[formatDate(text(course, 'startDate')), formatDate(text(course, 'endDate'))]
               .filter(Boolean)
               .join(' – ')}
+          />
+          <InfoRow
+            label="Lệ phí"
+            value={
+              flag(course, 'feeEnabled') && typeof course.feeAmount === 'number'
+                ? `${formatVnd(course.feeAmount)}/người`
+                : 'Không thu'
+            }
           />
           <InfoRow label="Số năm hoạt động" value={text(course, 'yearsActive')} />
           <InfoRow label="Cấp độ yêu cầu" value={text(course, 'requiredCurrentLevelName')} />

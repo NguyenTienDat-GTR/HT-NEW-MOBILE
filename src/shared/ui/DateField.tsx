@@ -37,6 +37,8 @@ export interface DateFieldProps {
   clearable?: boolean;
   /** Chọn cả giờ: Android chọn ngày rồi chọn giờ, iOS bánh xe ngày giờ. Hiển thị dd/MM/yyyy HH:mm. */
   withTime?: boolean;
+  /** Chỉ chọn giờ (HH:mm, giờ Việt Nam, 24 giờ): giá trị dạng HH:mm. */
+  timeOnly?: boolean;
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
@@ -44,6 +46,16 @@ const toDateIso = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 const toLocalIso = (date: Date) =>
   `${toDateIso(date)}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+const toTimeText = (date: Date) => `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+function fromTime(value: string | undefined): Date | undefined {
+  const match = /^(\d{2}):(\d{2})/.exec(value ?? '');
+  if (!match) return undefined;
+  const date = new Date();
+  date.setHours(Number(match[1]), Number(match[2]), 0, 0);
+  return date;
+}
 
 function fromIso(value: string | undefined): Date | undefined {
   const match = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(value ?? '');
@@ -74,12 +86,26 @@ export function DateField({
   disabled = false,
   clearable = false,
   withTime = false,
+  timeOnly = false,
 }: DateFieldProps) {
   const { colors, radius, iconSize, touch } = useTheme();
   const [iosOpen, setIosOpen] = useState(false);
-  const [draft, setDraft] = useState<Date>(fromIso(value) ?? new Date());
+  const [draft, setDraft] = useState<Date>((timeOnly ? fromTime(value) : fromIso(value)) ?? new Date());
 
   if (Platform.OS === 'web') {
+    if (timeOnly) {
+      return (
+        <WebTimeInput
+          label={label}
+          value={value}
+          onChange={onChange}
+          error={error}
+          hint={hint}
+          required={required}
+          disabled={disabled}
+        />
+      );
+    }
     return (
       <WebDateInput
         label={label}
@@ -94,10 +120,19 @@ export function DateField({
     );
   }
 
-  const current = fromIso(value);
-  const shown = withTime ? formatLocalDateTime(value) : formatDate(value);
+  const current = timeOnly ? fromTime(value) : fromIso(value);
+  const shown = timeOnly ? (current ? value.slice(0, 5) : '') : withTime ? formatLocalDateTime(value) : formatDate(value);
   const open = () => {
     if (disabled) return;
+    if (Platform.OS === 'android' && timeOnly) {
+      DateTimePickerAndroid.open({
+        value: current ?? fromTime('08:00') ?? new Date(),
+        mode: 'time',
+        is24Hour: true,
+        onValueChange: (_event, time) => onChange(toTimeText(time)),
+      });
+      return;
+    }
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: current ?? new Date(),
@@ -154,13 +189,13 @@ export function DateField({
         ]}
       >
         <Text variant="body" tone={shown ? 'foreground' : 'muted'} style={styles.value}>
-          {shown || (withTime ? 'Chọn ngày giờ' : 'Chọn ngày')}
+          {shown || (timeOnly ? 'Chọn giờ' : withTime ? 'Chọn ngày giờ' : 'Chọn ngày')}
         </Text>
         <CaretDownIcon size={iconSize.sm} color={colors.muted} weight="bold" />
       </Pressable>
       {clearable && current && !disabled ? (
         <Button
-          label={withTime ? 'Xóa ngày giờ' : 'Xóa ngày'}
+          label={timeOnly ? 'Xóa giờ' : withTime ? 'Xóa ngày giờ' : 'Xóa ngày'}
           variant="ghost"
           size="sm"
           fullWidth={false}
@@ -176,9 +211,9 @@ export function DateField({
           onClose={() => setIosOpen(false)}
           footer={
             <Button
-              label={withTime ? 'Chọn ngày giờ này' : 'Chọn ngày này'}
+              label={timeOnly ? 'Chọn giờ này' : withTime ? 'Chọn ngày giờ này' : 'Chọn ngày này'}
               onPress={() => {
-                onChange(withTime ? toLocalIso(draft) : toDateIso(draft));
+                onChange(timeOnly ? toTimeText(draft) : withTime ? toLocalIso(draft) : toDateIso(draft));
                 setIosOpen(false);
               }}
             />
@@ -186,7 +221,7 @@ export function DateField({
         >
           <DateTimePicker
             value={draft}
-            mode={withTime ? 'datetime' : 'date'}
+            mode={timeOnly ? 'time' : withTime ? 'datetime' : 'date'}
             display="spinner"
             locale="vi-VN"
             is24Hour
@@ -199,6 +234,47 @@ export function DateField({
     </View>
   );
 }
+
+/** Bản xem thử trên web: gõ giờ dạng HH:mm, chỉ ghi nhận khi đủ và đúng. */
+function WebTimeInput({
+  label,
+  value,
+  onChange,
+  error,
+  hint,
+  required,
+  disabled,
+}: Pick<DateFieldProps, 'label' | 'value' | 'onChange' | 'error' | 'hint' | 'required' | 'disabled'>) {
+  const [typed, setTyped] = useState<string | null>(null);
+  const shown = typed ?? value.slice(0, 5);
+  const invalid = typed !== null && typed !== '' && !isValidTime(typed);
+  return (
+    <TextField
+      label={label}
+      value={shown}
+      onChangeText={(text) => {
+        const digits = text.replace(/\D/g, '').slice(0, 4);
+        const masked = digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+        setTyped(masked);
+        if (masked === '') onChange('');
+        else if (isValidTime(masked)) onChange(masked);
+      }}
+      onBlur={() => setTyped(null)}
+      keyboardType="number-pad"
+      placeholder="HH:mm"
+      maxLength={5}
+      error={error ?? (invalid ? 'Nhập đúng dạng HH:mm (24 giờ)' : undefined)}
+      hint={hint ?? 'Nhập theo dạng HH:mm'}
+      required={required}
+      editable={!disabled}
+    />
+  );
+}
+
+const isValidTime = (text: string) => {
+  const match = /^(\d{2}):(\d{2})$/.exec(text);
+  return match !== null && Number(match[1]) <= 23 && Number(match[2]) <= 59;
+};
 
 /** Bản xem thử trên web: gõ dd/MM/yyyy (hoặc dd/MM/yyyy HH:mm), chỉ ghi nhận khi đủ và đúng. */
 function WebDateInput({

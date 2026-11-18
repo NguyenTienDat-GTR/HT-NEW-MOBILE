@@ -31,6 +31,7 @@ import { Text } from '@/shared/ui/Text';
 import { useToast } from '@/shared/ui/Toast';
 
 import {
+  formatCoursePeriod,
   isCourseEnded,
   ORGANIZING_LABELS,
   ORGANIZING_TONES,
@@ -311,9 +312,7 @@ export function CourseDetailScreen({ def, id, subject, onEdit }: CourseDetailScr
           <InfoRow label="Địa điểm" value={text(course, 'location')} />
           <InfoRow
             label="Thời gian"
-            value={[formatDate(text(course, 'startDate')), formatDate(text(course, 'endDate'))]
-              .filter(Boolean)
-              .join(' – ')}
+            value={formatCoursePeriod(course)}
           />
           <InfoRow
             label="Lệ phí"

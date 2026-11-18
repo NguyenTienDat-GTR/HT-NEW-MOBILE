@@ -108,6 +108,7 @@ export function validateField(
     return field.kind === 'select' ||
       field.kind === 'date' ||
       field.kind === 'datetime' ||
+      field.kind === 'time' ||
       field.kind === 'lookup'
       ? `Vui lòng chọn ${field.label.toLowerCase()}`
       : `Vui lòng nhập ${field.label.toLowerCase()}`;

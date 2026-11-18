@@ -196,6 +196,20 @@ function FormFieldViewBase(props: FormFieldViewProps) {
           clearable={!isRequired(field, mode)}
         />
       );
+    case 'time':
+      return (
+        <DateField
+          label={field.label}
+          value={String(value)}
+          onChange={(next) => onChange(field.name, next)}
+          error={error}
+          hint={field.hint}
+          required={isRequired(field, mode)}
+          disabled={locked}
+          timeOnly
+          clearable={!isRequired(field, mode)}
+        />
+      );
     case 'datetime':
       return (
         <DateField

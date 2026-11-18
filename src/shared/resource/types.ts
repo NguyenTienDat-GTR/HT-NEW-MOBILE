@@ -37,6 +37,8 @@ export type FieldKind =
   | 'date'
   /** Ngày kèm giờ (giờ Việt Nam): giá trị dạng yyyy-MM-ddTHH:mm. */
   | 'datetime'
+  /** Giờ trong ngày (giờ Việt Nam): giá trị dạng HH:mm. */
+  | 'time'
   | 'daymonth'
   | 'select'
   | 'switch'

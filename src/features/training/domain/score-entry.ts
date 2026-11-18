@@ -1,4 +1,4 @@
-import { organizingState, type CourseStatusFields } from './course-state';
+import { formatCourseMoment, organizingState, type CourseStatusFields } from './course-state';
 
 /** Một thành phần điểm của khóa (từ GET /training/courses/{mã}/score-components). */
 export interface ScoreComponent {
@@ -71,8 +71,8 @@ export function scoringBlockedReason(
   if (participant.certificateApprovalStatus === 'APPROVED')
     return 'Chứng nhận của hồ sơ này đã được duyệt nên điểm bị khóa.';
   if (organizingState(course) !== 'ONGOING') {
-    const start = typeof course.startDate === 'string' ? course.startDate : '';
-    const end = typeof course.endDate === 'string' ? course.endDate : '';
+    const start = formatCourseMoment(course, 'start');
+    const end = formatCourseMoment(course, 'end');
     return `Chỉ chấm điểm được khi khóa đang diễn ra${start || end ? ` (${start || '…'} → ${end || '…'})` : ''}.`;
   }
   return null;

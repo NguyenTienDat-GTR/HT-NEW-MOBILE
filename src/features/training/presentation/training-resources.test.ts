@@ -61,7 +61,9 @@ describe('khóa huấn luyện', () => {
     courseName: 'HL cấp I 2027',
     courseTypeCode: 'T1',
     startDate: '2027-03-10',
+    startTime: '08:00',
     endDate: '2027-03-12',
+    endTime: '17:00',
     registrationStartAt: '2027-01-01T08:00',
     registrationEndAt: '2027-02-28T17:30',
     passingScore: '5',
@@ -75,6 +77,25 @@ describe('khóa huấn luyện', () => {
     expect(
       validateForm(form, { ...filled, endDate: '2027-03-01' }, 'create').endDate,
     ).toBeDefined();
+  });
+
+  it('giờ kết thúc phải sau giờ bắt đầu; đăng ký không được sau giờ bắt đầu; gửi BE giờ HH:mm', () => {
+    const sameDay = { ...filled, endDate: '2027-03-10' };
+    expect(validateForm(form, { ...sameDay, endTime: '08:00' }, 'create').endTime).toBeDefined();
+    expect(validateForm(form, { ...sameDay, endTime: '17:00' }, 'create').endTime).toBeUndefined();
+    expect(
+      validateForm(form, { ...filled, registrationEndAt: '2027-03-10T09:00' }, 'create')
+        .registrationEndAt,
+    ).toBeDefined();
+    expect(
+      validateForm(form, { ...filled, registrationEndAt: '2027-03-10T08:00' }, 'create')
+        .registrationEndAt,
+    ).toBeUndefined();
+    expect(validateForm(form, { ...filled, startTime: '' }, 'create').startTime).toBeDefined();
+    expect(form.toBody(filled, 'create', null, null)).toMatchObject({
+      startTime: '08:00',
+      endTime: '17:00',
+    });
   });
 
   it('điểm đạt không vượt điểm tổng kết tối đa; đóng đăng ký không sau ngày bắt đầu', () => {

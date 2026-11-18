@@ -1,4 +1,3 @@
-import { formatDate } from '@/core/domain/date-format';
 import { fmtNumber } from '@/core/domain/number-format';
 import { hasPermissionPrefix } from '@/core/domain/permissions';
 import type { ResourceRow } from '@/core/resource/resource-gateway';
@@ -10,6 +9,7 @@ import { Banner } from '@/shared/ui/Banner';
 
 import { feeAmountError, feeBody } from '../domain/course-fee';
 import {
+  formatCoursePeriod,
   isCourseEnded,
   ORGANIZING_LABELS,
   ORGANIZING_TONES,
@@ -123,10 +123,13 @@ function courseBadges(row: Record<string, unknown>) {
   ];
 }
 
-const dateRange = (row: Record<string, unknown>) =>
-  [formatDate(text(row, 'startDate')), formatDate(text(row, 'endDate'))]
-    .filter(Boolean)
-    .join(' – ');
+const dateRange = (row: Record<string, unknown>) => formatCoursePeriod(row);
+
+/** Mốc bắt đầu của khóa trong form (yyyy-MM-ddTHH:mm); giờ trống thì 00:00 như BE. */
+const startMoment = (values: Record<string, unknown>) =>
+  typeof values.startDate === 'string' && values.startDate !== ''
+    ? `${values.startDate}T${typeof values.startTime === 'string' && values.startTime !== '' ? values.startTime : '00:00'}`
+    : '';
 
 /** Khóa huấn luyện: danh sách thẻ, chi tiết riêng (CourseDetailScreen), tạo/sửa theo form cấu hình. */
 export const coursesResource: ResourceDefinition = {
@@ -238,6 +241,13 @@ export const coursesResource: ResourceDefinition = {
       { name: 'location', label: 'Địa điểm', kind: 'text', maxLength: 255 },
       { name: 'startDate', label: 'Ngày bắt đầu', kind: 'date', required: true },
       {
+        name: 'startTime',
+        label: 'Giờ bắt đầu',
+        kind: 'time',
+        required: true,
+        hint: 'Giờ Việt Nam. Điểm danh / quét QR mở sớm hơn giờ bắt đầu 2 tiếng.',
+      },
+      {
         name: 'endDate',
         label: 'Ngày kết thúc',
         kind: 'date',
@@ -250,6 +260,20 @@ export const coursesResource: ResourceDefinition = {
           value < values.startDate
             ? 'Ngày kết thúc không được trước ngày bắt đầu'
             : null,
+      },
+      {
+        name: 'endTime',
+        label: 'Giờ kết thúc',
+        kind: 'time',
+        required: true,
+        validate: (value, values) => {
+          if (typeof value !== 'string' || value === '') return null;
+          if (typeof values.endDate !== 'string' || values.endDate === '') return null;
+          const start = startMoment(values);
+          return start !== '' && `${values.endDate}T${value}` <= start
+            ? 'Thời gian kết thúc phải sau thời gian bắt đầu của khóa'
+            : null;
+        },
       },
       {
         name: 'hostYear',
@@ -282,10 +306,9 @@ export const coursesResource: ResourceDefinition = {
         validate: (value, values) =>
           typeof value === 'string' &&
           value !== '' &&
-          typeof values.startDate === 'string' &&
-          values.startDate !== '' &&
-          value.slice(0, 10) > values.startDate
-            ? 'Thời gian mở đăng ký không được sau ngày bắt đầu khóa'
+          startMoment(values) !== '' &&
+          value > startMoment(values)
+            ? 'Thời gian mở đăng ký không được sau thời gian bắt đầu khóa'
             : null,
       },
       {
@@ -296,12 +319,8 @@ export const coursesResource: ResourceDefinition = {
         visible: (values) => values.registrationEnabled === true,
         validate: (value, values) => {
           if (typeof value !== 'string' || value === '') return null;
-          if (
-            typeof values.startDate === 'string' &&
-            values.startDate !== '' &&
-            value.slice(0, 10) > values.startDate
-          )
-            return 'Thời gian đóng đăng ký không được sau ngày bắt đầu khóa';
+          if (startMoment(values) !== '' && value > startMoment(values))
+            return 'Thời gian đóng đăng ký không được sau thời gian bắt đầu khóa';
           if (
             typeof values.registrationStartAt === 'string' &&
             values.registrationStartAt !== '' &&
@@ -468,7 +487,9 @@ export const coursesResource: ResourceDefinition = {
       yearsActive: row ? text(row, 'yearsActive') : '0',
       location: row ? text(row, 'location') : '',
       startDate: row ? text(row, 'startDate') : '',
+      startTime: row ? text(row, 'startTime').slice(0, 5) : '',
       endDate: row ? text(row, 'endDate') : '',
+      endTime: row ? text(row, 'endTime').slice(0, 5) : '',
       hostYear: row ? text(row, 'hostYear') : '',
       registrationEnabled: row ? row.registrationEnabled !== false : true,
       registrationStartAt: row ? vnLocalDateTimeOf(row.registrationStartAt) : '',
@@ -504,7 +525,9 @@ export const coursesResource: ResourceDefinition = {
         yearsActive: Number(optional(values, 'yearsActive') ?? 0),
         location: optional(values, 'location'),
         startDate: startDate || undefined,
+        startTime: optional(values, 'startTime'),
         endDate: optional(values, 'endDate'),
+        endTime: optional(values, 'endTime'),
         registrationEnabled: enabled,
         registrationStartAt:
           enabled && trimmed(values, 'registrationStartAt')

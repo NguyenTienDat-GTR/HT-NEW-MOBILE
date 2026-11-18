@@ -14,6 +14,10 @@ export interface CourseStatusFields {
   registrationEndAt?: unknown;
   startDate?: unknown;
   endDate?: unknown;
+  /** Giờ bắt đầu / kết thúc (HH:mm, giờ Việt Nam); khóa cũ chưa có giờ tính 00:00 và 23:59. */
+  startTime?: unknown;
+  endTime?: unknown;
+  pastCourse?: unknown;
   finishedAt?: unknown;
 }
 
@@ -47,6 +51,41 @@ export const ORGANIZING_TONES: Record<OrganizingState, StateTone> = {
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 const vnToday = (now: number) => new Date(now + VN_OFFSET_MS).toISOString().slice(0, 10);
+const vnNowLocal = (now: number) => new Date(now + VN_OFFSET_MS).toISOString().slice(0, 16);
+const timeOf = (value: unknown, fallback: string) =>
+  typeof value === 'string' && /^\d{2}:\d{2}/.test(value) ? value.slice(0, 5) : fallback;
+
+/** Mốc bắt đầu / kết thúc của khóa dạng yyyy-MM-ddTHH:mm (giờ Việt Nam); undefined nếu chưa có ngày. */
+export function courseStartLocal(row: CourseStatusFields): string | undefined {
+  return typeof row.startDate === 'string' && row.startDate
+    ? `${row.startDate.slice(0, 10)}T${timeOf(row.startTime, '00:00')}`
+    : undefined;
+}
+
+export function courseEndLocal(row: CourseStatusFields): string | undefined {
+  return typeof row.endDate === 'string' && row.endDate
+    ? `${row.endDate.slice(0, 10)}T${timeOf(row.endTime, '23:59')}`
+    : undefined;
+}
+
+/** "08:00 10/12/2026"; khóa quá khứ hoặc chưa có giờ thì chỉ "10/12/2026"; rỗng nếu chưa có ngày. */
+export function formatCourseMoment(row: CourseStatusFields, which: 'start' | 'end'): string {
+  const date = which === 'start' ? row.startDate : row.endDate;
+  const clock = which === 'start' ? row.startTime : row.endTime;
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(date)) return '';
+  const [year, month, day] = date.slice(0, 10).split('-');
+  const text = `${day}/${month}/${year}`;
+  return row.pastCourse === true || typeof clock !== 'string' || !clock
+    ? text
+    : `${clock.slice(0, 5)} ${text}`;
+}
+
+/** "08:00 10/12/2026 – 17:30 12/12/2026". */
+export function formatCoursePeriod(row: CourseStatusFields): string {
+  return [formatCourseMoment(row, 'start'), formatCourseMoment(row, 'end')]
+    .filter(Boolean)
+    .join(' – ');
+}
 const time = (value: unknown) => {
   if (typeof value !== 'string' || !value) return undefined;
   const parsed = new Date(value).getTime();
@@ -59,11 +98,11 @@ const isOrganizing = (value: unknown): value is OrganizingState =>
 
 export function organizingState(row: CourseStatusFields, now = Date.now()): OrganizingState {
   if (isOrganizing(row.organizingStatus)) return row.organizingStatus;
-  const today = vnToday(now);
-  const start = typeof row.startDate === 'string' ? row.startDate : undefined;
-  const end = typeof row.endDate === 'string' ? row.endDate : undefined;
-  if (end && today > end) return 'ENDED';
-  if (!start || today < start) return 'UPCOMING';
+  const current = vnNowLocal(now);
+  const start = courseStartLocal(row);
+  const end = courseEndLocal(row);
+  if (end && current > end) return 'ENDED';
+  if (!start || current < start) return 'UPCOMING';
   return 'ONGOING';
 }
 
@@ -79,11 +118,11 @@ export function registrationState(row: CourseStatusFields, now = Date.now()): Re
   return 'OPEN';
 }
 
-/** Khóa đã kết thúc (thủ công hoặc quá ngày kết thúc): BE không cho sửa. */
+/** Khóa đã kết thúc (thủ công hoặc quá giờ kết thúc): BE không cho sửa. */
 export function isCourseEnded(row: CourseStatusFields, now = Date.now()): boolean {
   if (row.finishedAt) return true;
-  const end = typeof row.endDate === 'string' ? row.endDate : undefined;
-  return (end !== undefined && vnToday(now) > end) || organizingState(row, now) === 'ENDED';
+  const end = courseEndLocal(row);
+  return (end !== undefined && vnNowLocal(now) > end) || organizingState(row, now) === 'ENDED';
 }
 
 /** Ngày (yyyy-MM-dd) theo giờ Việt Nam của một mốc ISO có múi giờ; rỗng nếu không hợp lệ. */

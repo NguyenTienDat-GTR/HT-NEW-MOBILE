@@ -20,6 +20,7 @@ export {
   CircleNotchIcon,
   ClipboardTextIcon,
   ClockIcon,
+  CoinsIcon,
   EnvelopeSimpleIcon,
   EyeIcon,
   EyeSlashIcon,

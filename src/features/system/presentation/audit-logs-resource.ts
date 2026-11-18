@@ -8,6 +8,8 @@ import {
   AUDIT_RESOURCE_KEYS,
   AUDIT_STATUS_CODE_OPTIONS,
   AUDIT_UNIT_OPTIONS,
+  auditMessageText,
+  auditMethodText,
   auditOperationLabel,
   auditOperationTone,
   auditStatusText,
@@ -64,6 +66,8 @@ export const auditLogsResource: ResourceDefinition = {
     { key: 'unitType', label: 'Cấp đơn vị', options: AUDIT_UNIT_OPTIONS },
   ],
   card: (row) => ({
+    // Hiện đủ nội dung, không cắt "...".
+    fullText: true,
     title: joinParts(
       [auditOperationLabel(row.operation), taxonomyLabel('resource', row.resource)],
       ' · ',
@@ -101,7 +105,7 @@ export const auditLogsResource: ResourceDefinition = {
             label: 'Thời gian xử lý',
             value: row.durationMs != null ? `${text(row, 'durationMs')} ms` : '',
           },
-          { label: 'Nội dung', value: text(row, 'message') },
+          { label: 'Nội dung', value: auditMessageText(row) },
           { label: 'Thông báo lỗi', value: text(row, 'errorMessage') },
         ],
       },
@@ -109,7 +113,7 @@ export const auditLogsResource: ResourceDefinition = {
         title: 'Yêu cầu kỹ thuật',
         collapsed: true,
         fields: [
-          { label: 'Phương thức', value: text(row, 'httpMethod') },
+          { label: 'Phương thức', value: auditMethodText(row.httpMethod) },
           { label: 'Đường dẫn', value: text(row, 'requestPath') },
           { label: 'Bộ lọc yêu cầu', value: text(row, 'queryString') },
           { label: 'Địa chỉ IP', value: text(row, 'ipAddress') },

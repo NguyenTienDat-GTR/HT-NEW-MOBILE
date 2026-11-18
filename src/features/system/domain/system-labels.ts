@@ -39,6 +39,19 @@ const TAXONOMY: Record<'module' | 'resource' | 'action' | 'scope', Record<string
     role_permission: 'Phân quyền vai trò',
     score_component: 'Thành phần điểm',
     session: 'Phiên đăng nhập',
+    // Khóa đối tượng ghi trong nhật ký hệ thống (theo đường dẫn API, có thể ở dạng số nhiều).
+    account_roles: 'Vai trò tài khoản',
+    account_permissions: 'Phân quyền tài khoản',
+    role_permissions: 'Phân quyền vai trò',
+    requirement: 'Điều kiện khóa huấn luyện',
+    badges: 'Thẻ tham dự',
+    media: 'Ảnh và tệp',
+    excel_jobs: 'Tiến trình Excel',
+    executive_board: 'Ban điều hành',
+    cross_deanery: 'Gửi liên giáo hạt',
+    course_invitations: 'Lời mời khóa huấn luyện',
+    search: 'Tìm kiếm',
+    mobile: 'Ứng dụng di động',
   },
   action: {
     approve: 'Duyệt',
@@ -103,15 +116,75 @@ export const AUDIT_OPERATION_LABELS: Record<string, string> = {
   EXPORT: 'Xuất dữ liệu',
 };
 
+// Thao tác ít gặp (đoạn cuối đường dẫn API); chỉ dùng để hiển thị, không đưa vào bộ lọc cho gọn.
+const AUDIT_EXTRA_OPERATION_LABELS: Record<string, string> = {
+  CANCEL: 'Hủy',
+  TRANSFER: 'Chuyển đơn vị',
+  RESOLVE_DUPLICATES: 'Xử lý trùng lặp',
+  DIVIDE: 'Chia nhóm',
+  SCAN: 'Quét điểm danh',
+  LOOKUP: 'Tra cứu',
+  RESET_PASSWORD: 'Đặt lại mật khẩu',
+  DECISION: 'Quyết định',
+  DIOCESE_APPROVAL: 'Giáo phận duyệt',
+  DEANERY_APPROVAL: 'Giáo hạt duyệt',
+  BULK_APPROVAL: 'Duyệt hàng loạt',
+  BULK: 'Thao tác hàng loạt',
+  IMPORT: 'Nhập từ Excel',
+  PREVIEW: 'Xem trước',
+  PREVIEW_PDF: 'Xem trước PDF',
+  EXPORT_PDF: 'Xuất PDF',
+  JOBS: 'Tạo tiến trình xuất',
+  OTP: 'Gửi mã xác thực',
+  VERIFY: 'Xác thực mã',
+  CHANGE_PASSWORD: 'Đổi mật khẩu',
+  PASSWORD: 'Mật khẩu',
+  DEVICES: 'Đăng ký thiết bị',
+  SEND: 'Gửi',
+  RESET: 'Đặt lại',
+  PARENT: 'Đổi đơn vị cha',
+  PROMOTE: 'Thăng cấp',
+  READ: 'Đánh dấu đã đọc',
+  BIRTH_DATE: 'Sửa ngày sinh',
+  REGISTRATION: 'Cập nhật đăng ký',
+  SCORE_NOTE: 'Nhận xét điểm',
+  REGISTRATION_NOTE: 'Ghi chú đăng ký',
+  ASSIGNMENTS: 'Cập nhật phân công',
+  REORDER: 'Sắp xếp thứ tự',
+  DEFAULT: 'Đặt mặc định',
+  SITE_SUBDOMAIN: 'Đổi tên miền con',
+  FILE: 'Tải tệp lên',
+  PROFILE: 'Cập nhật hồ sơ',
+  EMAIL: 'Đổi email',
+  AVATAR: 'Đổi ảnh đại diện',
+  EXCEPTION_CERTIFICATE: 'Tạo chứng nhận ngoại lệ',
+  PRIVACY_CONSENT: 'Đồng ý chính sách bảo mật',
+  PREREQUISITE_COPY: 'Sao chép điều kiện',
+  PAST: 'Tạo khóa đã diễn ra',
+  REQUESTS: 'Gửi yêu cầu',
+  REGISTRATIONS: 'Đăng ký tham dự',
+  CHECK_IN: 'Điểm danh',
+  STOP: 'Dừng',
+};
+
 export function auditOperationLabel(value: unknown): string {
   if (typeof value !== 'string' || !value) return '';
-  return (
-    AUDIT_OPERATION_LABELS[value] ??
-    value
-      .replace(/_/g, ' ')
-      .toLowerCase()
-      .replace(/^./, (letter) => letter.toUpperCase())
-  );
+  return AUDIT_OPERATION_LABELS[value] ?? AUDIT_EXTRA_OPERATION_LABELS[value] ?? 'Thao tác khác';
+}
+
+const HTTP_METHOD_LABELS: Record<string, string> = {
+  GET: 'Xem dữ liệu',
+  POST: 'Gửi dữ liệu',
+  PUT: 'Cập nhật',
+  PATCH: 'Cập nhật một phần',
+  DELETE: 'Xóa',
+};
+
+/** Phương thức HTTP bằng tiếng Việt, kèm mã kỹ thuật trong ngoặc. */
+export function auditMethodText(method: unknown): string {
+  if (typeof method !== 'string' || !method) return '';
+  const upper = method.toUpperCase();
+  return HTTP_METHOD_LABELS[upper] ? `${HTTP_METHOD_LABELS[upper]} (${upper})` : method;
 }
 
 export function auditOperationTone(value: unknown): SystemTone {
@@ -154,6 +227,17 @@ export function auditTargetText(row: Record<string, unknown>): string {
   if (name) return name;
   const id = typeof row.resourceId === 'string' ? row.resourceId.trim() : '';
   return id ? `Mã ${id}` : '';
+}
+
+/**
+ * Nội dung tiếng Việt của một dòng nhật ký, dựng từ thao tác + loại đối tượng + tên đối tượng.
+ * Trường `message` do BE ghi là chuỗi kỹ thuật ("GET /api/...") nên không hiển thị cho người dùng.
+ */
+export function auditMessageText(row: Record<string, unknown>): string {
+  const head = [auditOperationLabel(row.operation), taxonomyLabel('resource', row.resource)]
+    .filter(Boolean)
+    .join(' ');
+  return [head, auditTargetText(row)].filter(Boolean).join(': ');
 }
 
 /** Các loại đối tượng có thể gặp trong nhật ký, dùng cho bộ lọc. */

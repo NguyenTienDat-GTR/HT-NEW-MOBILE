@@ -13,6 +13,8 @@ import { InfoRow } from '@/shared/ui/InfoRow';
 import { LoadingState } from '@/shared/ui/LoadingState';
 import { Text } from '@/shared/ui/Text';
 
+import { UnitLeaderLevelStats } from './UnitLeaderLevelStats';
+
 export type UnitKind = 'dioceses' | 'deaneries' | 'parishes';
 
 const UNIT_TYPE: Record<UnitKind, string> = {
@@ -29,6 +31,7 @@ export function UnitExtras({ kind, row }: { kind: UnitKind; row: ResourceRow }) 
   const id = text(row, 'id');
   return (
     <>
+      <UnitLeaderLevelStats kind={kind} unitId={id} />
       <ExecutiveBoard kind={kind} unitId={id} />
       <StatusHistory kind={kind} unitId={id} />
     </>

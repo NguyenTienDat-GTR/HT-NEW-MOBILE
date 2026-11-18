@@ -130,6 +130,8 @@ export interface CardView {
   /** Tối đa 2 dòng mô tả; phần còn lại nằm ở màn chi tiết. */
   lines?: readonly (string | null | undefined)[];
   badges?: readonly { label: string; tone?: BadgeTone }[];
+  /** true: không giới hạn số dòng của thẻ (danh sách nhật ký cần thấy đủ nội dung). */
+  fullText?: boolean;
 }
 
 export interface DetailField {

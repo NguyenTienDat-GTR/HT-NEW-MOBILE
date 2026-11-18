@@ -1,4 +1,6 @@
 import {
+  auditMessageText,
+  auditMethodText,
   auditOperationLabel,
   auditOperationTone,
   auditStatusText,
@@ -10,7 +12,8 @@ import {
 describe('nhãn nhật ký và danh mục quyền', () => {
   it('thao tác: nhãn tiếng Việt, thao tác lạ thì viết lại dễ đọc', () => {
     expect(auditOperationLabel('TOGGLE_STATUS')).toBe('Bật/tắt trạng thái');
-    expect(auditOperationLabel('CUSTOM_ACTION')).toBe('Custom action');
+    expect(auditOperationLabel('RESET_PASSWORD')).toBe('Đặt lại mật khẩu');
+    expect(auditOperationLabel('CUSTOM_ACTION')).toBe('Thao tác khác');
     expect(auditOperationLabel(undefined)).toBe('');
   });
 
@@ -41,5 +44,21 @@ describe('nhãn nhật ký và danh mục quyền', () => {
     expect(taxonomyLabel('scope', 'ALL')).toBe('Toàn hệ thống');
     expect(taxonomyLabel('action', 'moi_la')).toBe('moi_la');
     expect(taxonomyLabel('resource', undefined)).toBe('');
+  });
+});
+
+describe('nội dung nhật ký bằng tiếng Việt', () => {
+  it('dựng từ thao tác, loại đối tượng và tên đối tượng thay cho dòng yêu cầu thô', () => {
+    expect(
+      auditMessageText({ operation: 'UPDATE', resource: 'parish', resourceName: 'Giáo xứ A', message: 'PUT /api/parishes/1' }),
+    ).toBe('Cập nhật Giáo xứ: Giáo xứ A');
+    expect(auditMessageText({ operation: 'LIST', resource: 'diocese' })).toBe('Xem danh sách Giáo phận');
+    expect(auditMessageText({ message: 'GET /api/x' })).toBe('');
+  });
+
+  it('phương thức HTTP có nhãn tiếng Việt', () => {
+    expect(auditMethodText('GET')).toBe('Xem dữ liệu (GET)');
+    expect(auditMethodText('patch')).toBe('Cập nhật một phần (PATCH)');
+    expect(auditMethodText(undefined)).toBe('');
   });
 });

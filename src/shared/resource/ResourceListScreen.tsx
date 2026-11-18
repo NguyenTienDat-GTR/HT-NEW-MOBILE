@@ -88,17 +88,17 @@ export function ResourceListScreen({
           accessibilityLabel={`${view.title}. ${(view.lines ?? []).filter(Boolean).join('. ')}`}
         >
           <View style={styles.card}>
-            <Text variant="bodyStrong" numberOfLines={2}>
+            <Text variant="bodyStrong" numberOfLines={view.fullText ? undefined : 2}>
               {view.title}
             </Text>
             {view.subtitle ? (
-              <Text variant="secondary" tone="textSecondary" numberOfLines={2}>
+              <Text variant="secondary" tone="textSecondary" numberOfLines={view.fullText ? undefined : 2}>
                 {view.subtitle}
               </Text>
             ) : null}
             {(view.lines ?? []).filter(Boolean).map((line, index) => (
               // Hai dòng có thể trùng chữ: khóa theo vị trí để không trùng key.
-              <Text key={`${index}-${line}`} variant="secondary" tone="muted" numberOfLines={2}>
+              <Text key={`${index}-${line}`} variant="secondary" tone="muted" numberOfLines={view.fullText ? undefined : 2}>
                 {line}
               </Text>
             ))}

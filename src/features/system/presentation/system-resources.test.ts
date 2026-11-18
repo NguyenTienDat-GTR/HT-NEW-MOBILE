@@ -130,6 +130,7 @@ describe('quyền hạn và nhật ký chỉ để xem', () => {
     });
     expect(card.title).toBe('Thu hồi · Chứng nhận');
     expect(card.subtitle).toBe('GPPC-HTI-2027-1');
+    expect(card.fullText).toBe(true);
     expect(card.badges?.map((badge) => badge.label)).toEqual(['Thu hồi', 'Không đủ quyền']);
   });
 });

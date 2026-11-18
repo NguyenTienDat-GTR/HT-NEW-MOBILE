@@ -1,3 +1,4 @@
+import { visibleFields } from '@/shared/resource/form-logic';
 import { stringifyRoleChoice } from '../domain/account-create';
 import { stringifySelection } from '../domain/permission-grants';
 
@@ -142,6 +143,14 @@ describe('phân quyền', () => {
     const inSections = new Set(rolePerm.sections.flatMap((section) => section.fields));
     const orphans = rolePerm.fields.map((field) => field.name).filter((name) => !inSections.has(name));
     expect(orphans).toEqual([]);
+  });
+
+  it('vai trò: superadmin chọn Admin giáo phận thì hiện ô Giáo phận áp dụng, SUPER_ADMIN thì không', () => {
+    const values = rolePerm.initialValues(null, { roles: ['SUPER_ADMIN'], permissions: [] });
+    const names = (roleCode: string) =>
+      visibleFields(rolePerm, ['unitDioceseIds', 'unitDeaneryIds', 'unitParishIds'], { ...values, roleCode }, 'create').map((field) => field.name);
+    expect(names('ADMIN_DIOCESE')).toEqual(['unitDioceseIds']);
+    expect(names('SUPER_ADMIN')).toEqual([]);
   });
 
   it('vai trò: tạo gửi nhiều quyền một lần, sửa chỉ gửi hạn', () => {

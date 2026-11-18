@@ -21,9 +21,12 @@ const COLLAPSED_COUNT = 3;
 export function OpenCoursesList({
   courses,
   loading,
+  onOpenCourse,
 }: {
   courses?: readonly OpenCourse[];
   loading?: boolean;
+  /** Mở chi tiết khóa; không truyền (không đủ quyền xem màn khóa) thì thẻ chỉ hiển thị. */
+  onOpenCourse?: (courseCode: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   if (loading || !courses) return <LoadingState />;
@@ -41,7 +44,15 @@ export function OpenCoursesList({
   return (
     <View style={styles.list}>
       {shown.map((course) => (
-        <Card key={course.courseCode}>
+        <Card
+          key={course.courseCode}
+          {...(onOpenCourse
+            ? {
+                onPress: () => onOpenCourse(course.courseCode),
+                accessibilityLabel: `${course.courseName}. Mở chi tiết khóa`,
+              }
+            : {})}
+        >
           <View style={styles.card}>
             <View style={styles.top}>
               <Text variant="bodyStrong" style={styles.name} numberOfLines={2}>

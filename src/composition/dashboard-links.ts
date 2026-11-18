@@ -30,6 +30,8 @@ const TARGETS_BY_KEY: Readonly<Record<string, Target>> = {
   pendingScoring: { resource: SCORES, filters: { result: 'UNCOMPLETED' } },
   closingCourses: { resource: COURSES, filters: { registrationStatus: 'OPEN' } },
   pendingCertificates: { resource: CERTIFICATE_APPROVALS, filters: { approvalStatus: 'PENDING' } },
+  // Khóa đang mở đăng ký: gốc của màn khóa; màn tổng quan nối thêm mã khóa để mở chi tiết.
+  openCourses: { resource: COURSES },
   // Điểm cần chú ý.
   slowCertificateApprovals: {
     resource: CERTIFICATE_APPROVALS,

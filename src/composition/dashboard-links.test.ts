@@ -17,6 +17,11 @@ const filtersOf = (path: string | null) => {
 };
 
 describe('dashboardHref: lối tắt kèm bộ lọc từ tổng quan', () => {
+  it('khóa đang mở đăng ký trỏ về gốc màn khóa, thiếu quyền thì null', () => {
+    expect(dashboardHref('openCourses', '/training/courses', ALL)).toBe('/res/courses');
+    expect(dashboardHref('openCourses', '/training/courses', user([]))).toBeNull();
+  });
+
   it('việc cần xử lý mở đúng màn với bộ lọc chọn sẵn', () => {
     const approvals = dashboardHref('pendingRegistrations', '/training/approvals', ALL);
     expect(approvals?.startsWith('/res/approvals?')).toBe(true);

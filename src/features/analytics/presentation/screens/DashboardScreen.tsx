@@ -91,6 +91,10 @@ export function DashboardScreen({
     filters.scope || report?.scope || '',
     Boolean(report) && !systemWide,
   );
+  const coursesPath = resolveHref('openCourses', '/training/courses');
+  const openCourse = coursesPath
+    ? (code: string) => onOpenPath(`${coursesPath}/${encodeURIComponent(code)}`)
+    : undefined;
   const workQueue = useWorkQueue(filters.scope, Boolean(report) && !systemWide && !isParish);
   const registerPermission =
     report?.scope === 'deanery'
@@ -174,7 +178,11 @@ export function DashboardScreen({
                 description="Khóa của giáo hạt và giáo phận đang nhận đăng ký."
                 tone={colors.viz[2]}
               >
-                <OpenCoursesList courses={openCourses.data} loading={openCourses.isLoading} />
+                <OpenCoursesList
+                  courses={openCourses.data}
+                  loading={openCourses.isLoading}
+                  onOpenCourse={openCourse}
+                />
               </ChartCard>
               <ChartCard
                 title="Điểm cần chú ý"
@@ -271,7 +279,11 @@ export function DashboardScreen({
                   }
                   tone={colors.viz[2]}
                 >
-                  <OpenCoursesList courses={openCourses.data} loading={openCourses.isLoading} />
+                  <OpenCoursesList
+                    courses={openCourses.data}
+                    loading={openCourses.isLoading}
+                    onOpenCourse={openCourse}
+                  />
                 </ChartCard>
               ) : null}
               <ChartCard

@@ -180,7 +180,7 @@ export const coursesResource: ResourceDefinition = {
       },
       {
         title: 'Thời gian tổ chức',
-        fields: ['startDate', 'endDate', 'hostYear'],
+        fields: ['startDate', 'startTime', 'endDate', 'endTime', 'hostYear'],
       },
       {
         title: 'Thời gian đăng ký',
